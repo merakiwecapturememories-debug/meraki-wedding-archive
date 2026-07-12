@@ -256,11 +256,6 @@
       <div class="auth-firm">Meraki Production</div>
     </div>
     <div class="auth-card-body">
-      <div class="auth-tabs">
-        <button type="button" class="auth-tab active" id="tabLoginBtn">Login</button>
-        <button type="button" class="auth-tab" id="tabSignupBtn">Register</button>
-      </div>
-
       <div id="loginForm">
         <div class="auth-field">
           <span class="auth-icon">✉</span>
@@ -273,26 +268,7 @@
         </div>
         <div id="loginError" style="font-size:12.5px;color:var(--danger);margin-bottom:10px;display:none;"></div>
         <button class="auth-submit" id="btnLogin">Sign In</button>
-        <div class="auth-switch">New employee? <a href="#" id="showSignup">Create an account</a></div>
-      </div>
-
-      <div id="signupForm" style="display:none;">
-        <div class="auth-field">
-          <span class="auth-icon">🧑</span>
-          <input type="text" id="signupName" placeholder="Full name">
-        </div>
-        <div class="auth-field">
-          <span class="auth-icon">✉</span>
-          <input type="email" id="signupEmail" placeholder="Email address">
-        </div>
-        <div class="auth-field">
-          <span class="auth-icon">🔒</span>
-          <input type="password" id="signupPassword" placeholder="Password (at least 6 characters)">
-          <button type="button" class="auth-eye" data-target="signupPassword">👁</button>
-        </div>
-        <div id="signupError" style="font-size:12.5px;color:var(--danger);margin-bottom:10px;display:none;"></div>
-        <button class="auth-submit" id="btnSignup">Create account</button>
-        <div class="auth-switch">Already have an account? <a href="#" id="showLogin">Sign in</a></div>
+        <div class="auth-switch" style="font-size:11.5px;color:var(--ink-muted);">Accounts are set up by your studio admin. Contact them if you need access.</div>
       </div>
     </div>
   </div>
@@ -603,23 +579,6 @@ function renderUserBadge(){
   el.appendChild(btn);
 }
 
-function showLoginPane(){
-  document.getElementById('signupForm').style.display = 'none';
-  document.getElementById('loginForm').style.display = 'block';
-  document.getElementById('tabLoginBtn').classList.add('active');
-  document.getElementById('tabSignupBtn').classList.remove('active');
-}
-function showSignupPane(){
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('signupForm').style.display = 'block';
-  document.getElementById('tabSignupBtn').classList.add('active');
-  document.getElementById('tabLoginBtn').classList.remove('active');
-}
-document.getElementById('showSignup').onclick = (e) => { e.preventDefault(); showSignupPane(); };
-document.getElementById('showLogin').onclick = (e) => { e.preventDefault(); showLoginPane(); };
-document.getElementById('tabLoginBtn').onclick = showLoginPane;
-document.getElementById('tabSignupBtn').onclick = showSignupPane;
-
 document.querySelectorAll('.auth-eye').forEach(btn => {
   btn.addEventListener('click', () => {
     const input = document.getElementById(btn.getAttribute('data-target'));
@@ -640,38 +599,6 @@ document.getElementById('btnLogin').onclick = async () => {
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if(error){
     errEl.textContent = error.message;
-    errEl.style.display = 'block';
-  }
-};
-
-document.getElementById('btnSignup').onclick = async () => {
-  const name = document.getElementById('signupName').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value;
-  const errEl = document.getElementById('signupError');
-  errEl.style.display = 'none';
-  if(!name || !email || !password){
-    errEl.textContent = 'Fill in all fields.';
-    errEl.style.display = 'block';
-    return;
-  }
-  if(password.length < 6){
-    errEl.textContent = 'Password must be at least 6 characters.';
-    errEl.style.display = 'block';
-    return;
-  }
-  const { data: signupData, error } = await sb.auth.signUp({
-    email, password,
-    options: { data: { full_name: name } }
-  });
-  if(error){
-    errEl.textContent = error.message;
-    errEl.style.display = 'block';
-    return;
-  }
-  if(!signupData.session){
-    errEl.style.color = 'var(--ok)';
-    errEl.textContent = 'Account created — check your email to confirm, then sign in.';
     errEl.style.display = 'block';
   }
 };
