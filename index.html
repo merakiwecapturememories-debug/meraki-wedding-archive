@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meraki Production — The Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#101828;
+    --ink-soft:#667085;
+    --ink-muted:#98A2B3;
+    --paper:#F4F5F7;
+    --card:#FFFFFF;
+    --card-sunken:#FAFAFB;
+    --line:#E4E5E9;
+    --line-strong:#D0D2D8;
+    --wine:#6E2A3A;
+    --wine-dark:#521F2B;
+    --wine-tint:#F7E9EC;
+    --amber:#B5720B;
+    --amber-tint:#FCF0DC;
+    --blue:#175CA8;
+    --blue-tint:#E4EFFB;
+    --ok:#1D7A4C;
+    --ok-tint:#E1F4EA;
+    --danger:#B4322E;
+    --danger-tint:#FBEAE9;
+    --slate:#5C6270;
+    --slate-tint:#EEEFF2;
+    --radius:8px;
+    --shadow-card:0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.05);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 1.75rem 4rem;}
+
+  header.top{
+    display:flex;justify-content:space-between;align-items:center;gap:1.5rem;
+    margin:0 -1.75rem 2rem;padding:1.15rem 1.75rem;flex-wrap:wrap;
+    background:var(--card);border-bottom:1px solid var(--line);
+  }
+  .brandmark{display:flex;align-items:center;gap:12px;}
+  .brandmark .mark{
+    width:38px;height:38px;border-radius:9px;background:var(--wine);color:#fff;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    font-weight:600;font-size:15px;letter-spacing:0.01em;
+  }
+  .firm-name{font-size:15px;font-weight:600;color:var(--ink);line-height:1.25;}
+  .subtitle{font-size:12px;color:var(--ink-soft);margin-top:1px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.75rem;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow-card);border-left:2.5px solid var(--stat-accent, var(--wine));}
+  .stat:nth-child(1){--stat-accent:var(--wine);}
+  .stat:nth-child(2){--stat-accent:var(--blue);}
+  .stat:nth-child(3){--stat-accent:var(--amber);}
+  .stat:nth-child(4){--stat-accent:var(--ok);}
+  .stat .label{font-size:11.5px;color:var(--ink-soft);font-weight:500;letter-spacing:0.01em;}
+  .stat .value{font-family:'IBM Plex Mono',monospace;font-size:23px;font-weight:600;margin-top:6px;letter-spacing:-0.01em;}
+  .stat .value small{font-size:13px;color:var(--ink-muted);font-weight:400;margin-left:3px;}
+
+  .layout{display:grid;grid-template-columns:290px 1fr;gap:20px;align-items:start;}
+  @media (max-width:820px){.layout{grid-template-columns:1fr;} .stats{grid-template-columns:repeat(2,1fr);}}
+
+  .panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .panel-title h2{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;margin:0;color:var(--ink);}
+
+  button{font-family:'Inter',sans-serif;cursor:pointer;}
+  .btn{border:1px solid var(--line-strong);background:var(--card);color:var(--ink);border-radius:7px;padding:7px 13px;font-size:13px;font-weight:500;transition:background 0.12s, border-color 0.12s, transform 0.05s;}
+  .btn:hover{background:var(--card-sunken);border-color:var(--ink-muted);}
+  .btn:active{transform:scale(0.98);}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--wine-tint);}
+  .btn-primary{background:var(--wine);border-color:var(--wine);color:#fff;}
+  .btn-primary:hover{background:var(--wine-dark);border-color:var(--wine-dark);}
+  .btn-ghost{border-color:transparent;background:transparent;padding:5px 8px;font-size:12.5px;color:var(--wine);font-weight:500;}
+  .btn-ghost:hover{background:var(--wine-tint);}
+  .btn-danger-ghost{border-color:transparent;background:transparent;padding:5px 8px;font-size:12.5px;color:var(--danger);font-weight:500;}
+  .btn-danger-ghost:hover{background:var(--danger-tint);}
+  .btn-sm{padding:5px 10px;font-size:12.5px;}
+
+  /* Drive registry */
+  #driveList{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .drive-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative;box-shadow:var(--shadow-card);}
+  .drive-card .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
+  .drive-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:0.01em;color:var(--ink);}
+  .drive-events-count{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .drive-bar-track{height:6px;border-radius:4px;background:var(--slate-tint);margin:10px 0 7px;overflow:hidden;}
+  .drive-bar-fill{height:100%;background:var(--wine);border-radius:4px;}
+  .drive-bar-fill.full{background:var(--danger);}
+  .drive-meta{display:flex;justify-content:space-between;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);}
+  .drive-actions{display:flex;gap:2px;margin-top:8px;justify-content:flex-end;border-top:1px solid var(--line);padding-top:8px;}
+  .drive-empty{font-size:13px;color:var(--ink-soft);padding:20px 14px;border:1px solid var(--line);background:var(--card-sunken);border-radius:10px;text-align:center;}
+
+  /* Event ledger */
+  .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .toolbar input[type=text], .toolbar select{
+    font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;border:1px solid var(--line-strong);
+    border-radius:7px;background:var(--card);color:var(--ink);
+  }
+  .toolbar input[type=text]:focus, .toolbar select:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 3px var(--wine-tint);}
+  .toolbar input[type=text]{flex:1;min-width:160px;}
+  .toolbar select{color:var(--ink);}
+  .toolbar .spacer{flex:1;}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--line);background:var(--card-sunken);}
+  tbody td{padding:12px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle;color:var(--ink);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--card-sunken);}
+  .client-name{font-weight:500;}
+  .event-type-tag{font-size:11.5px;color:var(--ink-soft);}
+  td.mono{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);}
+  .drive-pill{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--slate-tint);color:var(--ink-soft);padding:3px 9px;border-radius:6px;font-weight:500;}
+  .status-badge{display:inline-block;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;}
+  .status-pending{background:var(--amber-tint);color:var(--amber);}
+  .status-backed{background:var(--blue-tint);color:var(--blue);}
+  .status-delivered{background:var(--ok-tint);color:var(--ok);}
+  .status-archived{background:var(--slate-tint);color:var(--slate);}
+  .row-actions{display:flex;gap:2px;white-space:nowrap;}
+  .empty-state{padding:52px 20px;text-align:center;color:var(--ink-soft);}
+  .empty-state h3{font-family:'Inter',sans-serif;font-weight:600;color:var(--ink);margin-bottom:6px;font-size:15px;}
+  .empty-state p{font-size:13.5px;max-width:340px;margin:0 auto;}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(16,24,40,0.5);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--card);border-radius:12px;width:100%;max-width:440px;padding:22px 22px 18px;border:1px solid var(--line);box-shadow:0 12px 32px rgba(16,24,40,0.18);max-height:88vh;overflow-y:auto;}
+  .modal h3{font-family:'Inter',sans-serif;font-weight:600;font-size:16px;margin:0 0 16px;color:var(--ink);}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
+  .field input, .field select, .field textarea{
+    width:100%;font-family:'Inter',sans-serif;font-size:13.5px;padding:9px 11px;border:1px solid var(--line-strong);
+    border-radius:7px;background:#fff;color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 3px var(--wine-tint);}
+  .field textarea{resize:vertical;min-height:56px;font-family:'Inter',sans-serif;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+  .required-mark{color:var(--wine);}
+
+  .confirm-box{max-width:340px;text-align:center;}
+  .confirm-box p{font-size:13.5px;color:var(--ink-soft);margin:0 0 18px;}
+  .confirm-box .modal-actions{justify-content:center;}
+
+  .lifecycle-block{border:1px solid var(--line);background:var(--card-sunken);border-radius:8px;padding:12px 13px 4px;margin-bottom:13px;}
+  .lifecycle-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:10px;}
+  .checkbox-field{margin-bottom:8px;}
+  .checkbox-label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);cursor:pointer;font-weight:500;}
+  .checkbox-label input{width:auto;accent-color:var(--wine);}
+  .lifecycle-hint{font-size:11.5px;color:var(--ink-soft);line-height:1.5;margin:2px 0 10px;}
+
+  .event-dates{font-size:11px;color:var(--ink-soft);margin-top:3px;line-height:1.5;}
+  .raw-chip{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;white-space:nowrap;}
+  .raw-kept{background:var(--slate-tint);color:var(--slate);}
+  .raw-eligible{background:var(--amber-tint);color:var(--amber);}
+  .raw-deleted{background:var(--ok-tint);color:var(--ok);}
+  .raw-none{color:var(--ink-muted);font-size:12px;}
+
+  .alert-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--amber-tint);border:1px solid #ECD6A8;color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;}
+  .alert-banner strong{font-weight:600;}
+  .alert-banner button{background:transparent;border:none;color:var(--amber);font-weight:600;font-size:12.5px;text-decoration:underline;padding:0;}
+
+  ::placeholder{color:var(--ink-muted);}
+  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23667085'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  .auth-gate{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:60px 20px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,190,130,0.18), transparent 55%),
+      linear-gradient(160deg, #3a1216 0%, #5a1f24 35%, #7a3226 65%, #a85830 100%);
+  }
+  .auth-gate::before{
+    content:'';position:absolute;inset:0;
+    background-image:
+      radial-gradient(circle at 20% 85%, rgba(0,0,0,0.55), transparent 45%),
+      radial-gradient(circle at 78% 88%, rgba(0,0,0,0.5), transparent 40%);
+    pointer-events:none;
+  }
+  .auth-hero{position:relative;text-align:center;max-width:560px;margin-bottom:34px;}
+  .auth-hero h1{
+    font-family:'Playfair Display',serif;font-style:italic;font-weight:600;
+    color:#fdf3e7;font-size:32px;line-height:1.25;margin:0 0 14px;
+    text-shadow:0 2px 18px rgba(0,0,0,0.35);
+  }
+  .auth-hero p{color:#e8d3c4;font-size:14px;line-height:1.6;margin:0;opacity:0.92;}
+  .auth-card{position:relative;width:100%;max-width:380px;border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.4);}
+  .auth-card-top{
+    background:linear-gradient(135deg, var(--wine-dark), var(--wine));
+    padding:30px 26px 26px;text-align:center;position:relative;
+  }
+  .auth-card-top::after{
+    content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;
+    border:1px solid rgba(255,255,255,0.15);border-radius:50%;
+  }
+  .auth-logo{
+    width:52px;height:52px;border-radius:14px;background:#fff;color:var(--wine);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;
+    margin:0 auto 12px;box-shadow:0 6px 16px rgba(0,0,0,0.25);
+  }
+  .auth-firm{color:#fff;font-family:'Playfair Display',serif;font-weight:600;font-size:17px;}
+  .auth-card-body{background:#fff;padding:22px 26px 26px;}
+  .auth-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:20px;}
+  .auth-tab{
+    background:none;border:none;padding:6px 2px 12px;font-size:14px;font-weight:600;
+    color:var(--ink-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .auth-tab.active{color:var(--wine);border-bottom-color:var(--wine);}
+  .auth-field{position:relative;margin-bottom:14px;}
+  .auth-field input{
+    width:100%;font-family:'Inter',sans-serif;font-size:13.5px;padding:11px 14px 11px 38px;
+    border:1px solid var(--line-strong);border-radius:24px;background:var(--card-sunken);color:var(--ink);
+  }
+  .auth-field input:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 3px var(--wine-tint);background:#fff;}
+  .auth-field .auth-icon{
+    position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-muted);
+    display:flex;align-items:center;pointer-events:none;
+  }
+  .auth-field .auth-eye{
+    position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--ink-muted);
+    cursor:pointer;display:flex;align-items:center;background:none;border:none;padding:2px;
+  }
+  .auth-submit{
+    width:100%;padding:12px;border-radius:24px;border:none;background:var(--wine);color:#fff;
+    font-weight:600;font-size:14px;cursor:pointer;transition:background 0.12s;box-shadow:0 8px 18px rgba(110,42,58,0.3);
+  }
+  .auth-submit:hover{background:var(--wine-dark);}
+  .auth-switch{text-align:center;margin-top:14px;font-size:12.5px;color:var(--ink-soft);}
+  .auth-switch a{color:var(--wine);font-weight:500;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH GATE ===== -->
+<div id="authGate" class="auth-gate">
+  <div class="auth-hero">
+    <h1>Every Wedding, Every Drive —<br>Never Lost</h1>
+    <p>Your clients' memories are irreplaceable. Keep every event, every drive, and every raw file organized in one place.</p>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-card-top">
+      <div class="auth-logo">M</div>
+      <div class="auth-firm">Meraki Production</div>
+    </div>
+    <div class="auth-card-body">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabLoginBtn">Login</button>
+        <button type="button" class="auth-tab" id="tabSignupBtn">Register</button>
+      </div>
+
+      <div id="loginForm">
+        <div class="auth-field">
+          <span class="auth-icon">✉</span>
+          <input type="email" id="loginEmail" placeholder="Email address">
+        </div>
+        <div class="auth-field">
+          <span class="auth-icon">🔒</span>
+          <input type="password" id="loginPassword" placeholder="Password">
+          <button type="button" class="auth-eye" data-target="loginPassword">👁</button>
+        </div>
+        <div id="loginError" style="font-size:12.5px;color:var(--danger);margin-bottom:10px;display:none;"></div>
+        <button class="auth-submit" id="btnLogin">Sign In</button>
+        <div class="auth-switch">New employee? <a href="#" id="showSignup">Create an account</a></div>
+      </div>
+
+      <div id="signupForm" style="display:none;">
+        <div class="auth-field">
+          <span class="auth-icon">🧑</span>
+          <input type="text" id="signupName" placeholder="Full name">
+        </div>
+        <div class="auth-field">
+          <span class="auth-icon">✉</span>
+          <input type="email" id="signupEmail" placeholder="Email address">
+        </div>
+        <div class="auth-field">
+          <span class="auth-icon">🔒</span>
+          <input type="password" id="signupPassword" placeholder="Password (at least 6 characters)">
+          <button type="button" class="auth-eye" data-target="signupPassword">👁</button>
+        </div>
+        <div id="signupError" style="font-size:12.5px;color:var(--danger);margin-bottom:10px;display:none;"></div>
+        <button class="auth-submit" id="btnSignup">Create account</button>
+        <div class="auth-switch">Already have an account? <a href="#" id="showLogin">Sign in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none;">
+<div class="wrap">
+
+  <header class="top">
+    <div class="brandmark">
+      <div class="mark">M</div>
+      <div>
+        <div class="firm-name">Meraki Production</div>
+        <div class="subtitle">The Archive — storage management</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div id="loadStatus" style="font-size:12px;color:var(--ink-soft);"></div>
+      <div id="userBadge" style="font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:10px;"></div>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Events on file</div><div class="value" id="statEvents">–</div></div>
+    <div class="stat"><div class="label">Drives in use</div><div class="value" id="statDrives">–</div></div>
+    <div class="stat"><div class="label">Storage used</div><div class="value" id="statUsed">–</div></div>
+    <div class="stat"><div class="label">Storage free</div><div class="value" id="statFree">–</div></div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="panel-title">
+        <h2>Drive registry</h2>
+        <button class="btn btn-sm" id="btnAddDrive">+ Add drive</button>
+      </div>
+      <div id="driveList"></div>
+    </div>
+
+    <div>
+      <div class="panel-title">
+        <h2>Event ledger</h2>
+        <button class="btn btn-primary btn-sm" id="btnAddEvent">+ Add event</button>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="Search client or event name…">
+        <select id="filterStatus">
+          <option value="">All statuses</option>
+          <option value="In Editing">In editing</option>
+          <option value="Edited">Edited</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Raw Deleted">Raw deleted</option>
+        </select>
+        <select id="filterDrive"><option value="">All drives</option></select>
+      </div>
+      <div id="rawAlert"></div>
+      <div id="tableWrap"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="eventOverlay">
+  <div class="modal">
+    <h3 id="eventModalTitle">Add event</h3>
+    <span id="sessionAddCounter" style="display:none;font-size:11.5px;font-weight:500;color:var(--ok);margin-left:2px;"></span>
+    <input type="hidden" id="eventId">
+    <div class="field">
+      <label>Client name <span class="required-mark">*</span></label>
+      <input type="text" id="fClient" placeholder="e.g. Priya &amp; Arjun Sharma">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Event name <span class="required-mark">*</span></label>
+        <input type="text" id="fEventName" placeholder="e.g. Sangeet + Wedding">
+      </div>
+      <div class="field">
+        <label>Event type</label>
+        <select id="fEventType">
+          <option>Wedding</option>
+          <option>Engagement</option>
+          <option>Reception</option>
+          <option>Pre-wedding shoot</option>
+          <option>Birthday</option>
+          <option>Corporate event</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Event date</label>
+        <input type="date" id="fEventDate">
+      </div>
+      <div class="field">
+        <label>File size (GB)</label>
+        <input type="number" id="fSize" min="0" step="1" placeholder="e.g. 850">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Drive location</label>
+        <select id="fDrive"></select>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="fStatus">
+          <option>In Editing</option>
+          <option>Edited</option>
+          <option>Delivered</option>
+          <option>Raw Deleted</option>
+        </select>
+      </div>
+    </div>
+    <div class="lifecycle-block">
+      <div class="lifecycle-title">Raw data lifecycle</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Copied by</label>
+          <input type="text" id="fCopiedBy" placeholder="e.g. Rahul">
+        </div>
+        <div class="field">
+          <label>Copied to</label>
+          <input type="text" id="fCopiedTo" placeholder="e.g. Meraki HDD 03, Editing PC">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Editing completed on</label>
+          <input type="date" id="fEditedDate">
+        </div>
+        <div class="field">
+          <label>Delivered to client on</label>
+          <input type="date" id="fDeliveredDate">
+        </div>
+      </div>
+      <div class="field checkbox-field">
+        <label class="checkbox-label"><input type="checkbox" id="fRawDeleted"> Raw data deleted from this drive</label>
+      </div>
+      <div class="field" id="rawDeletedDateWrap" style="display:none;">
+        <label>Deleted on</label>
+        <input type="date" id="fRawDeletedDate">
+      </div>
+      <p class="lifecycle-hint">Once a client has confirmed receipt, most studios keep the raw files a little longer as a safety buffer (commonly 30–90 days) before clearing them — in case of a corrupted delivery or a client dispute.</p>
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="fNotes" placeholder="Contact number, delivery notes, raw + edited status…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelEvent">Cancel</button>
+      <button class="btn" id="btnSaveAddAnother">Save &amp; add another</button>
+      <button class="btn btn-primary" id="btnSaveEvent">Save event</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="driveOverlay">
+  <div class="modal">
+    <h3 id="driveModalTitle">Add drive</h3>
+    <input type="hidden" id="driveId">
+    <div class="field">
+      <label>Drive label <span class="required-mark">*</span></label>
+      <input type="text" id="dLabel" placeholder="e.g. WD-05 Seagate 5TB">
+    </div>
+    <div class="field">
+      <label>Capacity (TB)</label>
+      <input type="number" id="dCapacity" min="0.1" step="0.1" value="4.5">
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="dNotes" placeholder="Shelf location, purchase date, backup pair…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelDrive">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveDrive">Save drive</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="modal confirm-box">
+    <h3 id="confirmTitle">Remove this?</h3>
+    <p id="confirmBody"></p>
+    <div class="modal-actions">
+      <button class="btn" id="btnConfirmCancel">Cancel</button>
+      <button class="btn btn-primary" style="background:var(--danger);border-color:var(--danger);" id="btnConfirmOk">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   BACKEND CONFIG — fill these in before deploying.
+   1. Create a free project at https://supabase.com
+   2. In the SQL Editor, run:
+
+      create table archive_data (
+        id text primary key,
+        payload jsonb not null default '{}'::jsonb,
+        updated_at timestamptz not null default now()
+      );
+      alter table archive_data enable row level security;
+      create policy "allow anon read" on archive_data for select using (true);
+      create policy "allow anon write" on archive_data for insert with check (true);
+      create policy "allow anon update" on archive_data for update using (true);
+
+   3. Project Settings → API → copy "Project URL" and "anon public" key below.
+   NOTE: the anon key is safe to expose in client-side code (that's how
+   Supabase is designed), but the policies above give anyone with the URL
+   full read/write access to this table — fine for a trusted internal team
+   tool, not for anything public-facing.
+   ========================================================================= */
+const SUPABASE_URL = 'https://ulemlypcabupyphefgse.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_NYgJGSw9tVVEJESMLZZ-WA_2JJdrai9';
+const RECORD_ID = 'main';           // single shared record everyone reads/writes
+const POLL_INTERVAL_MS = 15000;     // how often to pull remote changes
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let data = { events: [], drives: [] };
+let pendingDelete = null;
+let pollTimer = null;
+let currentUser = null; // { id, email, name }
+
+function uid(){ return 'id_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+function seedDrives(){
+  const drives = [];
+  for(let i = 1; i <= 12; i++){
+    drives.push({
+      id: uid(),
+      label: 'Meraki HDD ' + String(i).padStart(2,'0'),
+      capacityTB: 4.5,
+      notes: ''
+    });
+  }
+  return drives;
+}
+
+function setStatus(text, isError){
+  const statusEl = document.getElementById('loadStatus');
+  statusEl.textContent = text;
+  statusEl.style.color = isError ? 'var(--danger)' : 'var(--ink-soft)';
+}
+
+function whoAmI(){
+  return currentUser ? (currentUser.name || currentUser.email) : 'unknown';
+}
+
+async function loadData(isBackgroundRefresh){
+  if(!isBackgroundRefresh) setStatus('Loading…');
+  try{
+    const { data: rows, error } = await sb.from('archive_data').select('payload').eq('id', RECORD_ID);
+    if(error) throw error;
+
+    if(rows.length && rows[0].payload && (rows[0].payload.drives||[]).length){
+      data = rows[0].payload;
+      if(!data.events) data.events = [];
+      if(!data.drives) data.drives = [];
+    } else {
+      // first-ever load: seed and create the row
+      data = { events: [], drives: seedDrives() };
+      await persist();
+    }
+    setStatus('Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
+    renderAll();
+  }catch(e){
+    setStatus("Offline — showing last loaded data (check connection or Supabase config)", true);
+  }
+}
+
+async function persist(){
+  try{
+    const { error } = await sb.from('archive_data').upsert({ id: RECORD_ID, payload: data, updated_at: new Date().toISOString() });
+    if(error) throw error;
+    setStatus('Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
+  }catch(e){
+    setStatus("Couldn't save — check your connection and try again", true);
+  }
+}
+
+function startBackgroundSync(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    // don't yank data out from under someone mid-edit (a modal is open)
+    const modalOpen = document.querySelector('.overlay.open');
+    if(!modalOpen) loadData(true);
+  }, POLL_INTERVAL_MS);
+}
+
+// ===================== AUTH =====================
+function showAuthGate(){
+  document.getElementById('authGate').style.display = 'flex';
+  document.getElementById('appRoot').style.display = 'none';
+}
+function showApp(){
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'block';
+}
+
+function renderUserBadge(){
+  const el = document.getElementById('userBadge');
+  if(!currentUser){ el.innerHTML = ''; return; }
+  el.innerHTML = `<span>Signed in as <strong>${(currentUser.name||currentUser.email)}</strong></span>`;
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-sm';
+  btn.textContent = 'Log out';
+  btn.onclick = async () => { await sb.auth.signOut(); };
+  el.appendChild(btn);
+}
+
+function showLoginPane(){
+  document.getElementById('signupForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('tabLoginBtn').classList.add('active');
+  document.getElementById('tabSignupBtn').classList.remove('active');
+}
+function showSignupPane(){
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('signupForm').style.display = 'block';
+  document.getElementById('tabSignupBtn').classList.add('active');
+  document.getElementById('tabLoginBtn').classList.remove('active');
+}
+document.getElementById('showSignup').onclick = (e) => { e.preventDefault(); showSignupPane(); };
+document.getElementById('showLogin').onclick = (e) => { e.preventDefault(); showLoginPane(); };
+document.getElementById('tabLoginBtn').onclick = showLoginPane;
+document.getElementById('tabSignupBtn').onclick = showSignupPane;
+
+document.querySelectorAll('.auth-eye').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.getAttribute('data-target'));
+    input.type = input.type === 'password' ? 'text' : 'password';
+  });
+});
+
+document.getElementById('btnLogin').onclick = async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  if(!email || !password){
+    errEl.textContent = 'Enter your email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+  }
+};
+
+document.getElementById('btnSignup').onclick = async () => {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const errEl = document.getElementById('signupError');
+  errEl.style.display = 'none';
+  if(!name || !email || !password){
+    errEl.textContent = 'Fill in all fields.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(password.length < 6){
+    errEl.textContent = 'Password must be at least 6 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const { data: signupData, error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { full_name: name } }
+  });
+  if(error){
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  if(!signupData.session){
+    errEl.style.color = 'var(--ok)';
+    errEl.textContent = 'Account created — check your email to confirm, then sign in.';
+    errEl.style.display = 'block';
+  }
+};
+
+sb.auth.onAuthStateChange((event, session) => {
+  if(session && session.user){
+    currentUser = {
+      id: session.user.id,
+      email: session.user.email,
+      name: (session.user.user_metadata && session.user.user_metadata.full_name) || ''
+    };
+    renderUserBadge();
+    showApp();
+    loadData().then(startBackgroundSync);
+  } else {
+    currentUser = null;
+    if(pollTimer) clearInterval(pollTimer);
+    showAuthGate();
+  }
+});
+// ===================== /AUTH =====================
+
+function fmtTB(gb){
+  return (gb/1000).toFixed(2).replace(/\.00$/,'') + ' TB';
+}
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+function daysSince(d){
+  if(!d) return null;
+  const dt = new Date(d + 'T00:00:00');
+  if(isNaN(dt)) return null;
+  return Math.floor((Date.now() - dt.getTime()) / 86400000);
+}
+function statusClass(s){
+  return { 'In Editing':'status-pending', 'Edited':'status-backed', 'Delivered':'status-delivered', 'Raw Deleted':'status-archived' }[s] || 'status-pending';
+}
+const DELETE_BUFFER_DAYS = 30;
+function rawChip(e){
+  if(e.rawDeleted){
+    return `<span class="raw-chip raw-deleted">Raw deleted</span>`;
+  }
+  if(e.deliveredDate){
+    const days = daysSince(e.deliveredDate);
+    if(days !== null && days >= DELETE_BUFFER_DAYS){
+      return `<span class="raw-chip raw-eligible">Eligible to clear</span>`;
+    }
+    return `<span class="raw-chip raw-kept">Raw kept${days !== null ? ' · ' + days + 'd' : ''}</span>`;
+  }
+  return `<span class="raw-none">—</span>`;
+}
+
+function driveUsedGB(driveId){
+  return data.events.filter(e => e.driveId === driveId && !e.rawDeleted).reduce((sum,e) => sum + (Number(e.sizeGB)||0), 0);
+}
+
+function renderStats(){
+  const totalEvents = data.events.length;
+  const drivesUsed = data.drives.filter(d => driveUsedGB(d.id) > 0).length;
+  const totalUsedGB = data.events.reduce((s,e) => s + (e.rawDeleted ? 0 : (Number(e.sizeGB)||0)), 0);
+  const totalCapGB = data.drives.reduce((s,d) => s + (Number(d.capacityTB)||0)*1000, 0);
+  const freeGB = Math.max(totalCapGB - totalUsedGB, 0);
+  document.getElementById('statEvents').textContent = totalEvents;
+  document.getElementById('statDrives').innerHTML = drivesUsed + '<small>/ ' + data.drives.length + '</small>';
+  document.getElementById('statUsed').textContent = fmtTB(totalUsedGB);
+  document.getElementById('statFree').textContent = fmtTB(freeGB);
+}
+
+function renderDrives(){
+  const list = document.getElementById('driveList');
+  const filterDrive = document.getElementById('filterDrive');
+  const currentFilterVal = filterDrive.value;
+  filterDrive.innerHTML = '<option value="">All drives</option>' +
+    data.drives.map(d => `<option value="${d.id}">${escapeHtml(d.label)}</option>`).join('');
+  filterDrive.value = currentFilterVal;
+
+  if(data.drives.length === 0){
+    list.innerHTML = '<div class="drive-empty">No drives registered yet.<br>Add your first 5TB drive to get started.</div>';
+    return;
+  }
+  list.innerHTML = data.drives.map(d => {
+    const usedGB = driveUsedGB(d.id);
+    const capGB = (Number(d.capacityTB)||0) * 1000;
+    const pct = capGB > 0 ? Math.min((usedGB/capGB)*100, 100) : 0;
+    const count = data.events.filter(e => e.driveId === d.id).length;
+    const isFull = pct >= 95;
+    return `<div class="drive-card">
+      <div class="row1">
+        <div>
+          <div class="drive-name">${escapeHtml(d.label)}</div>
+          <div class="drive-events-count">${count} event${count===1?'':'s'}${d.updatedBy ? ` · edited by ${escapeHtml(d.updatedBy)}` : ''}</div>
+        </div>
+      </div>
+      <div class="drive-bar-track"><div class="drive-bar-fill${isFull?' full':''}" style="width:${pct.toFixed(0)}%;"></div></div>
+      <div class="drive-meta"><span>${fmtTB(usedGB)} used</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
+      <div class="drive-actions">
+        <button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>
+        <button class="btn-danger-ghost btn-sm" data-del-drive="${d.id}">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderRawAlert(){
+  const banner = document.getElementById('rawAlert');
+  const eligible = data.events.filter(e => !e.rawDeleted && e.deliveredDate && daysSince(e.deliveredDate) >= DELETE_BUFFER_DAYS);
+  if(eligible.length === 0){ banner.innerHTML = ''; return; }
+  const freeGB = eligible.reduce((s,e) => s + (Number(e.sizeGB)||0), 0);
+  banner.innerHTML = `<div class="alert-banner">
+    <span><strong>${eligible.length} event${eligible.length===1?'':'s'}</strong> delivered ${DELETE_BUFFER_DAYS}+ days ago still hold raw data on your drives (${fmtTB(freeGB)}). Safe to review for cleanup.</span>
+    <button id="btnFilterEligible">Show these</button>
+  </div>`;
+  document.getElementById('btnFilterEligible').onclick = () => {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterDrive').value = '';
+    rawEligibleFilterActive = true;
+    renderTable();
+  };
+}
+
+let rawEligibleFilterActive = false;
+
+function renderTable(){
+  const wrap = document.getElementById('tableWrap');
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const statusFilter = document.getElementById('filterStatus').value;
+  const driveFilter = document.getElementById('filterDrive').value;
+
+  let rows = data.events.filter(e => {
+    const matchesSearch = !search || (e.client||'').toLowerCase().includes(search) || (e.eventName||'').toLowerCase().includes(search);
+    const matchesStatus = !statusFilter || e.status === statusFilter;
+    const matchesDrive = !driveFilter || e.driveId === driveFilter;
+    const matchesEligible = !rawEligibleFilterActive || (!e.rawDeleted && e.deliveredDate && daysSince(e.deliveredDate) >= DELETE_BUFFER_DAYS);
+    return matchesSearch && matchesStatus && matchesDrive && matchesEligible;
+  }).sort((a,b) => (b.eventDate||'').localeCompare(a.eventDate||''));
+
+  if(data.events.length === 0){
+    wrap.innerHTML = `<div class="empty-state"><h3>The ledger is empty</h3><p>Add your first wedding or event to start tracking which drive it lives on.</p></div>`;
+    return;
+  }
+  if(rows.length === 0){
+    wrap.innerHTML = `<div class="empty-state"><h3>No matches</h3><p>Try a different search term or clear the filters.</p></div>`;
+    return;
+  }
+
+  const driveMap = Object.fromEntries(data.drives.map(d => [d.id, d.label]));
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Client</th><th>Event</th><th>Drive</th><th>Size</th><th>Status</th><th>Raw data</th><th></th>
+    </tr></thead>
+    <tbody>
+      ${rows.map(e => {
+        let lineParts = [];
+        if(e.copiedBy || e.copiedTo) lineParts.push(`Copied${e.copiedBy ? ' by ' + escapeHtml(e.copiedBy) : ''}${e.copiedTo ? ' to ' + escapeHtml(e.copiedTo) : ''}`);
+        if(e.editedDate) lineParts.push(`Edited ${fmtDate(e.editedDate)}`);
+        if(e.deliveredDate) lineParts.push(`Delivered ${fmtDate(e.deliveredDate)}`);
+        const dateLines = lineParts.join('<br>');
+        return `<tr>
+        <td class="client-name">${escapeHtml(e.client)}${e.updatedBy ? `<div style="font-size:10.5px;color:var(--ink-muted);font-weight:400;margin-top:2px;">by ${escapeHtml(e.updatedBy)}</div>` : ''}</td>
+        <td>${escapeHtml(e.eventName)}<div class="event-type-tag">${escapeHtml(e.eventType||'')} · ${fmtDate(e.eventDate)}</div>${dateLines ? `<div class="event-dates">${dateLines}</div>` : ''}</td>
+        <td>${e.driveId && driveMap[e.driveId] ? `<span class="drive-pill">${escapeHtml(driveMap[e.driveId])}</span>` : '<span style="color:var(--ink-soft);font-size:12px;">Unassigned</span>'}</td>
+        <td class="mono">${e.sizeGB ? fmtTB(e.sizeGB) : '—'}${e.rawDeleted ? '<br><span style="font-size:10.5px;color:var(--ink-muted);">freed</span>' : ''}</td>
+        <td><span class="status-badge ${statusClass(e.status)}">${escapeHtml(e.status||'In Editing')}</span></td>
+        <td>${rawChip(e)}</td>
+        <td><div class="row-actions">
+          <button class="btn-ghost btn-sm" data-edit-event="${e.id}">Edit</button>
+          <button class="btn-danger-ghost btn-sm" data-del-event="${e.id}">Remove</button>
+        </div></td>
+      </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function populateDriveSelect(){
+  const sel = document.getElementById('fDrive');
+  sel.innerHTML = '<option value="">Unassigned</option>' +
+    data.drives.map(d => `<option value="${d.id}">${escapeHtml(d.label)}</option>`).join('');
+}
+
+function renderAll(){
+  renderStats();
+  renderDrives();
+  renderRawAlert();
+  renderTable();
+}
+
+// ---- Event modal ----
+const eventOverlay = document.getElementById('eventOverlay');
+function openEventModal(id){
+  populateDriveSelect();
+  const isEdit = !!id;
+  document.getElementById('eventModalTitle').textContent = isEdit ? 'Edit event' : 'Add event';
+  const ev = isEdit ? data.events.find(e => e.id === id) : null;
+  document.getElementById('eventId').value = ev ? ev.id : '';
+  document.getElementById('fClient').value = ev ? ev.client : '';
+  document.getElementById('fEventName').value = ev ? ev.eventName : '';
+  document.getElementById('fEventType').value = ev ? ev.eventType : 'Wedding';
+  document.getElementById('fEventDate').value = ev ? ev.eventDate : '';
+  document.getElementById('fSize').value = ev ? ev.sizeGB : '';
+  document.getElementById('fDrive').value = ev ? (ev.driveId || '') : '';
+  document.getElementById('fStatus').value = ev ? ev.status : 'In Editing';
+  document.getElementById('fCopiedBy').value = ev ? (ev.copiedBy||'') : '';
+  document.getElementById('fCopiedTo').value = ev ? (ev.copiedTo||'') : '';
+  document.getElementById('fEditedDate').value = ev ? (ev.editedDate||'') : '';
+  document.getElementById('fDeliveredDate').value = ev ? (ev.deliveredDate||'') : '';
+  document.getElementById('fRawDeleted').checked = ev ? !!ev.rawDeleted : false;
+  document.getElementById('fRawDeletedDate').value = ev ? (ev.rawDeletedDate||'') : '';
+  document.getElementById('rawDeletedDateWrap').style.display = (ev && ev.rawDeleted) ? '' : 'none';
+  document.getElementById('fNotes').value = ev ? (ev.notes||'') : '';
+  eventOverlay.classList.add('open');
+  document.getElementById('fClient').focus();
+}
+function closeEventModal(){
+  eventOverlay.classList.remove('open');
+  const counterEl = document.getElementById('sessionAddCounter');
+  if(counterEl) counterEl.style.display = 'none';
+}
+
+document.getElementById('fRawDeleted').addEventListener('change', (e) => {
+  const wrap = document.getElementById('rawDeletedDateWrap');
+  const dateField = document.getElementById('fRawDeletedDate');
+  if(e.target.checked){
+    wrap.style.display = '';
+    if(!dateField.value) dateField.value = new Date().toISOString().slice(0,10);
+    document.getElementById('fStatus').value = 'Raw Deleted';
+  }else{
+    wrap.style.display = 'none';
+  }
+});
+
+document.getElementById('btnAddEvent').onclick = () => {
+  sessionAddCount = 0;
+  const counterEl = document.getElementById('sessionAddCounter');
+  if(counterEl) counterEl.style.display = 'none';
+  openEventModal(null);
+};
+document.getElementById('btnCancelEvent').onclick = closeEventModal;
+eventOverlay.addEventListener('click', e => { if(e.target === eventOverlay) closeEventModal(); });
+
+function buildEventRecord(){
+  const client = document.getElementById('fClient').value.trim();
+  const eventName = document.getElementById('fEventName').value.trim();
+  if(!client || !eventName){
+    document.getElementById('fClient').style.borderColor = client ? '' : 'var(--danger)';
+    document.getElementById('fEventName').style.borderColor = eventName ? '' : 'var(--danger)';
+    return null;
+  }
+  const id = document.getElementById('eventId').value || uid();
+  return {
+    id, client, eventName,
+    eventType: document.getElementById('fEventType').value,
+    eventDate: document.getElementById('fEventDate').value,
+    sizeGB: Number(document.getElementById('fSize').value) || 0,
+    driveId: document.getElementById('fDrive').value || null,
+    status: document.getElementById('fStatus').value,
+    copiedBy: document.getElementById('fCopiedBy').value.trim(),
+    copiedTo: document.getElementById('fCopiedTo').value.trim(),
+    editedDate: document.getElementById('fEditedDate').value,
+    deliveredDate: document.getElementById('fDeliveredDate').value,
+    rawDeleted: document.getElementById('fRawDeleted').checked,
+    rawDeletedDate: document.getElementById('fRawDeleted').checked ? document.getElementById('fRawDeletedDate').value : '',
+    notes: document.getElementById('fNotes').value.trim(),
+    updatedBy: whoAmI(),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function saveEventRecord(record){
+  const idx = data.events.findIndex(e => e.id === record.id);
+  if(idx >= 0) data.events[idx] = record; else data.events.push(record);
+}
+
+let sessionAddCount = 0;
+
+document.getElementById('btnSaveEvent').onclick = async () => {
+  const record = buildEventRecord();
+  if(!record) return;
+  saveEventRecord(record);
+  await persist();
+  renderAll();
+  closeEventModal();
+};
+
+document.getElementById('btnSaveAddAnother').onclick = async () => {
+  const record = buildEventRecord();
+  if(!record) return;
+  saveEventRecord(record);
+  await persist();
+  renderAll();
+
+  // Keep whichever drive / copied-by this operator is working through,
+  // clear only the per-event fields, and get ready for the next entry.
+  const keepDrive = document.getElementById('fDrive').value;
+  const keepCopiedBy = document.getElementById('fCopiedBy').value;
+  const keepCopiedTo = document.getElementById('fCopiedTo').value;
+  const keepEventType = document.getElementById('fEventType').value;
+  const keepStatus = document.getElementById('fStatus').value;
+
+  document.getElementById('eventId').value = '';
+  document.getElementById('fClient').value = '';
+  document.getElementById('fEventName').value = '';
+  document.getElementById('fEventDate').value = '';
+  document.getElementById('fSize').value = '';
+  document.getElementById('fDrive').value = keepDrive;
+  document.getElementById('fStatus').value = keepStatus;
+  document.getElementById('fCopiedBy').value = keepCopiedBy;
+  document.getElementById('fCopiedTo').value = keepCopiedTo;
+  document.getElementById('fEventType').value = keepEventType;
+  document.getElementById('fEditedDate').value = '';
+  document.getElementById('fDeliveredDate').value = '';
+  document.getElementById('fRawDeleted').checked = false;
+  document.getElementById('rawDeletedDateWrap').style.display = 'none';
+  document.getElementById('fNotes').value = '';
+  document.getElementById('eventModalTitle').textContent = 'Add event';
+
+  sessionAddCount++;
+  const counterEl = document.getElementById('sessionAddCounter');
+  if(counterEl){
+    counterEl.textContent = sessionAddCount + ' added this session';
+    counterEl.style.display = 'inline';
+  }
+  document.getElementById('fClient').focus();
+};
+
+// ---- Drive modal ----
+const driveOverlay = document.getElementById('driveOverlay');
+function openDriveModal(id){
+  const isEdit = !!id;
+  document.getElementById('driveModalTitle').textContent = isEdit ? 'Edit drive' : 'Add drive';
+  const dr = isEdit ? data.drives.find(d => d.id === id) : null;
+  document.getElementById('driveId').value = dr ? dr.id : '';
+  document.getElementById('dLabel').value = dr ? dr.label : '';
+  document.getElementById('dCapacity').value = dr ? dr.capacityTB : 4.5;
+  document.getElementById('dNotes').value = dr ? (dr.notes||'') : '';
+  driveOverlay.classList.add('open');
+  document.getElementById('dLabel').focus();
+}
+function closeDriveModal(){ driveOverlay.classList.remove('open'); }
+
+document.getElementById('btnAddDrive').onclick = () => openDriveModal(null);
+document.getElementById('btnCancelDrive').onclick = closeDriveModal;
+driveOverlay.addEventListener('click', e => { if(e.target === driveOverlay) closeDriveModal(); });
+
+document.getElementById('btnSaveDrive').onclick = async () => {
+  const label = document.getElementById('dLabel').value.trim();
+  if(!label){
+    document.getElementById('dLabel').style.borderColor = 'var(--danger)';
+    return;
+  }
+  const id = document.getElementById('driveId').value || uid();
+  const record = {
+    id, label,
+    capacityTB: Number(document.getElementById('dCapacity').value) || 4.5,
+    notes: document.getElementById('dNotes').value.trim(),
+    updatedBy: whoAmI(),
+    updatedAt: new Date().toISOString()
+  };
+  const idx = data.drives.findIndex(d => d.id === id);
+  if(idx >= 0) data.drives[idx] = record; else data.drives.push(record);
+  await persist();
+  renderAll();
+  closeDriveModal();
+};
+
+// ---- Confirm delete ----
+const confirmOverlay = document.getElementById('confirmOverlay');
+function askConfirm(title, body, onOk){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmBody').textContent = body;
+  pendingDelete = onOk;
+  confirmOverlay.classList.add('open');
+}
+document.getElementById('btnConfirmCancel').onclick = () => { confirmOverlay.classList.remove('open'); pendingDelete = null; };
+confirmOverlay.addEventListener('click', e => { if(e.target === confirmOverlay){ confirmOverlay.classList.remove('open'); pendingDelete = null; } });
+document.getElementById('btnConfirmOk').onclick = async () => {
+  if(pendingDelete) await pendingDelete();
+  confirmOverlay.classList.remove('open');
+  pendingDelete = null;
+};
+
+// ---- Delegated row/card actions ----
+document.getElementById('tableWrap').addEventListener('click', e => {
+  const editId = e.target.getAttribute('data-edit-event');
+  const delId = e.target.getAttribute('data-del-event');
+  if(editId) openEventModal(editId);
+  if(delId){
+    const ev = data.events.find(x => x.id === delId);
+    askConfirm('Remove this event?', `"${ev.eventName}" for ${ev.client} will be removed from the ledger.`, async () => {
+      data.events = data.events.filter(x => x.id !== delId);
+      await persist();
+      renderAll();
+    });
+  }
+});
+
+document.getElementById('driveList').addEventListener('click', e => {
+  const editId = e.target.getAttribute('data-edit-drive');
+  const delId = e.target.getAttribute('data-del-drive');
+  if(editId) openDriveModal(editId);
+  if(delId){
+    const dr = data.drives.find(x => x.id === delId);
+    const count = data.events.filter(x => x.driveId === delId).length;
+    askConfirm('Remove this drive?', count > 0 ? `${count} event${count===1?'':'s'} on "${dr.label}" will be marked unassigned.` : `"${dr.label}" will be removed from the registry.`, async () => {
+      data.drives = data.drives.filter(x => x.id !== delId);
+      data.events.forEach(ev => { if(ev.driveId === delId) ev.driveId = null; });
+      await persist();
+      renderAll();
+    });
+  }
+});
+
+// ---- Filters ----
+document.getElementById('searchInput').addEventListener('input', () => { rawEligibleFilterActive = false; renderTable(); });
+document.getElementById('filterStatus').addEventListener('change', () => { rawEligibleFilterActive = false; renderTable(); });
+document.getElementById('filterDrive').addEventListener('change', () => { rawEligibleFilterActive = false; renderTable(); });
+
+// App initializes once a session is confirmed (see onAuthStateChange above).
+</script>
+</div>
+</body>
+</html>
