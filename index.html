@@ -1138,21 +1138,27 @@ document.getElementById('btnScanDrive').onclick = openScanModal;
 document.getElementById('btnCancelScan').onclick = closeScanModal;
 scanOverlay.addEventListener('click', e => { if(e.target === scanOverlay) closeScanModal(); });
 
-// Recursively sum file sizes under a directory handle
-async function getFolderSizeBytes(dirHandle, depth){
-  let total = 0;
-  if(depth > 12) return total; // safety cap against pathological nesting
-  for await (const [, handle] of dirHandle.entries()){
+// Recursively sum file sizes under a directory handle, in parallel, with live progress
+async function getFolderSizeBytes(dirHandle, depth, progress){
+  if(depth > 12) return 0; // safety cap against pathological nesting
+  const entries = [];
+  for await (const [, handle] of dirHandle.entries()) entries.push(handle);
+
+  const sizes = await Promise.all(entries.map(async (handle) => {
     if(handle.kind === 'file'){
       try{
         const file = await handle.getFile();
-        total += file.size;
-      }catch(e){ /* skip unreadable file */ }
+        progress.filesRead++;
+        if(progress.filesRead % 15 === 0) progress.onTick();
+        return file.size;
+      }catch(e){ return 0; } // skip unreadable file
     } else if(handle.kind === 'directory'){
-      total += await getFolderSizeBytes(handle, depth + 1);
+      return await getFolderSizeBytes(handle, depth + 1, progress);
     }
-  }
-  return total;
+    return 0;
+  }));
+
+  return sizes.reduce((a,b) => a+b, 0);
 }
 
 // Try to pull a date out of a folder name like "Ayesha & Rohan - 14 Feb 2026" or "2026-02-14 Sharma Wedding"
@@ -1182,17 +1188,37 @@ document.getElementById('btnChooseScanFolder').onclick = async () => {
   }
 
   progressEl.style.color = 'var(--ink-soft)';
-  progressEl.textContent = 'Scanning…';
+  progressEl.textContent = 'Reading folder list…';
   const resultsEl = document.getElementById('scanResults');
   resultsEl.style.display = 'block';
   resultsEl.innerHTML = '';
   scanResultsData = [];
 
-  let scanned = 0;
+  // First pass: list top-level folders only (fast) so we know the real total for a %
+  const topLevelFolders = [];
   for await (const [name, handle] of rootHandle.entries()){
-    if(handle.kind !== 'directory') continue; // only top-level folders count as events
-    progressEl.textContent = `Scanning… (${++scanned} folder${scanned===1?'':'s'} so far: "${name}")`;
-    const bytes = await getFolderSizeBytes(handle, 0);
+    if(handle.kind === 'directory') topLevelFolders.push([name, handle]);
+  }
+  const total = topLevelFolders.length;
+
+  if(total === 0){
+    progressEl.style.color = 'var(--danger)';
+    progressEl.textContent = 'No subfolders found in that location.';
+    renderScanResults();
+    return;
+  }
+
+  for(let i = 0; i < total; i++){
+    const [name, handle] = topLevelFolders[i];
+    const pct = Math.round((i / total) * 100);
+    const progress = {
+      filesRead: 0,
+      onTick(){
+        progressEl.textContent = `Scanning… ${pct}% (${i+1}/${total} folders) — "${name}" — ${this.filesRead} files read`;
+      }
+    };
+    progressEl.textContent = `Scanning… ${pct}% (${i+1}/${total} folders) — "${name}"`;
+    const bytes = await getFolderSizeBytes(handle, 0, progress);
     const sizeGB = Math.round((bytes / (1024**3)) * 100) / 100;
     scanResultsData.push({
       name, sizeGB,
@@ -1203,7 +1229,7 @@ document.getElementById('btnChooseScanFolder').onclick = async () => {
   }
 
   progressEl.style.color = 'var(--ok)';
-  progressEl.textContent = `Done — found ${scanResultsData.length} folder${scanResultsData.length===1?'':'s'}.`;
+  progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).`;
   renderScanResults();
 };
 
