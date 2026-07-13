@@ -545,7 +545,8 @@ function showApp(){
 function renderUserBadge(){
   const el = document.getElementById('userBadge');
   if(!currentUser){ el.innerHTML = ''; return; }
-  el.innerHTML = `<span>Signed in as <strong>${(currentUser.name||currentUser.email)}</strong></span>`;
+  const adminTag = isAdmin() ? ' <span style="background:var(--wine);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:0.04em;padding:2px 7px;border-radius:999px;vertical-align:middle;">ADMIN</span>' : '';
+  el.innerHTML = `<span>Signed in as <strong>${(currentUser.name||currentUser.email)}</strong>${adminTag}</span>`;
   const btn = document.createElement('button');
   btn.className = 'btn btn-sm';
   btn.textContent = 'Log out';
@@ -598,7 +599,8 @@ sb.auth.onAuthStateChange((event, session) => {
     currentUser = {
       id: session.user.id,
       email: session.user.email,
-      name: (session.user.user_metadata && session.user.user_metadata.full_name) || ''
+      name: (session.user.user_metadata && session.user.user_metadata.full_name) || '',
+      role: (session.user.user_metadata && session.user.user_metadata.role) || 'member'
     };
     renderUserBadge();
     showApp();
@@ -609,6 +611,7 @@ sb.auth.onAuthStateChange((event, session) => {
     showAuthGate();
   }
 });
+function isAdmin(){ return !!(currentUser && currentUser.role === 'admin'); }
 // ===================== /AUTH =====================
 
 function fmtTB(gb){
@@ -689,7 +692,7 @@ function renderDrives(){
       <div class="drive-meta"><span>${fmtTB(usedGB)} used</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
       <div class="drive-actions">
         <button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>
-        <button class="btn-danger-ghost btn-sm" data-del-drive="${d.id}">Remove</button>
+        ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-drive="${d.id}">Remove</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -764,7 +767,7 @@ function renderTable(){
         <td>${rawChip(e)}</td>
         <td><div class="row-actions">
           <button class="btn-ghost btn-sm" data-edit-event="${e.id}">Edit</button>
-          <button class="btn-danger-ghost btn-sm" data-del-event="${e.id}">Remove</button>
+          ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-event="${e.id}">Remove</button>` : ''}
         </div></td>
       </tr>`;
       }).join('')}
