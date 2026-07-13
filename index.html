@@ -284,7 +284,10 @@
     <div>
       <div class="panel-title">
         <h2>Event ledger</h2>
-        <button class="btn btn-primary btn-sm" id="btnAddEvent">+ Add event</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm" id="btnScanDrive" style="display:none;">📀 Scan connected drive</button>
+          <button class="btn btn-primary btn-sm" id="btnAddEvent">+ Add event</button>
+        </div>
       </div>
       <div class="toolbar">
         <input type="text" id="searchInput" placeholder="Search client or event name…">
@@ -428,6 +431,30 @@
     <div class="modal-actions">
       <button class="btn" id="btnConfirmCancel">Cancel</button>
       <button class="btn btn-primary" style="background:var(--danger);border-color:var(--danger);" id="btnConfirmOk">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="scanOverlay">
+  <div class="modal" style="max-width:640px;">
+    <h3>Scan connected drive</h3>
+    <p style="font-size:12.5px;color:var(--ink-soft);margin:-8px 0 16px;line-height:1.5;">
+      Plug in the HDD, then click "Choose folder" and select the drive's root in the dialog that opens.
+      Each top-level folder on it is treated as one event — its name becomes the client name and its size is measured automatically.
+      Works in <strong>Chrome or Edge on desktop only</strong>.
+    </p>
+    <div class="field">
+      <label>Which drive is this?</label>
+      <select id="scanDriveSelect"></select>
+    </div>
+    <div style="margin:14px 0;">
+      <button class="btn btn-primary" id="btnChooseScanFolder">Choose folder &amp; scan</button>
+      <span id="scanProgress" style="font-size:12.5px;color:var(--ink-soft);margin-left:10px;"></span>
+    </div>
+    <div id="scanResults" style="max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelScan">Close</button>
+      <button class="btn btn-primary" id="btnImportScan" style="display:none;">Import selected</button>
     </div>
   </div>
 </div>
@@ -623,6 +650,9 @@ function renderUserBadge(){
   btn.textContent = 'Log out';
   btn.onclick = async () => { await sb.auth.signOut(); };
   el.appendChild(btn);
+
+  const scanBtn = document.getElementById('btnScanDrive');
+  scanBtn.style.display = (isAdmin() && 'showDirectoryPicker' in window) ? 'inline-flex' : 'none';
 }
 
 document.querySelectorAll('.auth-eye').forEach(btn => {
@@ -1087,6 +1117,165 @@ document.getElementById('driveList').addEventListener('click', e => {
     });
   }
 });
+
+// ---- Admin: scan connected drive ----
+const scanOverlay = document.getElementById('scanOverlay');
+let scanResultsData = []; // { name, sizeGB, guessedDate, include }
+
+function openScanModal(){
+  const sel = document.getElementById('scanDriveSelect');
+  sel.innerHTML = data.drives.map(d => `<option value="${d.id}">${escapeHtml(d.label)}</option>`).join('');
+  document.getElementById('scanResults').style.display = 'none';
+  document.getElementById('scanResults').innerHTML = '';
+  document.getElementById('scanProgress').textContent = '';
+  document.getElementById('btnImportScan').style.display = 'none';
+  scanResultsData = [];
+  scanOverlay.classList.add('open');
+}
+function closeScanModal(){ scanOverlay.classList.remove('open'); }
+
+document.getElementById('btnScanDrive').onclick = openScanModal;
+document.getElementById('btnCancelScan').onclick = closeScanModal;
+scanOverlay.addEventListener('click', e => { if(e.target === scanOverlay) closeScanModal(); });
+
+// Recursively sum file sizes under a directory handle
+async function getFolderSizeBytes(dirHandle, depth){
+  let total = 0;
+  if(depth > 12) return total; // safety cap against pathological nesting
+  for await (const [, handle] of dirHandle.entries()){
+    if(handle.kind === 'file'){
+      try{
+        const file = await handle.getFile();
+        total += file.size;
+      }catch(e){ /* skip unreadable file */ }
+    } else if(handle.kind === 'directory'){
+      total += await getFolderSizeBytes(handle, depth + 1);
+    }
+  }
+  return total;
+}
+
+// Try to pull a date out of a folder name like "Ayesha & Rohan - 14 Feb 2026" or "2026-02-14 Sharma Wedding"
+function guessDateFromName(name){
+  const iso = name.match(/(\d{4})[-_.](\d{1,2})[-_.](\d{1,2})/);
+  if(iso) return `${iso[1]}-${String(iso[2]).padStart(2,'0')}-${String(iso[3]).padStart(2,'0')}`;
+  const dmy = name.match(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4})/);
+  if(dmy) return `${dmy[3]}-${String(dmy[2]).padStart(2,'0')}-${String(dmy[1]).padStart(2,'0')}`;
+  return '';
+}
+function guessClientFromName(name){
+  return name.replace(/(\d{4})[-_.](\d{1,2})[-_.](\d{1,2})/, '').replace(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4})/, '').replace(/[-_]+/g, ' ').trim() || name;
+}
+
+document.getElementById('btnChooseScanFolder').onclick = async () => {
+  const progressEl = document.getElementById('scanProgress');
+  if(!('showDirectoryPicker' in window)){
+    progressEl.style.color = 'var(--danger)';
+    progressEl.textContent = 'Your browser doesn\'t support this — use Chrome or Edge on desktop.';
+    return;
+  }
+  let rootHandle;
+  try{
+    rootHandle = await window.showDirectoryPicker();
+  }catch(e){
+    return; // user cancelled the picker
+  }
+
+  progressEl.style.color = 'var(--ink-soft)';
+  progressEl.textContent = 'Scanning…';
+  const resultsEl = document.getElementById('scanResults');
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '';
+  scanResultsData = [];
+
+  let scanned = 0;
+  for await (const [name, handle] of rootHandle.entries()){
+    if(handle.kind !== 'directory') continue; // only top-level folders count as events
+    progressEl.textContent = `Scanning… (${++scanned} folder${scanned===1?'':'s'} so far: "${name}")`;
+    const bytes = await getFolderSizeBytes(handle, 0);
+    const sizeGB = Math.round((bytes / (1024**3)) * 100) / 100;
+    scanResultsData.push({
+      name, sizeGB,
+      client: guessClientFromName(name),
+      eventDate: guessDateFromName(name),
+      include: true
+    });
+  }
+
+  progressEl.style.color = 'var(--ok)';
+  progressEl.textContent = `Done — found ${scanResultsData.length} folder${scanResultsData.length===1?'':'s'}.`;
+  renderScanResults();
+};
+
+function renderScanResults(){
+  const resultsEl = document.getElementById('scanResults');
+  if(!scanResultsData.length){
+    resultsEl.innerHTML = `<div style="padding:16px;font-size:13px;color:var(--ink-soft);">No subfolders found in that location.</div>`;
+    document.getElementById('btnImportScan').style.display = 'none';
+    return;
+  }
+  resultsEl.innerHTML = scanResultsData.map((item, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);">
+      <input type="checkbox" data-scan-idx="${i}" class="scan-include" ${item.include ? 'checked' : ''}>
+      <div style="flex:1;">
+        <input type="text" data-scan-field="client" data-scan-idx="${i}" value="${escapeHtml(item.client)}" style="width:100%;font-size:13px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;margin-bottom:4px;">
+        <div style="font-size:11px;color:var(--ink-muted);">Folder: ${escapeHtml(item.name)} · ${item.sizeGB} GB${item.eventDate ? ' · ' + item.eventDate : ''}</div>
+      </div>
+      <input type="date" data-scan-field="eventDate" data-scan-idx="${i}" value="${item.eventDate}" style="font-size:12px;padding:6px;border:1px solid var(--line-strong);border-radius:6px;">
+    </div>
+  `).join('');
+  document.getElementById('btnImportScan').style.display = 'inline-flex';
+
+  resultsEl.querySelectorAll('.scan-include').forEach(cb => {
+    cb.addEventListener('change', () => { scanResultsData[+cb.getAttribute('data-scan-idx')].include = cb.checked; });
+  });
+  resultsEl.querySelectorAll('[data-scan-field]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const idx = +inp.getAttribute('data-scan-idx');
+      const field = inp.getAttribute('data-scan-field');
+      scanResultsData[idx][field] = inp.value;
+    });
+  });
+}
+
+document.getElementById('btnImportScan').onclick = async () => {
+  const driveId = document.getElementById('scanDriveSelect').value;
+  const toImport = scanResultsData.filter(x => x.include);
+  if(!toImport.length) return;
+
+  const progressEl = document.getElementById('scanProgress');
+  let done = 0;
+  for(const item of toImport){
+    const record = {
+      id: uid(),
+      client: item.client || item.name,
+      eventName: item.name,
+      eventType: '',
+      eventDate: item.eventDate || '',
+      sizeGB: Math.round((item.sizeGB || 0) * 100) / 100,
+      driveId: driveId,
+      status: 'In Editing',
+      copiedBy: whoAmI(),
+      copiedTo: '',
+      editedDate: '',
+      deliveredDate: '',
+      rawDeleted: false,
+      rawDeletedDate: '',
+      notes: 'Auto-imported from drive scan',
+      updatedBy: whoAmI(),
+      updatedAt: new Date().toISOString()
+    };
+    saveEventRecord(record);
+    await persistEvent(record);
+    done++;
+    progressEl.style.color = 'var(--ink-soft)';
+    progressEl.textContent = `Importing… ${done}/${toImport.length}`;
+  }
+  progressEl.style.color = 'var(--ok)';
+  progressEl.textContent = `Imported ${done} event${done===1?'':'s'}.`;
+  renderAll();
+  setTimeout(closeScanModal, 900);
+};
 
 // ---- Filters ----
 document.getElementById('searchInput').addEventListener('input', () => { rawEligibleFilterActive = false; renderTable(); });
