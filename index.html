@@ -439,8 +439,8 @@
   <div class="modal" style="max-width:640px;">
     <h3>Scan connected drive</h3>
     <p style="font-size:12.5px;color:var(--ink-soft);margin:-8px 0 16px;line-height:1.5;">
-      Plug in the HDD, then click "Choose folder" and select the drive's root in the dialog that opens.
-      Each top-level folder on it is treated as one event — its name becomes the client name and its size is measured automatically.
+      Plug in the HDD, then click "Choose folder" and select the <strong>drive's root folder</strong> — the top-level one that contains all your event folders side by side (e.g. "01 Chanchal &amp; Anupriya", "02 Priya &amp; Rahul"...). <strong>Don't select an individual event's folder</strong> — its Photo/Video subfolders would get mistaken for separate events.
+      Each top-level folder you select becomes one event — its name becomes the client name and its size is measured automatically.
       Works in <strong>Chrome or Edge on desktop only</strong>.
     </p>
     <div class="field">
@@ -1069,9 +1069,10 @@ document.getElementById('btnSaveDrive').onclick = async () => {
 
 // ---- Confirm delete ----
 const confirmOverlay = document.getElementById('confirmOverlay');
-function askConfirm(title, body, onOk){
+function askConfirm(title, body, onOk, okLabel){
   document.getElementById('confirmTitle').textContent = title;
   document.getElementById('confirmBody').textContent = body;
+  document.getElementById('btnConfirmOk').textContent = okLabel || 'Remove';
   pendingDelete = onOk;
   confirmOverlay.classList.add('open');
 }
@@ -1207,6 +1208,27 @@ document.getElementById('btnChooseScanFolder').onclick = async () => {
     renderScanResults();
     return;
   }
+
+  // Sanity check: if most folder names look like media-type subfolders (Photo, Video, Raw, Edited...)
+  // rather than client/event names, the person likely picked one event's folder instead of the drive root.
+  const suspiciousPattern = /^(photo|photos|video|videos|raw|raw data|rawdata|edited|edit|final|finals|deliverable|deliverables|footage|backup|jpeg|jpegs|jpg|export|exports|album|albums|highlights|teaser|selects)s?$/i;
+  const suspiciousCount = topLevelFolders.filter(([name]) => suspiciousPattern.test(name.trim())).length;
+  if(suspiciousCount > 0 && suspiciousCount >= Math.ceil(total * 0.5)){
+    progressEl.style.color = 'var(--danger)';
+    progressEl.textContent = '';
+    askConfirm(
+      'This looks like a single event\'s folder',
+      `The folders here are named like "${topLevelFolders.slice(0,3).map(f=>f[0]).join('", "')}" — that looks like the inside of one wedding, not the drive's root. Go up one folder level and select the parent folder that contains all the event folders instead. Continue scanning this folder anyway?`,
+      () => { runScan(topLevelFolders, total, progressEl); },
+      'Scan anyway'
+    );
+    return;
+  }
+
+  await runScan(topLevelFolders, total, progressEl);
+};
+
+async function runScan(topLevelFolders, total, progressEl){
 
   for(let i = 0; i < total; i++){
     const [name, handle] = topLevelFolders[i];
