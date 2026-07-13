@@ -491,21 +491,60 @@ function whoAmI(){
   return currentUser ? (currentUser.name || currentUser.email) : 'unknown';
 }
 
+function driveToRow(d){
+  return {
+    id: d.id, label: d.label, capacity_tb: Number(d.capacityTB) || 4.5,
+    notes: d.notes || '', updated_by: d.updatedBy || null, updated_at: d.updatedAt || new Date().toISOString()
+  };
+}
+function rowToDrive(r){
+  return {
+    id: r.id, label: r.label, capacityTB: Number(r.capacity_tb) || 4.5,
+    notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at
+  };
+}
+function eventToRow(e){
+  return {
+    id: e.id, client: e.client, event_name: e.eventName, event_type: e.eventType || '',
+    event_date: e.eventDate || '', size_gb: Number(e.sizeGB) || 0, drive_id: e.driveId || null,
+    status: e.status || '', copied_by: e.copiedBy || '', copied_to: e.copiedTo || '',
+    edited_date: e.editedDate || '', delivered_date: e.deliveredDate || '',
+    raw_deleted: !!e.rawDeleted, raw_deleted_date: e.rawDeletedDate || '',
+    notes: e.notes || '', updated_by: e.updatedBy || null, updated_at: e.updatedAt || new Date().toISOString()
+  };
+}
+function rowToEvent(r){
+  return {
+    id: r.id, client: r.client, eventName: r.event_name, eventType: r.event_type,
+    eventDate: r.event_date, sizeGB: Number(r.size_gb) || 0, driveId: r.drive_id,
+    status: r.status, copiedBy: r.copied_by, copiedTo: r.copied_to,
+    editedDate: r.edited_date, deliveredDate: r.delivered_date,
+    rawDeleted: !!r.raw_deleted, rawDeletedDate: r.raw_deleted_date,
+    notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at
+  };
+}
+
 async function loadData(isBackgroundRefresh){
   if(!isBackgroundRefresh) setStatus('Loading…');
   try{
-    const { data: rows, error } = await sb.from('archive_data').select('payload').eq('id', RECORD_ID);
-    if(error) throw error;
+    const [drivesRes, eventsRes] = await Promise.all([
+      sb.from('drives').select('*').order('label'),
+      sb.from('events').select('*').order('event_date', { ascending: false })
+    ]);
+    if(drivesRes.error) throw drivesRes.error;
+    if(eventsRes.error) throw eventsRes.error;
 
-    if(rows.length && rows[0].payload && (rows[0].payload.drives||[]).length){
-      data = rows[0].payload;
-      if(!data.events) data.events = [];
-      if(!data.drives) data.drives = [];
+    if(!drivesRes.data.length){
+      // first-ever load: seed the drive registry
+      const seeded = seedDrives();
+      const { error } = await sb.from('drives').insert(seeded.map(driveToRow));
+      if(error) throw error;
+      data.drives = seeded;
     } else {
-      // first-ever load: seed and create the row
-      data = { events: [], drives: seedDrives() };
-      await persist();
+      data.drives = drivesRes.data.map(rowToDrive);
     }
+    data.events = eventsRes.data.map(rowToEvent);
+
     setStatus('Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
     renderAll();
   }catch(e){
@@ -513,13 +552,45 @@ async function loadData(isBackgroundRefresh){
   }
 }
 
-async function persist(){
+async function persistDrive(record){
   try{
-    const { error } = await sb.from('archive_data').upsert({ id: RECORD_ID, payload: data, updated_at: new Date().toISOString() });
+    const { error } = await sb.from('drives').upsert(driveToRow(record));
     if(error) throw error;
     setStatus('Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
   }catch(e){
     setStatus("Couldn't save — check your connection and try again", true);
+  }
+}
+
+async function persistEvent(record){
+  try{
+    const { error } = await sb.from('events').upsert(eventToRow(record));
+    if(error) throw error;
+    setStatus('Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
+  }catch(e){
+    setStatus("Couldn't save — check your connection and try again", true);
+  }
+}
+
+async function deleteDriveRemote(id){
+  try{
+    const { error } = await sb.from('drives').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){
+    setStatus("Couldn't remove — you may not have permission, or check your connection", true);
+    return false;
+  }
+}
+
+async function deleteEventRemote(id){
+  try{
+    const { error } = await sb.from('events').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){
+    setStatus("Couldn't remove — you may not have permission, or check your connection", true);
+    return false;
   }
 }
 
@@ -880,7 +951,7 @@ document.getElementById('btnSaveEvent').onclick = async () => {
   const record = buildEventRecord();
   if(!record) return;
   saveEventRecord(record);
-  await persist();
+  await persistEvent(record);
   renderAll();
   closeEventModal();
 };
@@ -889,7 +960,7 @@ document.getElementById('btnSaveAddAnother').onclick = async () => {
   const record = buildEventRecord();
   if(!record) return;
   saveEventRecord(record);
-  await persist();
+  await persistEvent(record);
   renderAll();
 
   // Keep whichever drive / copied-by this operator is working through,
@@ -961,7 +1032,7 @@ document.getElementById('btnSaveDrive').onclick = async () => {
   };
   const idx = data.drives.findIndex(d => d.id === id);
   if(idx >= 0) data.drives[idx] = record; else data.drives.push(record);
-  await persist();
+  await persistDrive(record);
   renderAll();
   closeDriveModal();
 };
@@ -990,9 +1061,11 @@ document.getElementById('tableWrap').addEventListener('click', e => {
   if(delId){
     const ev = data.events.find(x => x.id === delId);
     askConfirm('Remove this event?', `"${ev.eventName}" for ${ev.client} will be removed from the ledger.`, async () => {
-      data.events = data.events.filter(x => x.id !== delId);
-      await persist();
-      renderAll();
+      const ok = await deleteEventRemote(delId);
+      if(ok){
+        data.events = data.events.filter(x => x.id !== delId);
+        renderAll();
+      }
     });
   }
 });
@@ -1005,10 +1078,12 @@ document.getElementById('driveList').addEventListener('click', e => {
     const dr = data.drives.find(x => x.id === delId);
     const count = data.events.filter(x => x.driveId === delId).length;
     askConfirm('Remove this drive?', count > 0 ? `${count} event${count===1?'':'s'} on "${dr.label}" will be marked unassigned.` : `"${dr.label}" will be removed from the registry.`, async () => {
-      data.drives = data.drives.filter(x => x.id !== delId);
-      data.events.forEach(ev => { if(ev.driveId === delId) ev.driveId = null; });
-      await persist();
-      renderAll();
+      const ok = await deleteDriveRemote(delId);
+      if(ok){
+        data.drives = data.drives.filter(x => x.id !== delId);
+        data.events.forEach(ev => { if(ev.driveId === delId) ev.driveId = null; });
+        renderAll();
+      }
     });
   }
 });
