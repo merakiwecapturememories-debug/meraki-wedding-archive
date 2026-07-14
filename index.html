@@ -219,6 +219,28 @@
   .toast{background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:10px 16px;border-radius:8px;box-shadow:0 8px 20px rgba(16,24,40,0.25);opacity:0;transform:translateY(6px);transition:opacity 0.18s, transform 0.18s;}
   .toast.show{opacity:1;transform:translateY(0);}
   .toast.toast-danger{background:var(--danger);}
+
+  /* Folder breakdown — modal editor */
+  .folder-block{border:1px solid var(--line);background:var(--card-sunken);border-radius:8px;padding:12px 13px;margin-bottom:13px;}
+  .folder-block-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .folder-block-title .lifecycle-title{margin:0;}
+  .folder-row{display:grid;grid-template-columns:1.1fr 0.85fr 0.7fr 0.9fr 0.85fr auto;gap:6px;align-items:center;margin-bottom:7px;}
+  .folder-row input, .folder-row select{width:100%;font-family:'Inter',sans-serif;font-size:12.5px;padding:7px 8px;border:1px solid var(--line-strong);border-radius:6px;background:#fff;color:var(--ink);}
+  .folder-row input:focus, .folder-row select:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 2px var(--wine-tint);}
+  .folder-row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;padding:4px 6px;line-height:1;}
+  .folder-row-remove:hover{background:var(--danger-tint);border-radius:5px;}
+  .folder-empty-hint{font-size:12px;color:var(--ink-soft);padding:6px 2px 4px;}
+  .folder-total-line{font-size:12px;color:var(--ink-soft);margin-top:4px;padding-top:8px;border-top:1px solid var(--line);}
+  .folder-total-line strong{color:var(--ink);font-family:'IBM Plex Mono',monospace;}
+
+  /* Folder breakdown — card display */
+  .folder-chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .folder-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--slate-tint);color:var(--ink-soft);padding:3px 8px;border-radius:6px;font-weight:500;}
+  .folder-chip .fname{color:var(--ink);font-family:'IBM Plex Mono',monospace;}
+  .folder-detail-table{width:100%;border-collapse:collapse;margin-top:2px;}
+  .folder-detail-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-muted);font-weight:600;padding:4px 8px 4px 0;}
+  .folder-detail-table td{font-size:12px;color:var(--ink);padding:5px 8px 5px 0;border-top:1px solid var(--line);}
+  .folder-type-tag{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--wine-tint);color:var(--wine);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -386,9 +408,21 @@
         <input type="date" id="fEventDate">
       </div>
       <div class="field">
-        <label>File size (GB)</label>
+        <label>File size (GB) <span id="fSizeAutoNote" style="font-weight:400;color:var(--ink-muted);display:none;">— auto from folders</span></label>
         <input type="number" id="fSize" min="0" step="1" placeholder="e.g. 850">
       </div>
+    </div>
+    <div class="folder-block">
+      <div class="folder-block-title">
+        <div class="lifecycle-title">Folders on this drive</div>
+        <button type="button" class="btn btn-sm" id="btnAddFolderRow">+ Add folder</button>
+      </div>
+      <div id="folderRowHeader" style="display:none;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-muted);font-weight:600;grid-template-columns:1.1fr 0.85fr 0.7fr 0.9fr 0.85fr auto;gap:6px;padding:0 0 4px;">
+        <div>Folder name</div><div>Type</div><div>Size (GB)</div><div>Copied by</div><div>Copied on</div><div></div>
+      </div>
+      <div id="folderRows"></div>
+      <div id="folderEmptyHint" class="folder-empty-hint">No folders yet — e.g. add "Photos" and "Video" separately to track their sizes individually.</div>
+      <div id="folderTotalLine" class="folder-total-line" style="display:none;"></div>
     </div>
     <div class="field-row">
       <div class="field">
@@ -599,7 +633,8 @@ function eventToRow(e){
     status: e.status || '', copied_by: e.copiedBy || '', copied_to: e.copiedTo || '',
     edited_date: e.editedDate || '', delivered_date: e.deliveredDate || '',
     raw_deleted: !!e.rawDeleted, raw_deleted_date: e.rawDeletedDate || '',
-    notes: e.notes || '', updated_by: e.updatedBy || null, updated_at: e.updatedAt || new Date().toISOString()
+    notes: e.notes || '', updated_by: e.updatedBy || null, updated_at: e.updatedAt || new Date().toISOString(),
+    folders: Array.isArray(e.folders) ? e.folders : []
   };
 }
 function rowToEvent(r){
@@ -609,7 +644,8 @@ function rowToEvent(r){
     status: r.status, copiedBy: r.copied_by, copiedTo: r.copied_to,
     editedDate: r.edited_date, deliveredDate: r.delivered_date,
     rawDeleted: !!r.raw_deleted, rawDeletedDate: r.raw_deleted_date,
-    notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at
+    notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at,
+    folders: Array.isArray(r.folders) ? r.folders : []
   };
 }
 
@@ -995,15 +1031,28 @@ function renderTable(){
     </tr></thead>
     <tbody>
       ${rows.map(e => {
+        const folders = Array.isArray(e.folders) ? e.folders : [];
         let lineParts = [];
         if(e.copiedBy || e.copiedTo) lineParts.push(`<dt>Copied</dt><dd>${e.copiedBy ? escapeHtml(e.copiedBy) : ''}${e.copiedTo ? ' → ' + escapeHtml(e.copiedTo) : ''}</dd>`);
         if(e.editedDate) lineParts.push(`<dt>Edited</dt><dd>${fmtDate(e.editedDate)}</dd>`);
         if(e.deliveredDate) lineParts.push(`<dt>Delivered</dt><dd>${fmtDate(e.deliveredDate)}</dd>`);
         if(e.notes) lineParts.push(`<dt>Notes</dt><dd>${escapeHtml(e.notes)}</dd>`);
-        const hasDetail = lineParts.length > 0;
+        const hasDetail = lineParts.length > 0 || folders.length > 0;
+        const folderChips = folders.length > 0 ? `<div class="folder-chip-list">${folders.map(f => `<span class="folder-chip"><span class="fname">${escapeHtml(f.name)}</span> · ${(f.sizeGB||0).toLocaleString()} GB</span>`).join('')}</div>` : '';
+        const folderTable = folders.length > 0 ? `
+          <table class="folder-detail-table">
+            <thead><tr><th>Folder</th><th>Type</th><th>Size</th><th>Copied by</th><th>Copied on</th></tr></thead>
+            <tbody>${folders.map(f => `<tr>
+              <td>${escapeHtml(f.name)}</td>
+              <td><span class="folder-type-tag">${escapeHtml(f.type||'Other')}</span></td>
+              <td>${(f.sizeGB||0).toLocaleString()} GB</td>
+              <td>${f.copiedBy ? escapeHtml(f.copiedBy) : '—'}</td>
+              <td>${f.copiedDate ? fmtDate(f.copiedDate) : '—'}</td>
+            </tr>`).join('')}</tbody>
+          </table>` : '';
         return `<tr>
         <td class="client-name">${escapeHtml(e.client)}${e.updatedBy ? `<div style="font-size:10.5px;color:var(--ink-muted);font-weight:400;margin-top:2px;">by ${escapeHtml(e.updatedBy)}</div>` : ''}</td>
-        <td>${escapeHtml(e.eventName)}<div class="event-type-tag">${escapeHtml(e.eventType||'')} · ${fmtDate(e.eventDate)}</div>${hasDetail ? `<button class="row-expand-toggle" data-toggle-detail="${e.id}"><span class="chev">▶</span> Details</button>` : ''}</td>
+        <td>${escapeHtml(e.eventName)}<div class="event-type-tag">${escapeHtml(e.eventType||'')} · ${fmtDate(e.eventDate)}</div>${folderChips}${hasDetail ? `<button class="row-expand-toggle" data-toggle-detail="${e.id}"><span class="chev">▶</span> Details</button>` : ''}</td>
         <td>${e.driveId && driveMap[e.driveId] ? `<span class="drive-pill">${escapeHtml(driveMap[e.driveId])}</span>` : '<span style="color:var(--ink-soft);font-size:12px;">Unassigned</span>'}</td>
         <td class="mono">${e.sizeGB ? fmtTB(e.sizeGB) : '—'}${e.rawDeleted ? '<br><span style="font-size:10.5px;color:var(--ink-muted);">freed</span>' : ''}</td>
         <td><span class="status-badge ${statusClass(e.status)}">${escapeHtml(e.status||'In Editing')}</span></td>
@@ -1012,7 +1061,7 @@ function renderTable(){
           <button class="btn-ghost btn-sm" data-edit-event="${e.id}">Edit</button>
           ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-event="${e.id}">Remove</button>` : ''}
         </div></td>
-      </tr>${hasDetail ? `<tr class="row-detail" id="detail-${e.id}" style="display:none;"><td colspan="7"><dl>${lineParts.join('')}</dl></td></tr>` : ''}`;
+      </tr>${hasDetail ? `<tr class="row-detail" id="detail-${e.id}" style="display:none;"><td colspan="7">${folderTable}${lineParts.length ? `<dl style="${folders.length ? 'margin-top:10px;' : ''}">${lineParts.join('')}</dl>` : ''}</td></tr>` : ''}`;
       }).join('')}
     </tbody>
   </table>`;
@@ -1041,6 +1090,80 @@ function renderAll(){
   renderTable();
 }
 
+// ---- Folder breakdown (Photos / Video / etc, each with its own size + copy log) ----
+let currentFolders = []; // [{id, name, type, sizeGB, copiedBy, copiedDate}]
+const FOLDER_TYPES = ['Photos','Video','Raw','Edited','Other'];
+
+function renderFolderRows(){
+  const wrap = document.getElementById('folderRows');
+  const header = document.getElementById('folderRowHeader');
+  const emptyHint = document.getElementById('folderEmptyHint');
+  const totalLine = document.getElementById('folderTotalLine');
+  const sizeField = document.getElementById('fSize');
+  const sizeAutoNote = document.getElementById('fSizeAutoNote');
+
+  if(currentFolders.length === 0){
+    wrap.innerHTML = '';
+    header.style.display = 'none';
+    emptyHint.style.display = 'block';
+    totalLine.style.display = 'none';
+    sizeField.readOnly = false;
+    sizeAutoNote.style.display = 'none';
+    return;
+  }
+
+  header.style.display = 'grid';
+  emptyHint.style.display = 'none';
+
+  wrap.innerHTML = currentFolders.map((f, i) => `
+    <div class="folder-row" data-folder-idx="${i}">
+      <input type="text" data-f="name" value="${escapeHtml(f.name)}" placeholder="e.g. Photos">
+      <select data-f="type">${FOLDER_TYPES.map(t => `<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
+      <input type="number" min="0" step="0.1" data-f="sizeGB" value="${f.sizeGB || ''}" placeholder="GB">
+      <input type="text" data-f="copiedBy" value="${escapeHtml(f.copiedBy||'')}" placeholder="Who">
+      <input type="date" data-f="copiedDate" value="${f.copiedDate||''}">
+      <button type="button" class="folder-row-remove" data-remove-folder="${i}" aria-label="Remove folder">✕</button>
+    </div>`).join('');
+
+  wrap.querySelectorAll('[data-folder-idx]').forEach(row => {
+    const idx = Number(row.getAttribute('data-folder-idx'));
+    row.querySelectorAll('[data-f]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const key = inp.getAttribute('data-f');
+        currentFolders[idx][key] = key === 'sizeGB' ? Number(inp.value)||0 : inp.value;
+        updateFolderTotal();
+      });
+    });
+  });
+  wrap.querySelectorAll('[data-remove-folder]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFolders.splice(Number(btn.getAttribute('data-remove-folder')), 1);
+      renderFolderRows();
+    });
+  });
+
+  updateFolderTotal();
+}
+
+function updateFolderTotal(){
+  const totalLine = document.getElementById('folderTotalLine');
+  const sizeField = document.getElementById('fSize');
+  const sizeAutoNote = document.getElementById('fSizeAutoNote');
+  const total = currentFolders.reduce((s,f) => s + (Number(f.sizeGB)||0), 0);
+  totalLine.style.display = 'block';
+  totalLine.innerHTML = `${currentFolders.length} folder${currentFolders.length===1?'':'s'} · total <strong>${total.toLocaleString()} GB</strong> (auto-filled into "File size" above)`;
+  sizeField.value = total;
+  sizeField.readOnly = true;
+  sizeAutoNote.style.display = 'inline';
+}
+
+document.getElementById('btnAddFolderRow').addEventListener('click', () => {
+  currentFolders.push({ id: uid(), name: '', type: 'Photos', sizeGB: 0, copiedBy: whoAmI(), copiedDate: new Date().toISOString().slice(0,10) });
+  renderFolderRows();
+  const rows = document.querySelectorAll('#folderRows [data-f="name"]');
+  if(rows.length) rows[rows.length-1].focus();
+});
+
 // ---- Event modal ----
 const eventOverlay = document.getElementById('eventOverlay');
 function openEventModal(id){
@@ -1064,6 +1187,8 @@ function openEventModal(id){
   document.getElementById('fRawDeletedDate').value = ev ? (ev.rawDeletedDate||'') : '';
   document.getElementById('rawDeletedDateWrap').style.display = (ev && ev.rawDeleted) ? '' : 'none';
   document.getElementById('fNotes').value = ev ? (ev.notes||'') : '';
+  currentFolders = ev && Array.isArray(ev.folders) ? JSON.parse(JSON.stringify(ev.folders)) : [];
+  renderFolderRows();
   eventOverlay.classList.add('open');
   document.getElementById('fClient').focus();
 }
@@ -1118,7 +1243,11 @@ function buildEventRecord(){
     rawDeletedDate: document.getElementById('fRawDeleted').checked ? document.getElementById('fRawDeletedDate').value : '',
     notes: document.getElementById('fNotes').value.trim(),
     updatedBy: whoAmI(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    folders: currentFolders.filter(f => f.name && f.name.trim()).map(f => ({
+      id: f.id || uid(), name: f.name.trim(), type: f.type || 'Other',
+      sizeGB: Number(f.sizeGB)||0, copiedBy: (f.copiedBy||'').trim(), copiedDate: f.copiedDate || ''
+    }))
   };
 }
 
@@ -1171,6 +1300,8 @@ document.getElementById('btnSaveAddAnother').onclick = async () => {
   document.getElementById('rawDeletedDateWrap').style.display = 'none';
   document.getElementById('fNotes').value = '';
   document.getElementById('eventModalTitle').textContent = 'Add event';
+  currentFolders = [];
+  renderFolderRows();
 
   sessionAddCount++;
   const counterEl = document.getElementById('sessionAddCounter');
