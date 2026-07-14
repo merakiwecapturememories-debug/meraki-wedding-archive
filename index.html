@@ -172,6 +172,53 @@
 
   ::placeholder{color:var(--ink-muted);}
   select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23667085'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;}
+
+  /* Metric card context cue */
+  .stat .cue{font-size:11px;margin-top:5px;font-weight:500;display:flex;align-items:center;gap:4px;}
+  .cue-ok{color:var(--ok);}
+  .cue-warn{color:var(--amber);}
+  .cue-danger{color:var(--danger);}
+  .cue-neutral{color:var(--ink-soft);}
+
+  /* Drive capacity text label (never color-only) */
+  .capacity-label{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:5px;white-space:nowrap;}
+  .capacity-low{background:var(--ok-tint);color:var(--ok);}
+  .capacity-moderate{background:var(--amber-tint);color:var(--amber);}
+  .capacity-near{background:var(--danger-tint);color:var(--danger);}
+  .drive-bar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 7px;}
+  .drive-bar-row .drive-bar-track{flex:1;margin:0;}
+
+  /* Empty-drive invitation */
+  .drive-invite{font-size:11px;color:var(--wine);font-weight:500;margin-top:2px;cursor:pointer;background:none;border:none;padding:0;text-decoration:underline;}
+
+  /* Row expand / progressive disclosure */
+  .row-expand-toggle{background:none;border:none;color:var(--ink-soft);font-size:11.5px;font-weight:500;cursor:pointer;padding:2px 0;display:inline-flex;align-items:center;gap:3px;}
+  .row-expand-toggle:hover{color:var(--wine);}
+  .row-expand-toggle .chev{display:inline-block;transition:transform 0.15s;font-size:9px;}
+  .row-expand-toggle.open .chev{transform:rotate(90deg);}
+  .row-detail{background:var(--card-sunken);}
+  .row-detail td{padding:11px 12px 13px;font-size:12.5px;color:var(--ink-soft);border-bottom:1px solid var(--line);}
+  .row-detail dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;}
+  .row-detail dt{font-weight:600;color:var(--ink);}
+  .row-detail dd{margin:0;}
+
+  /* Empty state clear-filters action */
+  .empty-state .btn{margin-top:14px;}
+
+  /* Skeleton loaders (used instead of spinners) */
+  @keyframes skeleton-pulse{0%{opacity:1;}50%{opacity:0.55;}100%{opacity:1;}}
+  .skel{background:var(--line);border-radius:6px;animation:skeleton-pulse 1.3s ease-in-out infinite;}
+  .skel-drive-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+  .skel-line{height:11px;border-radius:4px;margin-bottom:8px;}
+  .skel-bar{height:6px;border-radius:4px;margin:10px 0 7px;}
+  .skel-table-row{display:grid;grid-template-columns:1.3fr 1.6fr 0.9fr 0.7fr 0.9fr 0.9fr 0.6fr;gap:12px;align-items:center;padding:14px 12px;border-bottom:1px solid var(--line);background:var(--card);}
+  .skel-table-row:first-child{border-radius:10px 10px 0 0;}
+
+  /* Toast (echoes the action verb, not generic "Success") */
+  #toastHost{position:fixed;bottom:20px;right:20px;z-index:100;display:flex;flex-direction:column;gap:8px;}
+  .toast{background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:10px 16px;border-radius:8px;box-shadow:0 8px 20px rgba(16,24,40,0.25);opacity:0;transform:translateY(6px);transition:opacity 0.18s, transform 0.18s;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast.toast-danger{background:var(--danger);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -265,11 +312,11 @@
     </div>
   </header>
 
-  <div class="stats">
-    <div class="stat"><div class="label">Events on file</div><div class="value" id="statEvents">–</div></div>
-    <div class="stat"><div class="label">Drives in use</div><div class="value" id="statDrives">–</div></div>
-    <div class="stat"><div class="label">Storage used</div><div class="value" id="statUsed">–</div></div>
-    <div class="stat"><div class="label">Storage free</div><div class="value" id="statFree">–</div></div>
+  <div class="stats" id="statsRoot">
+    <div class="stat"><div class="label">Events on file</div><div class="value" id="statEvents">–</div><div class="cue cue-neutral" id="cueEvents"></div></div>
+    <div class="stat"><div class="label">Drives in use</div><div class="value" id="statDrives">–</div><div class="cue cue-neutral" id="cueDrives"></div></div>
+    <div class="stat"><div class="label">Storage used</div><div class="value" id="statUsed">–</div><div class="cue cue-neutral" id="cueUsed"></div></div>
+    <div class="stat"><div class="label">Storage free</div><div class="value" id="statFree">–</div><div class="cue cue-neutral" id="cueFree"></div></div>
   </div>
 
   <div class="layout">
@@ -459,6 +506,8 @@
   </div>
 </div>
 
+<div id="toastHost"></div>
+
 <script>
 /* =========================================================================
    BACKEND CONFIG — fill these in before deploying.
@@ -514,6 +563,19 @@ function setStatus(text, isError){
   statusEl.style.color = isError ? 'var(--danger)' : 'var(--ink-soft)';
 }
 
+function toast(text, isError){
+  const host = document.getElementById('toastHost');
+  const el = document.createElement('div');
+  el.className = 'toast' + (isError ? ' toast-danger' : '');
+  el.textContent = text;
+  host.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 250);
+  }, 2600);
+}
+
 function whoAmI(){
   return currentUser ? (currentUser.name || currentUser.email) : 'unknown';
 }
@@ -551,8 +613,28 @@ function rowToEvent(r){
   };
 }
 
+function renderSkeleton(){
+  document.getElementById('driveList').innerHTML = Array.from({length:4}).map(() => `
+    <div class="skel-drive-card">
+      <div class="skel skel-line" style="width:55%;"></div>
+      <div class="skel skel-line" style="width:35%;height:9px;"></div>
+      <div class="skel skel-bar"></div>
+      <div class="skel skel-line" style="width:70%;height:9px;margin-bottom:0;"></div>
+    </div>`).join('');
+  document.getElementById('tableWrap').innerHTML = `<div>${Array.from({length:5}).map(() => `
+    <div class="skel-table-row">
+      <div class="skel skel-line" style="margin:0;"></div>
+      <div class="skel skel-line" style="margin:0;"></div>
+      <div class="skel skel-line" style="margin:0;"></div>
+      <div class="skel skel-line" style="margin:0;"></div>
+      <div class="skel skel-line" style="margin:0;"></div>
+      <div class="skel skel-line" style="margin:0;"></div>
+      <div class="skel skel-line" style="margin:0;"></div>
+    </div>`).join('')}</div>`;
+}
+
 async function loadData(isBackgroundRefresh){
-  if(!isBackgroundRefresh) setStatus('Loading…');
+  if(!isBackgroundRefresh){ setStatus('Loading…'); renderSkeleton(); }
   try{
     const [drivesRes, eventsRes] = await Promise.all([
       sb.from('drives').select('*').order('label'),
@@ -586,6 +668,7 @@ async function persistDrive(record){
     setStatus('Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
   }catch(e){
     setStatus("Couldn't save — check your connection and try again", true);
+    toast("Couldn't save drive", true);
   }
 }
 
@@ -596,6 +679,7 @@ async function persistEvent(record){
     setStatus('Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
   }catch(e){
     setStatus("Couldn't save — check your connection and try again", true);
+    toast("Couldn't save event", true);
   }
 }
 
@@ -606,6 +690,7 @@ async function deleteDriveRemote(id){
     return true;
   }catch(e){
     setStatus("Couldn't remove — you may not have permission, or check your connection", true);
+    toast("Couldn't remove drive", true);
     return false;
   }
 }
@@ -617,6 +702,7 @@ async function deleteEventRemote(id){
     return true;
   }catch(e){
     setStatus("Couldn't remove — you may not have permission, or check your connection", true);
+    toast("Couldn't remove event", true);
     return false;
   }
 }
@@ -758,10 +844,50 @@ function renderStats(){
   const totalUsedGB = data.events.reduce((s,e) => s + (e.rawDeleted ? 0 : (Number(e.sizeGB)||0)), 0);
   const totalCapGB = data.drives.reduce((s,d) => s + (Number(d.capacityTB)||0)*1000, 0);
   const freeGB = Math.max(totalCapGB - totalUsedGB, 0);
+  const usedPct = totalCapGB > 0 ? (totalUsedGB / totalCapGB) * 100 : 0;
+
   document.getElementById('statEvents').textContent = totalEvents;
   document.getElementById('statDrives').innerHTML = drivesUsed + '<small>/ ' + data.drives.length + '</small>';
   document.getElementById('statUsed').textContent = fmtTB(totalUsedGB);
   document.getElementById('statFree').textContent = fmtTB(freeGB);
+
+  // Events on file — how spread out the work is
+  const eventsCue = document.getElementById('cueEvents');
+  const eligibleForCleanup = data.events.filter(e => !e.rawDeleted && e.deliveredDate && daysSince(e.deliveredDate) >= DELETE_BUFFER_DAYS).length;
+  eventsCue.className = 'cue ' + (eligibleForCleanup > 0 ? 'cue-warn' : 'cue-neutral');
+  eventsCue.textContent = eligibleForCleanup > 0
+    ? `${eligibleForCleanup} eligible for raw cleanup`
+    : (totalEvents > 0 ? `across ${data.drives.length} drive${data.drives.length===1?'':'s'}` : 'none logged yet');
+
+  // Drives in use — free slots remaining
+  const drivesCue = document.getElementById('cueDrives');
+  const openSlots = data.drives.length - drivesUsed;
+  drivesCue.className = 'cue ' + (openSlots === 0 && data.drives.length > 0 ? 'cue-warn' : 'cue-neutral');
+  drivesCue.textContent = data.drives.length === 0 ? 'no drives registered' : `${openSlots} open slot${openSlots===1?'':'s'}`;
+
+  // Storage used — threshold health label, not just a number
+  const usedCue = document.getElementById('cueUsed');
+  let usedLevel, usedWord;
+  if(usedPct >= 90){ usedLevel = 'cue-danger'; usedWord = 'near capacity'; }
+  else if(usedPct >= 65){ usedLevel = 'cue-warn'; usedWord = 'moderate'; }
+  else { usedLevel = 'cue-ok'; usedWord = 'healthy'; }
+  usedCue.className = 'cue ' + usedLevel;
+  usedCue.textContent = totalCapGB > 0 ? `${usedPct.toFixed(0)}% capacity — ${usedWord}` : 'no capacity registered';
+
+  // Storage free — framed as runway (how many more average-sized events fit)
+  const freeCue = document.getElementById('cueFree');
+  const avgEventGB = totalEvents > 0 ? totalUsedGB / totalEvents : 0;
+  if(totalCapGB === 0){
+    freeCue.className = 'cue cue-neutral';
+    freeCue.textContent = 'no capacity registered';
+  } else if(avgEventGB > 0){
+    const runwayEvents = Math.floor(freeGB / avgEventGB);
+    freeCue.className = 'cue ' + (runwayEvents <= 2 ? 'cue-danger' : runwayEvents <= 6 ? 'cue-warn' : 'cue-ok');
+    freeCue.textContent = `~${runwayEvents} more event${runwayEvents===1?'':'s'} at current avg. size`;
+  } else {
+    freeCue.className = 'cue cue-ok';
+    freeCue.textContent = `${(100-usedPct).toFixed(0)}% of total capacity`;
+  }
 }
 
 function renderDrives(){
@@ -782,14 +908,22 @@ function renderDrives(){
     const pct = capGB > 0 ? Math.min((usedGB/capGB)*100, 100) : 0;
     const count = data.events.filter(e => e.driveId === d.id).length;
     const isFull = pct >= 95;
+    let capClass, capWord;
+    if(pct >= 90){ capClass = 'capacity-near'; capWord = 'Near capacity'; }
+    else if(pct >= 60){ capClass = 'capacity-moderate'; capWord = 'Moderate'; }
+    else { capClass = 'capacity-low'; capWord = 'Low'; }
     return `<div class="drive-card">
       <div class="row1">
         <div>
           <div class="drive-name">${escapeHtml(d.label)}</div>
           <div class="drive-events-count">${count} event${count===1?'':'s'}${d.updatedBy ? ` · edited by ${escapeHtml(d.updatedBy)}` : ''}</div>
+          ${count === 0 ? `<button class="drive-invite" data-add-event-for="${d.id}">No events yet — add the first one</button>` : ''}
         </div>
       </div>
-      <div class="drive-bar-track"><div class="drive-bar-fill${isFull?' full':''}" style="width:${pct.toFixed(0)}%;"></div></div>
+      <div class="drive-bar-row">
+        <div class="drive-bar-track"><div class="drive-bar-fill${isFull?' full':''}" style="width:${pct.toFixed(0)}%;"></div></div>
+        <span class="capacity-label ${capClass}">${capWord}</span>
+      </div>
       <div class="drive-meta"><span>${fmtTB(usedGB)} used</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
       <div class="drive-actions">
         <button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>
@@ -842,7 +976,14 @@ function renderTable(){
     return;
   }
   if(rows.length === 0){
-    wrap.innerHTML = `<div class="empty-state"><h3>No matches</h3><p>Try a different search term or clear the filters.</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><h3>No matches</h3><p>Try a different search term or clear the filters.</p><button class="btn btn-sm" id="btnClearFiltersEmpty">Clear filters</button></div>`;
+    document.getElementById('btnClearFiltersEmpty').onclick = () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterDrive').value = '';
+      rawEligibleFilterActive = false;
+      renderTable();
+    };
     return;
   }
 
@@ -855,13 +996,14 @@ function renderTable(){
     <tbody>
       ${rows.map(e => {
         let lineParts = [];
-        if(e.copiedBy || e.copiedTo) lineParts.push(`Copied${e.copiedBy ? ' by ' + escapeHtml(e.copiedBy) : ''}${e.copiedTo ? ' to ' + escapeHtml(e.copiedTo) : ''}`);
-        if(e.editedDate) lineParts.push(`Edited ${fmtDate(e.editedDate)}`);
-        if(e.deliveredDate) lineParts.push(`Delivered ${fmtDate(e.deliveredDate)}`);
-        const dateLines = lineParts.join('<br>');
+        if(e.copiedBy || e.copiedTo) lineParts.push(`<dt>Copied</dt><dd>${e.copiedBy ? escapeHtml(e.copiedBy) : ''}${e.copiedTo ? ' → ' + escapeHtml(e.copiedTo) : ''}</dd>`);
+        if(e.editedDate) lineParts.push(`<dt>Edited</dt><dd>${fmtDate(e.editedDate)}</dd>`);
+        if(e.deliveredDate) lineParts.push(`<dt>Delivered</dt><dd>${fmtDate(e.deliveredDate)}</dd>`);
+        if(e.notes) lineParts.push(`<dt>Notes</dt><dd>${escapeHtml(e.notes)}</dd>`);
+        const hasDetail = lineParts.length > 0;
         return `<tr>
         <td class="client-name">${escapeHtml(e.client)}${e.updatedBy ? `<div style="font-size:10.5px;color:var(--ink-muted);font-weight:400;margin-top:2px;">by ${escapeHtml(e.updatedBy)}</div>` : ''}</td>
-        <td>${escapeHtml(e.eventName)}<div class="event-type-tag">${escapeHtml(e.eventType||'')} · ${fmtDate(e.eventDate)}</div>${dateLines ? `<div class="event-dates">${dateLines}</div>` : ''}</td>
+        <td>${escapeHtml(e.eventName)}<div class="event-type-tag">${escapeHtml(e.eventType||'')} · ${fmtDate(e.eventDate)}</div>${hasDetail ? `<button class="row-expand-toggle" data-toggle-detail="${e.id}"><span class="chev">▶</span> Details</button>` : ''}</td>
         <td>${e.driveId && driveMap[e.driveId] ? `<span class="drive-pill">${escapeHtml(driveMap[e.driveId])}</span>` : '<span style="color:var(--ink-soft);font-size:12px;">Unassigned</span>'}</td>
         <td class="mono">${e.sizeGB ? fmtTB(e.sizeGB) : '—'}${e.rawDeleted ? '<br><span style="font-size:10.5px;color:var(--ink-muted);">freed</span>' : ''}</td>
         <td><span class="status-badge ${statusClass(e.status)}">${escapeHtml(e.status||'In Editing')}</span></td>
@@ -870,10 +1012,20 @@ function renderTable(){
           <button class="btn-ghost btn-sm" data-edit-event="${e.id}">Edit</button>
           ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-event="${e.id}">Remove</button>` : ''}
         </div></td>
-      </tr>`;
+      </tr>${hasDetail ? `<tr class="row-detail" id="detail-${e.id}" style="display:none;"><td colspan="7"><dl>${lineParts.join('')}</dl></td></tr>` : ''}`;
       }).join('')}
     </tbody>
   </table>`;
+
+  wrap.querySelectorAll('[data-toggle-detail]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-toggle-detail');
+      const row = document.getElementById('detail-' + id);
+      const isOpen = row.style.display !== 'none';
+      row.style.display = isOpen ? 'none' : 'table-row';
+      btn.classList.toggle('open', !isOpen);
+    });
+  });
 }
 
 function populateDriveSelect(){
@@ -984,6 +1136,7 @@ document.getElementById('btnSaveEvent').onclick = async () => {
   await persistEvent(record);
   renderAll();
   closeEventModal();
+  toast('Event saved');
 };
 
 document.getElementById('btnSaveAddAnother').onclick = async () => {
@@ -992,6 +1145,7 @@ document.getElementById('btnSaveAddAnother').onclick = async () => {
   saveEventRecord(record);
   await persistEvent(record);
   renderAll();
+  toast('Event saved');
 
   // Keep whichever drive / copied-by this operator is working through,
   // clear only the per-event fields, and get ready for the next entry.
@@ -1065,6 +1219,7 @@ document.getElementById('btnSaveDrive').onclick = async () => {
   await persistDrive(record);
   renderAll();
   closeDriveModal();
+  toast('Drive saved');
 };
 
 // ---- Confirm delete ----
@@ -1096,6 +1251,7 @@ document.getElementById('tableWrap').addEventListener('click', e => {
       if(ok){
         data.events = data.events.filter(x => x.id !== delId);
         renderAll();
+        toast('Event removed');
       }
     });
   }
@@ -1104,7 +1260,12 @@ document.getElementById('tableWrap').addEventListener('click', e => {
 document.getElementById('driveList').addEventListener('click', e => {
   const editId = e.target.getAttribute('data-edit-drive');
   const delId = e.target.getAttribute('data-del-drive');
+  const addEventForId = e.target.getAttribute('data-add-event-for');
   if(editId) openDriveModal(editId);
+  if(addEventForId){
+    openEventModal(null);
+    document.getElementById('fDrive').value = addEventForId;
+  }
   if(delId){
     const dr = data.drives.find(x => x.id === delId);
     const count = data.events.filter(x => x.driveId === delId).length;
@@ -1114,6 +1275,7 @@ document.getElementById('driveList').addEventListener('click', e => {
         data.drives = data.drives.filter(x => x.id !== delId);
         data.events.forEach(ev => { if(ev.driveId === delId) ev.driveId = null; });
         renderAll();
+        toast('Drive removed');
       }
     });
   }
