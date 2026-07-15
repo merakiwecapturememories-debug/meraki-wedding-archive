@@ -479,8 +479,8 @@
       <label>Client name <span class="required-mark">*</span></label>
       <input type="text" id="fClient" placeholder="e.g. Priya &amp; Arjun Sharma">
     </div>
-    <div class="field-row">
-      <div class="field">
+    <div class="field-row" id="eventNameRow">
+      <div class="field" id="fEventNameField">
         <label>Event name <span class="required-mark">*</span></label>
         <input type="text" id="fEventName" placeholder="e.g. Sangeet + Wedding">
       </div>
@@ -1441,6 +1441,12 @@ function applyEditingLifecycleLock(){
   document.getElementById('lifecycleHint').textContent = locked
     ? 'Editing and delivery status are managed by an admin. You can still log who copied the data, where, and when below.'
     : 'Once a client has confirmed receipt, most studios keep the raw files a little longer as a safety buffer (commonly 30–90 days) before clearing them — in case of a corrupted delivery or a client dispute.';
+
+  // Event name: employees just copy data, so don't make them type it separately — auto-fill from client name
+  const fEventNameField = document.getElementById('fEventNameField');
+  const eventNameRow = document.getElementById('eventNameRow');
+  fEventNameField.style.display = locked ? 'none' : '';
+  eventNameRow.style.gridTemplateColumns = locked ? '1fr' : '1fr 1fr';
 }
 
 // ---- Event modal ----
@@ -1502,10 +1508,11 @@ eventOverlay.addEventListener('click', e => { if(e.target === eventOverlay) clos
 
 function buildEventRecord(){
   const client = document.getElementById('fClient').value.trim();
-  const eventName = document.getElementById('fEventName').value.trim();
+  let eventName = document.getElementById('fEventName').value.trim();
+  if(!isAdmin() && !eventName) eventName = client; // employees don't type this separately
   if(!client || !eventName){
     document.getElementById('fClient').style.borderColor = client ? '' : 'var(--danger)';
-    document.getElementById('fEventName').style.borderColor = eventName ? '' : 'var(--danger)';
+    if(isAdmin()) document.getElementById('fEventName').style.borderColor = eventName ? '' : 'var(--danger)';
     return null;
   }
   const id = document.getElementById('eventId').value || uid();
