@@ -255,10 +255,16 @@
   .folder-block{border:1px solid var(--line);background:var(--card-sunken);border-radius:8px;padding:12px 13px;margin-bottom:13px;}
   .folder-block-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
   .folder-block-title .lifecycle-title{margin:0;}
-  .folder-row{display:grid;grid-template-columns:1.1fr 0.85fr 0.7fr 0.9fr 0.85fr auto;gap:6px;align-items:center;margin-bottom:7px;}
-  .folder-row input, .folder-row select{width:100%;font-family:'Inter',sans-serif;font-size:12.5px;padding:7px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card-sunken);color:var(--ink);}
-  .folder-row input:focus, .folder-row select:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 2px var(--wine-tint);}
-  .folder-row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;padding:4px 6px;line-height:1;}
+  .folder-entry{border:1px solid var(--line-strong);border-radius:8px;padding:10px;margin-bottom:9px;background:var(--card);}
+  .folder-entry-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .folder-entry-head input{flex:1;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;padding:8px 10px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card-sunken);color:var(--ink);}
+  .folder-entry-head input:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 2px var(--wine-tint);}
+  .folder-entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px;}
+  .folder-entry-grid:last-child{margin-bottom:0;}
+  .folder-field-label{font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-muted);font-weight:600;display:block;margin-bottom:3px;}
+  .folder-entry input, .folder-entry select{width:100%;font-family:'Inter',sans-serif;font-size:12.5px;padding:7px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card-sunken);color:var(--ink);}
+  .folder-entry input:focus, .folder-entry select:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 2px var(--wine-tint);}
+  .folder-row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:5px 7px;line-height:1;flex-shrink:0;}
   .folder-row-remove:hover{background:var(--danger-tint);border-radius:5px;}
   .folder-empty-hint{font-size:12px;color:var(--ink-soft);padding:6px 2px 4px;}
   .folder-total-line{font-size:12px;color:var(--ink-soft);margin-top:4px;padding-top:8px;border-top:1px solid var(--line);}
@@ -502,9 +508,6 @@
       <div class="folder-block-title">
         <div class="lifecycle-title">Folders on this drive</div>
         <button type="button" class="btn btn-sm" id="btnAddFolderRow">+ Add folder</button>
-      </div>
-      <div id="folderRowHeader" style="display:none;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-muted);font-weight:600;grid-template-columns:1.1fr 0.85fr 0.7fr 0.9fr 0.85fr auto;gap:6px;padding:0 0 4px;">
-        <div>Folder name</div><div>Type</div><div>Size (GB)</div><div>Copied by</div><div>Copied on</div><div></div>
       </div>
       <div id="folderRows"></div>
       <div id="folderEmptyHint" class="folder-empty-hint">No folders yet — e.g. add "Photos" and "Video" separately to track their sizes individually.</div>
@@ -1233,7 +1236,6 @@ const FOLDER_TYPES = ['Photos','Video','Raw','Edited','Other'];
 
 function renderFolderRows(){
   const wrap = document.getElementById('folderRows');
-  const header = document.getElementById('folderRowHeader');
   const emptyHint = document.getElementById('folderEmptyHint');
   const totalLine = document.getElementById('folderTotalLine');
   const sizeField = document.getElementById('fSize');
@@ -1241,7 +1243,6 @@ function renderFolderRows(){
 
   if(currentFolders.length === 0){
     wrap.innerHTML = '';
-    header.style.display = 'none';
     emptyHint.style.display = 'block';
     totalLine.style.display = 'none';
     sizeField.readOnly = false;
@@ -1249,17 +1250,34 @@ function renderFolderRows(){
     return;
   }
 
-  header.style.display = 'grid';
   emptyHint.style.display = 'none';
 
   wrap.innerHTML = currentFolders.map((f, i) => `
-    <div class="folder-row" data-folder-idx="${i}">
-      <input type="text" data-f="name" value="${escapeHtml(f.name)}" placeholder="e.g. Photos">
-      <select data-f="type">${FOLDER_TYPES.map(t => `<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
-      <input type="number" min="0" step="0.1" data-f="sizeGB" value="${f.sizeGB || ''}" placeholder="GB">
-      <input type="text" data-f="copiedBy" value="${escapeHtml(f.copiedBy||'')}" placeholder="Who">
-      <input type="date" data-f="copiedDate" value="${f.copiedDate||''}">
-      <button type="button" class="folder-row-remove" data-remove-folder="${i}" aria-label="Remove folder">✕</button>
+    <div class="folder-entry" data-folder-idx="${i}">
+      <div class="folder-entry-head">
+        <input type="text" data-f="name" value="${escapeHtml(f.name)}" placeholder="Folder name — e.g. Photos">
+        <button type="button" class="folder-row-remove" data-remove-folder="${i}" aria-label="Remove folder">✕</button>
+      </div>
+      <div class="folder-entry-grid">
+        <div>
+          <span class="folder-field-label">Type</span>
+          <select data-f="type">${FOLDER_TYPES.map(t => `<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
+        </div>
+        <div>
+          <span class="folder-field-label">Size (GB)</span>
+          <input type="number" min="0" step="0.1" data-f="sizeGB" value="${f.sizeGB || ''}" placeholder="0">
+        </div>
+      </div>
+      <div class="folder-entry-grid">
+        <div>
+          <span class="folder-field-label">Copied by</span>
+          <input type="text" data-f="copiedBy" value="${escapeHtml(f.copiedBy||'')}" placeholder="Name">
+        </div>
+        <div>
+          <span class="folder-field-label">Copied on</span>
+          <input type="date" data-f="copiedDate" value="${f.copiedDate||''}">
+        </div>
+      </div>
     </div>`).join('');
 
   wrap.querySelectorAll('[data-folder-idx]').forEach(row => {
