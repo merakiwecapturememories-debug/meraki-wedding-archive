@@ -190,6 +190,9 @@
   .checkbox-label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);cursor:pointer;font-weight:500;}
   .checkbox-label input{width:auto;accent-color:var(--wine);}
   .lifecycle-hint{font-size:11.5px;color:var(--ink-soft);line-height:1.5;margin:2px 0 10px;}
+  .admin-only-tag{font-size:9px;text-transform:uppercase;letter-spacing:0.04em;font-weight:700;color:var(--amber);background:var(--amber-tint);padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:middle;}
+  .field input:disabled, .field select:disabled, .checkbox-label input:disabled{opacity:0.5;cursor:not-allowed;}
+  .checkbox-label:has(input:disabled){opacity:0.6;}
 
   .event-dates{font-size:11px;color:var(--ink-soft);margin-top:3px;line-height:1.5;}
   .raw-chip{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;white-space:nowrap;}
@@ -519,7 +522,7 @@
         <select id="fDrive"></select>
       </div>
       <div class="field">
-        <label>Status</label>
+        <label id="fStatusLabel">Status</label>
         <select id="fStatus">
           <option>In Editing</option>
           <option>Edited</option>
@@ -542,22 +545,22 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Editing completed on</label>
+          <label id="fEditedDateLabel">Editing completed on</label>
           <input type="date" id="fEditedDate">
         </div>
         <div class="field">
-          <label>Delivered to client on</label>
+          <label id="fDeliveredDateLabel">Delivered to client on</label>
           <input type="date" id="fDeliveredDate">
         </div>
       </div>
       <div class="field checkbox-field">
-        <label class="checkbox-label"><input type="checkbox" id="fRawDeleted"> Raw data deleted from this drive</label>
+        <label class="checkbox-label" id="fRawDeletedLabel"><input type="checkbox" id="fRawDeleted"> Raw data deleted from this drive</label>
       </div>
       <div class="field" id="rawDeletedDateWrap" style="display:none;">
         <label>Deleted on</label>
         <input type="date" id="fRawDeletedDate">
       </div>
-      <p class="lifecycle-hint">Once a client has confirmed receipt, most studios keep the raw files a little longer as a safety buffer (commonly 30–90 days) before clearing them — in case of a corrupted delivery or a client dispute.</p>
+      <p class="lifecycle-hint" id="lifecycleHint">Once a client has confirmed receipt, most studios keep the raw files a little longer as a safety buffer (commonly 30–90 days) before clearing them — in case of a corrupted delivery or a client dispute.</p>
     </div>
     <div class="field">
       <label>Notes</label>
@@ -1415,6 +1418,31 @@ document.getElementById('contentsOverlay').addEventListener('click', e => {
   if(e.target.id === 'contentsOverlay') closeDriveContents();
 });
 
+// ---- Editing/delivery lifecycle: admin-only, since employees' job is copying data ----
+function applyEditingLifecycleLock(){
+  const locked = !isAdmin();
+  const tag = '<span class="admin-only-tag">Admin only</span>';
+
+  document.getElementById('fStatus').disabled = locked;
+  document.getElementById('fEditedDate').disabled = locked;
+  document.getElementById('fDeliveredDate').disabled = locked;
+  document.getElementById('fRawDeleted').disabled = locked;
+  document.getElementById('fRawDeletedDate').disabled = locked;
+
+  document.getElementById('fStatusLabel').innerHTML = 'Status' + (locked ? tag : '');
+  document.getElementById('fEditedDateLabel').innerHTML = 'Editing completed on' + (locked ? tag : '');
+  document.getElementById('fDeliveredDateLabel').innerHTML = 'Delivered to client on' + (locked ? tag : '');
+  document.getElementById('fRawDeletedLabel').innerHTML = '<input type="checkbox" id="fRawDeleted"' + (locked ? ' disabled' : '') + '> Raw data deleted from this drive' + (locked ? tag : '');
+  // rebuild the checkbox's checked state + listener since innerHTML replaced the node
+  const freshCheckbox = document.getElementById('fRawDeleted');
+  freshCheckbox.checked = document.getElementById('rawDeletedDateWrap').style.display !== 'none';
+  freshCheckbox.addEventListener('change', handleRawDeletedChange);
+
+  document.getElementById('lifecycleHint').textContent = locked
+    ? 'Editing and delivery status are managed by an admin. You can still log who copied the data, where, and when below.'
+    : 'Once a client has confirmed receipt, most studios keep the raw files a little longer as a safety buffer (commonly 30–90 days) before clearing them — in case of a corrupted delivery or a client dispute.';
+}
+
 // ---- Event modal ----
 const eventOverlay = document.getElementById('eventOverlay');
 function openEventModal(id){
@@ -1440,6 +1468,7 @@ function openEventModal(id){
   document.getElementById('fNotes').value = ev ? (ev.notes||'') : '';
   currentFolders = ev && Array.isArray(ev.folders) ? JSON.parse(JSON.stringify(ev.folders)) : [];
   renderFolderRows();
+  applyEditingLifecycleLock();
   eventOverlay.classList.add('open');
   document.getElementById('fClient').focus();
 }
@@ -1449,7 +1478,7 @@ function closeEventModal(){
   if(counterEl) counterEl.style.display = 'none';
 }
 
-document.getElementById('fRawDeleted').addEventListener('change', (e) => {
+function handleRawDeletedChange(e){
   const wrap = document.getElementById('rawDeletedDateWrap');
   const dateField = document.getElementById('fRawDeletedDate');
   if(e.target.checked){
@@ -1459,7 +1488,8 @@ document.getElementById('fRawDeleted').addEventListener('change', (e) => {
   }else{
     wrap.style.display = 'none';
   }
-});
+}
+document.getElementById('fRawDeleted').addEventListener('change', handleRawDeletedChange);
 
 document.getElementById('btnAddEvent').onclick = () => {
   sessionAddCount = 0;
