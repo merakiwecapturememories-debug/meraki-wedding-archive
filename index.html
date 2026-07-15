@@ -512,12 +512,12 @@
       <div id="folderEmptyHint" class="folder-empty-hint">No folders yet — e.g. add "Photos" and "Video" separately to track their sizes individually.</div>
       <div id="folderTotalLine" class="folder-total-line" style="display:none;"></div>
     </div>
-    <div class="field-row">
+    <div class="field-row" id="driveStatusRow">
       <div class="field">
         <label>Drive location</label>
         <select id="fDrive"></select>
       </div>
-      <div class="field">
+      <div class="field" id="fStatusField">
         <label id="fStatusLabel">Status</label>
         <select id="fStatus">
           <option>In Editing</option>
@@ -539,7 +539,7 @@
           <input type="text" id="fCopiedTo" placeholder="e.g. Meraki HDD 03, Editing PC">
         </div>
       </div>
-      <div class="field-row">
+      <div class="field-row" id="editedDeliveredRow">
         <div class="field">
           <label id="fEditedDateLabel">Editing completed on</label>
           <input type="date" id="fEditedDate">
@@ -549,7 +549,7 @@
           <input type="date" id="fDeliveredDate">
         </div>
       </div>
-      <div class="field checkbox-field">
+      <div class="field checkbox-field" id="fRawDeletedField">
         <label class="checkbox-label" id="fRawDeletedLabel"><input type="checkbox" id="fRawDeleted"> Raw data deleted from this drive</label>
       </div>
       <div class="field" id="rawDeletedDateWrap" style="display:none;">
@@ -1416,25 +1416,15 @@ document.getElementById('contentsOverlay').addEventListener('click', e => {
 // ---- Editing/delivery lifecycle: admin-only, since employees' job is copying data ----
 function applyEditingLifecycleLock(){
   const locked = !isAdmin();
-  const tag = '<span class="admin-only-tag">Admin only</span>';
 
-  document.getElementById('fStatus').disabled = locked;
-  document.getElementById('fEditedDate').disabled = locked;
-  document.getElementById('fDeliveredDate').disabled = locked;
-  document.getElementById('fRawDeleted').disabled = locked;
-  document.getElementById('fRawDeletedDate').disabled = locked;
-
-  document.getElementById('fStatusLabel').innerHTML = 'Status' + (locked ? tag : '');
-  document.getElementById('fEditedDateLabel').innerHTML = 'Editing completed on' + (locked ? tag : '');
-  document.getElementById('fDeliveredDateLabel').innerHTML = 'Delivered to client on' + (locked ? tag : '');
-  document.getElementById('fRawDeletedLabel').innerHTML = '<input type="checkbox" id="fRawDeleted"' + (locked ? ' disabled' : '') + '> Raw data deleted from this drive' + (locked ? tag : '');
-  // rebuild the checkbox's checked state + listener since innerHTML replaced the node
-  const freshCheckbox = document.getElementById('fRawDeleted');
-  freshCheckbox.checked = document.getElementById('rawDeletedDateWrap').style.display !== 'none';
-  freshCheckbox.addEventListener('change', handleRawDeletedChange);
+  document.getElementById('driveStatusRow').style.gridTemplateColumns = locked ? '1fr' : '1fr 1fr';
+  document.getElementById('fStatusField').style.display = locked ? 'none' : '';
+  document.getElementById('editedDeliveredRow').style.display = locked ? 'none' : '';
+  document.getElementById('fRawDeletedField').style.display = locked ? 'none' : '';
+  if(locked) document.getElementById('rawDeletedDateWrap').style.display = 'none';
 
   document.getElementById('lifecycleHint').textContent = locked
-    ? 'Editing and delivery status are managed by an admin. You can still log who copied the data, where, and when below.'
+    ? 'Editing and delivery status are managed by an admin. You can log who copied the data, where, and when below.'
     : 'Once a client has confirmed receipt, most studios keep the raw files a little longer as a safety buffer (commonly 30–90 days) before clearing them — in case of a corrupted delivery or a client dispute.';
 }
 
