@@ -123,6 +123,8 @@
   .drive-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative;box-shadow:var(--shadow-card);}
   .drive-card .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
   .drive-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:0.01em;color:var(--ink);}
+  .drive-name-link{background:none;border:none;padding:0;text-align:left;cursor:pointer;}
+  .drive-name-link:hover{color:var(--wine-dark);text-decoration:underline;}
   .drive-events-count{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
   .drive-bar-track{height:6px;border-radius:4px;background:var(--slate-tint);margin:10px 0 7px;overflow:hidden;}
   .drive-bar-fill{height:100%;background:var(--wine);border-radius:4px;}
@@ -289,6 +291,28 @@
   .event-card-size-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);margin-bottom:2px;}
   .event-card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
   .event-card-updated{font-size:10.5px;color:var(--ink-muted);margin-top:6px;}
+
+  /* Drive contents — Explorer-style folder grid */
+  .contents-modal{max-width:760px;}
+  .explorer-titlebar{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .explorer-breadcrumb{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .explorer-breadcrumb button{background:none;border:none;color:var(--wine-dark);cursor:pointer;font-size:13px;font-weight:600;padding:0;}
+  .explorer-breadcrumb button:hover{text-decoration:underline;}
+  .explorer-breadcrumb .crumb-current{color:var(--ink);font-weight:600;}
+  .explorer-breadcrumb .crumb-sep{color:var(--ink-muted);}
+  #explorerSearch{width:160px;font-size:12.5px;padding:7px 10px;border:1px solid var(--line-strong);border-radius:7px;background:var(--card-sunken);color:var(--ink);flex-shrink:0;}
+  .explorer-subhead{font-size:11.5px;color:var(--ink-muted);margin:12px 0 14px;padding-bottom:9px;border-bottom:1px solid var(--line);}
+  .explorer-body{max-height:440px;overflow-y:auto;}
+  .folder-icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:4px;}
+  .folder-icon-item{
+    display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:8px;
+    cursor:pointer;border:1px solid transparent;text-align:center;background:none;
+  }
+  .folder-icon-item:hover{background:var(--card-sunken);}
+  .folder-icon-item svg{width:46px;height:38px;flex-shrink:0;}
+  .folder-icon-item .fi-label{font-size:11.5px;color:var(--ink);font-weight:500;line-height:1.25;word-break:break-word;max-width:100%;}
+  .folder-icon-item .fi-caption{font-size:10px;color:var(--ink-muted);}
+  .explorer-empty{padding:34px 10px;text-align:center;color:var(--ink-soft);font-size:13px;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -598,6 +622,20 @@
     <div class="modal-actions">
       <button class="btn" id="btnCancelScan">Close</button>
       <button class="btn btn-primary" id="btnImportScan" style="display:none;">Import selected</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="contentsOverlay">
+  <div class="modal contents-modal">
+    <div class="explorer-titlebar">
+      <div class="explorer-breadcrumb" id="explorerBreadcrumb"></div>
+      <input type="text" id="explorerSearch" placeholder="Search…">
+    </div>
+    <div class="explorer-subhead" id="explorerSubhead"></div>
+    <div class="explorer-body" id="explorerBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCloseContents">Close</button>
     </div>
   </div>
 </div>
@@ -1038,7 +1076,7 @@ function renderDrives(){
     return `<div class="drive-card">
       <div class="row1">
         <div>
-          <div class="drive-name">${escapeHtml(d.label)}</div>
+          <button class="drive-name drive-name-link" data-view-drive="${d.id}">${escapeHtml(d.label)}</button>
           <div class="drive-events-count">${count} event${count===1?'':'s'}${d.updatedBy ? ` · edited by ${escapeHtml(d.updatedBy)}` : ''}</div>
           ${count === 0 ? `<button class="drive-invite" data-add-event-for="${d.id}">No events yet — add the first one</button>` : ''}
         </div>
@@ -1049,6 +1087,7 @@ function renderDrives(){
       </div>
       <div class="drive-meta"><span>${fmtTB(usedGB)} used</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
       <div class="drive-actions">
+        <button class="btn-ghost btn-sm" data-view-drive="${d.id}">View contents</button>
         <button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>
         ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-drive="${d.id}">Remove</button>` : ''}
       </div>
@@ -1260,6 +1299,102 @@ document.getElementById('btnAddFolderRow').addEventListener('click', () => {
   renderFolderRows();
   const rows = document.querySelectorAll('#folderRows [data-f="name"]');
   if(rows.length) rows[rows.length-1].focus();
+});
+
+// ---- Drive contents (Windows-Explorer-style folder view) ----
+let contentsState = { driveId: null, level: 'events', eventId: null };
+
+function folderIconSVG(){
+  return `<svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 10c0-2.2 1.8-4 4-4h10l4 4h20c2.2 0 4 1.8 4 4v20c0 2.2-1.8 4-4 4H6c-2.2 0-4-1.8-4-4V10z" fill="#F4C24B"/>
+    <path d="M2 15h44v17c0 2.2-1.8 4-4 4H6c-2.2 0-4-1.8-4-4V15z" fill="#F7CE6B"/>
+    <rect x="16" y="1" width="13" height="16" rx="1.5" fill="#fff" stroke="#D8DCE3" stroke-width="1"/>
+    <rect x="18.5" y="5" width="8" height="1.4" fill="#4B8FD8"/>
+    <rect x="18.5" y="8" width="8" height="1.4" fill="#C7CBD3"/>
+    <rect x="18.5" y="11" width="5" height="1.4" fill="#C7CBD3"/>
+  </svg>`;
+}
+
+function openDriveContents(driveId){
+  contentsState = { driveId, level: 'events', eventId: null };
+  document.getElementById('explorerSearch').value = '';
+  renderExplorer();
+  document.getElementById('contentsOverlay').classList.add('open');
+}
+
+function closeDriveContents(){
+  document.getElementById('contentsOverlay').classList.remove('open');
+}
+
+function renderExplorer(){
+  const drive = data.drives.find(d => d.id === contentsState.driveId);
+  if(!drive){ closeDriveContents(); return; }
+  const crumb = document.getElementById('explorerBreadcrumb');
+  const subhead = document.getElementById('explorerSubhead');
+  const body = document.getElementById('explorerBody');
+  const search = document.getElementById('explorerSearch').value.trim().toLowerCase();
+
+  if(contentsState.level === 'events'){
+    crumb.innerHTML = `<span class="crumb-current">${escapeHtml(drive.label)}</span>`;
+    let items = data.events.filter(e => e.driveId === drive.id);
+    if(search) items = items.filter(e => (e.eventName||'').toLowerCase().includes(search) || (e.client||'').toLowerCase().includes(search));
+    subhead.textContent = `File folder (${items.length})`;
+    if(items.length === 0){
+      body.innerHTML = `<div class="explorer-empty">${search ? 'No folders match your search.' : 'No event folders on this drive yet.'}</div>`;
+      return;
+    }
+    body.innerHTML = `<div class="folder-icon-grid">${items.map(e => `
+      <button class="folder-icon-item" data-open-event="${e.id}" title="${escapeHtml(e.client)} — ${e.sizeGB ? fmtTB(e.sizeGB) : '0 GB'}">
+        ${folderIconSVG()}
+        <div class="fi-label">${escapeHtml(e.eventName)}</div>
+        <div class="fi-caption">${e.sizeGB ? fmtTB(e.sizeGB) : '0 GB'}</div>
+      </button>`).join('')}</div>`;
+    body.querySelectorAll('[data-open-event]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ev = data.events.find(x => x.id === btn.getAttribute('data-open-event'));
+        if(ev && Array.isArray(ev.folders) && ev.folders.length > 0){
+          contentsState.level = 'folders';
+          contentsState.eventId = ev.id;
+          document.getElementById('explorerSearch').value = '';
+          renderExplorer();
+        } else {
+          closeDriveContents();
+          openEventModal(ev);
+        }
+      });
+    });
+  } else {
+    const ev = data.events.find(x => x.id === contentsState.eventId);
+    if(!ev){ contentsState.level = 'events'; renderExplorer(); return; }
+    crumb.innerHTML = `<button data-back-to-events>${escapeHtml(drive.label)}</button><span class="crumb-sep">›</span><span class="crumb-current">${escapeHtml(ev.eventName)}</span>`;
+    let items = ev.folders || [];
+    if(search) items = items.filter(f => (f.name||'').toLowerCase().includes(search));
+    subhead.innerHTML = `File folder (${items.length}) · <button class="row-expand-toggle" style="display:inline;padding:0;" data-edit-this-event="${ev.id}">Edit event details</button>`;
+    if(items.length === 0){
+      body.innerHTML = `<div class="explorer-empty">${search ? 'No folders match your search.' : 'No sub-folders logged for this event yet.'}</div>`;
+    } else {
+      body.innerHTML = `<div class="folder-icon-grid">${items.map(f => `
+        <div class="folder-icon-item" title="${f.copiedBy ? 'Copied by ' + escapeHtml(f.copiedBy) : 'Copied by —'}${f.copiedDate ? ' on ' + fmtDate(f.copiedDate) : ''}">
+          ${folderIconSVG()}
+          <div class="fi-label">${escapeHtml(f.name)}</div>
+          <div class="fi-caption">${(f.sizeGB||0).toLocaleString()} GB · ${escapeHtml(f.type||'Other')}</div>
+        </div>`).join('')}</div>`;
+    }
+    const backBtn = crumb.querySelector('[data-back-to-events]');
+    if(backBtn) backBtn.addEventListener('click', () => {
+      contentsState.level = 'events'; contentsState.eventId = null;
+      document.getElementById('explorerSearch').value = '';
+      renderExplorer();
+    });
+    const editBtn = subhead.querySelector('[data-edit-this-event]');
+    if(editBtn) editBtn.addEventListener('click', () => { closeDriveContents(); openEventModal(ev); });
+  }
+}
+
+document.getElementById('explorerSearch').addEventListener('input', renderExplorer);
+document.getElementById('btnCloseContents').addEventListener('click', closeDriveContents);
+document.getElementById('contentsOverlay').addEventListener('click', e => {
+  if(e.target.id === 'contentsOverlay') closeDriveContents();
 });
 
 // ---- Event modal ----
@@ -1490,7 +1625,9 @@ document.getElementById('driveList').addEventListener('click', e => {
   const editId = e.target.getAttribute('data-edit-drive');
   const delId = e.target.getAttribute('data-del-drive');
   const addEventForId = e.target.getAttribute('data-add-event-for');
+  const viewId = e.target.getAttribute('data-view-drive');
   if(editId) openDriveModal(editId);
+  if(viewId) openDriveContents(viewId);
   if(addEventForId){
     openEventModal(null);
     document.getElementById('fDrive').value = addEventForId;
