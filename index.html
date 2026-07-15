@@ -948,14 +948,41 @@ sb.auth.onAuthStateChange((event, session) => {
     renderUserBadge();
     showApp();
     loadData().then(startBackgroundSync);
+    startIdleTimer();
   } else {
     currentUser = null;
     if(pollTimer) clearInterval(pollTimer);
+    stopIdleTimer();
     showAuthGate();
   }
 });
 function isAdmin(){ return !!(currentUser && currentUser.role === 'admin'); }
 // ===================== /AUTH =====================
+
+// ===================== IDLE AUTO-LOGOUT =====================
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+let idleTimer = null;
+const IDLE_ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+
+function resetIdleTimer(){
+  if(idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(async () => {
+    toast("Signed out after 5 minutes of inactivity");
+    await sb.auth.signOut();
+  }, IDLE_TIMEOUT_MS);
+}
+
+function startIdleTimer(){
+  IDLE_ACTIVITY_EVENTS.forEach(evt => document.addEventListener(evt, resetIdleTimer, {passive:true}));
+  resetIdleTimer();
+}
+
+function stopIdleTimer(){
+  if(idleTimer) clearTimeout(idleTimer);
+  idleTimer = null;
+  IDLE_ACTIVITY_EVENTS.forEach(evt => document.removeEventListener(evt, resetIdleTimer));
+}
+// ===================== /IDLE AUTO-LOGOUT =====================
 
 function fmtTB(gb){
   return (gb/1000).toFixed(2).replace(/\.00$/,'') + ' TB';
