@@ -475,14 +475,10 @@
     <h3 id="eventModalTitle">Add event</h3>
     <span id="sessionAddCounter" style="display:none;font-size:11.5px;font-weight:500;color:var(--ok);margin-left:2px;"></span>
     <input type="hidden" id="eventId">
-    <div class="field">
-      <label>Client name <span class="required-mark">*</span></label>
-      <input type="text" id="fClient" placeholder="e.g. Priya &amp; Arjun Sharma">
-    </div>
-    <div class="field-row" id="eventNameRow">
-      <div class="field" id="fEventNameField">
-        <label>Event name <span class="required-mark">*</span></label>
-        <input type="text" id="fEventName" placeholder="e.g. Sangeet + Wedding">
+    <div class="field-row">
+      <div class="field">
+        <label>Client name <span class="required-mark">*</span></label>
+        <input type="text" id="fClient" placeholder="e.g. Priya &amp; Arjun Sharma">
       </div>
       <div class="field">
         <label>Event type</label>
@@ -1185,7 +1181,6 @@ function renderTable(){
             <div class="event-card-avatar">${initials}</div>
             <div class="event-card-headline">
               <div class="event-card-client">${escapeHtml(e.client)}</div>
-              <div class="event-card-name">${escapeHtml(e.eventName)}</div>
             </div>
             <span class="status-badge ${statusClass(e.status)}">${escapeHtml(e.status||'In Editing')}</span>
           </div>
@@ -1441,12 +1436,6 @@ function applyEditingLifecycleLock(){
   document.getElementById('lifecycleHint').textContent = locked
     ? 'Editing and delivery status are managed by an admin. You can still log who copied the data, where, and when below.'
     : 'Once a client has confirmed receipt, most studios keep the raw files a little longer as a safety buffer (commonly 30–90 days) before clearing them — in case of a corrupted delivery or a client dispute.';
-
-  // Event name: employees just copy data, so don't make them type it separately — auto-fill from client name
-  const fEventNameField = document.getElementById('fEventNameField');
-  const eventNameRow = document.getElementById('eventNameRow');
-  fEventNameField.style.display = locked ? 'none' : '';
-  eventNameRow.style.gridTemplateColumns = locked ? '1fr' : '1fr 1fr';
 }
 
 // ---- Event modal ----
@@ -1458,7 +1447,6 @@ function openEventModal(id){
   const ev = isEdit ? data.events.find(e => e.id === id) : null;
   document.getElementById('eventId').value = ev ? ev.id : '';
   document.getElementById('fClient').value = ev ? ev.client : '';
-  document.getElementById('fEventName').value = ev ? ev.eventName : '';
   document.getElementById('fEventType').value = ev ? ev.eventType : 'Wedding';
   document.getElementById('fEventDate').value = ev ? ev.eventDate : '';
   document.getElementById('fSize').value = ev ? ev.sizeGB : '';
@@ -1508,13 +1496,12 @@ eventOverlay.addEventListener('click', e => { if(e.target === eventOverlay) clos
 
 function buildEventRecord(){
   const client = document.getElementById('fClient').value.trim();
-  let eventName = document.getElementById('fEventName').value.trim();
-  if(!isAdmin() && !eventName) eventName = client; // employees don't type this separately
-  if(!client || !eventName){
-    document.getElementById('fClient').style.borderColor = client ? '' : 'var(--danger)';
-    if(isAdmin()) document.getElementById('fEventName').style.borderColor = eventName ? '' : 'var(--danger)';
+  const eventName = client; // event name field removed — folders capture the specifics instead
+  if(!client){
+    document.getElementById('fClient').style.borderColor = 'var(--danger)';
     return null;
   }
+  document.getElementById('fClient').style.borderColor = '';
   const id = document.getElementById('eventId').value || uid();
   return {
     id, client, eventName,
@@ -1574,7 +1561,6 @@ document.getElementById('btnSaveAddAnother').onclick = async () => {
 
   document.getElementById('eventId').value = '';
   document.getElementById('fClient').value = '';
-  document.getElementById('fEventName').value = '';
   document.getElementById('fEventDate').value = '';
   document.getElementById('fSize').value = '';
   document.getElementById('fDrive').value = keepDrive;
