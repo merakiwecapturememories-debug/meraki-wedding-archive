@@ -137,7 +137,23 @@
   .drive-empty{font-size:13px;color:var(--ink-soft);padding:20px 14px;border:1px solid var(--line);background:var(--card-sunken);border-radius:10px;text-align:center;}
 
   /* Event ledger */
-  .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .toolbar-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;box-shadow:var(--shadow-card);position:sticky;top:12px;z-index:5;margin-bottom:16px;
+  }
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .entries-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow-card);overflow:hidden;
+  }
+  .entries-panel-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 16px;border-bottom:1px solid var(--line);
+    font-size:11.5px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;color:var(--ink-muted);
+  }
+  .entries-panel-head .entries-count{font-family:'IBM Plex Mono',monospace;text-transform:none;letter-spacing:0;color:var(--ink-soft);font-weight:500;}
+  .entries-panel #tableWrap{padding:16px;}
+  .entries-panel .empty-state{border:none;background:none;box-shadow:none;padding:40px 20px;}
   .toolbar input[type=text], .toolbar select{
     font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;border:1px solid var(--line-strong);
     border-radius:7px;background:var(--card);color:var(--ink);
@@ -485,19 +501,27 @@
           <button class="btn btn-primary btn-sm" id="btnAddEvent">+ Add event</button>
         </div>
       </div>
-      <div class="toolbar">
-        <input type="text" id="searchInput" placeholder="Search client or event name…">
-        <select id="filterStatus">
-          <option value="">All statuses</option>
-          <option value="In Editing">In editing</option>
-          <option value="Edited">Edited</option>
-          <option value="Delivered">Delivered</option>
-          <option value="Raw Deleted">Raw deleted</option>
-        </select>
-        <select id="filterDrive"><option value="">All drives</option></select>
+      <div class="toolbar-panel">
+        <div class="toolbar">
+          <input type="text" id="searchInput" placeholder="Search client or event name…">
+          <select id="filterStatus">
+            <option value="">All statuses</option>
+            <option value="In Editing">In editing</option>
+            <option value="Edited">Edited</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Raw Deleted">Raw deleted</option>
+          </select>
+          <select id="filterDrive"><option value="">All drives</option></select>
+        </div>
       </div>
       <div id="rawAlert"></div>
-      <div id="tableWrap"></div>
+      <div class="entries-panel">
+        <div class="entries-panel-head">
+          <span>Entries</span>
+          <span class="entries-count" id="entriesCount"></span>
+        </div>
+        <div id="tableWrap"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1194,6 +1218,9 @@ function renderTable(){
     const matchesEligible = !rawEligibleFilterActive || (!e.rawDeleted && e.deliveredDate && daysSince(e.deliveredDate) >= DELETE_BUFFER_DAYS);
     return matchesSearch && matchesStatus && matchesDrive && matchesEligible;
   }).sort((a,b) => (b.eventDate||'').localeCompare(a.eventDate||''));
+
+  const countEl = document.getElementById('entriesCount');
+  if(countEl) countEl.textContent = rows.length === data.events.length ? `${rows.length}` : `${rows.length} of ${data.events.length}`;
 
   if(data.events.length === 0){
     wrap.innerHTML = `<div class="empty-state"><h3>The ledger is empty</h3><p>Add your first wedding or event to start tracking which drive it lives on.</p></div>`;
