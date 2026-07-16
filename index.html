@@ -1313,7 +1313,7 @@ function renderFolderRows(){
   wrap.innerHTML = currentFolders.map((f, i) => `
     <div class="folder-entry" data-folder-idx="${i}">
       <div class="folder-entry-head">
-        <input type="text" data-f="name" value="${escapeHtml(f.name)}" placeholder="Folder name — e.g. Photos">
+        <input type="text" data-f="name" value="${escapeHtml(f.name)}" placeholder="Folder name — e.g. Photos, Video">
         <button type="button" class="folder-row-remove" data-remove-folder="${i}" aria-label="Remove folder">✕</button>
       </div>
       <div class="folder-entry-grid">
@@ -1569,10 +1569,14 @@ function buildEventRecord(){
     notes: document.getElementById('fNotes').value.trim(),
     updatedBy: whoAmI(),
     updatedAt: new Date().toISOString(),
-    folders: currentFolders.filter(f => f.name && f.name.trim()).map(f => ({
-      id: f.id || uid(), name: f.name.trim(), type: f.type || 'Other',
-      sizeGB: Number(f.sizeGB)||0, copiedBy: (f.copiedBy||'').trim(), copiedDate: f.copiedDate || ''
-    }))
+    folders: currentFolders
+      .filter(f => (f.name && f.name.trim()) || Number(f.sizeGB) > 0 || (f.copiedBy && f.copiedBy.trim()) || f.copiedDate)
+      .map((f, i) => ({
+        id: f.id || uid(),
+        name: (f.name && f.name.trim()) || `Folder ${i + 1}`,
+        type: f.type || 'Other',
+        sizeGB: Number(f.sizeGB)||0, copiedBy: (f.copiedBy||'').trim(), copiedDate: f.copiedDate || ''
+      }))
   };
 }
 
