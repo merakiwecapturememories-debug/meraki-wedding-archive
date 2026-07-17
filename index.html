@@ -1909,8 +1909,9 @@ document.getElementById('btnChooseScanFolder').onclick = async () => {
 
   // First pass: list top-level folders only (fast) so we know the real total for a %
   const topLevelFolders = [];
+  const SYSTEM_FOLDER_SKIPLIST = /^(\$RECYCLE\.BIN|System Volume Information|\.Trashes|\.Trash|\.fseventsd|\.Spotlight-V100|\.TemporaryItems|\.DocumentRevisions-V100|lost\+found|\$Recycle\.Bin)$/i;
   for await (const [name, handle] of rootHandle.entries()){
-    if(handle.kind === 'directory') topLevelFolders.push([name, handle]);
+    if(handle.kind === 'directory' && !SYSTEM_FOLDER_SKIPLIST.test(name.trim())) topLevelFolders.push([name, handle]);
   }
   const total = topLevelFolders.length;
 
