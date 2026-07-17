@@ -676,6 +676,20 @@
       <button class="btn btn-primary" id="btnChooseScanFolder">Choose folder &amp; scan</button>
       <span id="scanProgress" style="font-size:12.5px;color:var(--ink-soft);margin-left:10px;"></span>
     </div>
+    <details style="margin:-4px 0 14px;">
+      <summary style="cursor:pointer;font-size:12px;color:var(--ink-soft);">Drive has thousands of files? The browser scan can take a while — use the faster method instead</summary>
+      <div style="margin-top:10px;padding:12px 14px;background:var(--card-sunken);border-radius:8px;font-size:12px;color:var(--ink-soft);line-height:1.6;">
+        Browser scanning reads every single file individually, which slows down a lot on drives with tens of thousands of RAW photos/videos. For a near-instant scan instead:
+        <ol style="margin:8px 0 10px;padding-left:18px;">
+          <li>Download <a href="scan_drive.py" download style="color:var(--wine-fg);">scan_drive.py</a> once (needs Python — <a href="https://www.python.org/downloads/" target="_blank" rel="noopener" style="color:var(--wine-fg);">get it here</a> if you don't have it)</li>
+          <li>Double-click it, paste the drive's folder path when asked</li>
+          <li>It finishes in seconds and prints a CSV block — copy it</li>
+          <li>Paste it below and click "Parse pasted results"</li>
+        </ol>
+        <textarea id="scanPasteInput" rows="4" placeholder="folder,size_gb,guessed_client,guessed_date&#10;Nitesh weds Ishu,620.4,Nitesh weds Ishu,2026-02-14" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);resize:vertical;box-sizing:border-box;"></textarea>
+        <button class="btn btn-sm" id="btnParsePastedScan" style="margin-top:8px;">Parse pasted results</button>
+      </div>
+    </details>
     <div id="scanResults" style="max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;display:none;"></div>
     <div class="modal-actions">
       <button class="btn" id="btnCancelScan">Close</button>
@@ -1795,21 +1809,29 @@ async function getFolderSizeBytes(dirHandle, depth, progress){
   const entries = [];
   for await (const [, handle] of dirHandle.entries()) entries.push(handle);
 
-  const sizes = await Promise.all(entries.map(async (handle) => {
-    if(handle.kind === 'file'){
-      try{
-        const file = await handle.getFile();
-        progress.filesRead++;
-        if(progress.filesRead % 15 === 0) progress.onTick();
-        return file.size;
-      }catch(e){ return 0; } // skip unreadable file
-    } else if(handle.kind === 'directory'){
-      return await getFolderSizeBytes(handle, depth + 1, progress);
-    }
-    return 0;
-  }));
-
-  return sizes.reduce((a,b) => a+b, 0);
+  // Bounded concurrency: reading thousands of files at once via Promise.all can thrash
+  // physical/USB drives (random-access seek storms) and make things SLOWER, not faster.
+  // Batching keeps parallelism (per Chrome's own guidance) without overwhelming the disk.
+  const BATCH_SIZE = 48;
+  let total = 0;
+  for(let i = 0; i < entries.length; i += BATCH_SIZE){
+    const batch = entries.slice(i, i + BATCH_SIZE);
+    const sizes = await Promise.all(batch.map(async (handle) => {
+      if(handle.kind === 'file'){
+        try{
+          const file = await handle.getFile();
+          progress.filesRead++;
+          if(progress.filesRead % 15 === 0) progress.onTick();
+          return file.size;
+        }catch(e){ return 0; } // skip unreadable file
+      } else if(handle.kind === 'directory'){
+        return await getFolderSizeBytes(handle, depth + 1, progress);
+      }
+      return 0;
+    }));
+    total += sizes.reduce((a,b) => a+b, 0);
+  }
+  return total;
 }
 
 // Try to pull a date out of a folder name like "Ayesha & Rohan - 14 Feb 2026" or "2026-02-14 Sharma Wedding"
@@ -1823,6 +1845,46 @@ function guessDateFromName(name){
 function guessClientFromName(name){
   return name.replace(/(\d{4})[-_.](\d{1,2})[-_.](\d{1,2})/, '').replace(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4})/, '').replace(/[-_]+/g, ' ').trim() || name;
 }
+
+document.getElementById('btnParsePastedScan').addEventListener('click', () => {
+  const raw = document.getElementById('scanPasteInput').value.trim();
+  const progressEl = document.getElementById('scanProgress');
+  if(!raw){
+    progressEl.style.color = 'var(--danger)';
+    progressEl.textContent = 'Paste the CSV output from scan_drive.py first.';
+    return;
+  }
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  // Tolerate an optional header row
+  const dataLines = /^folder\s*,/i.test(lines[0]) ? lines.slice(1) : lines;
+
+  const parsed = [];
+  for(const line of dataLines){
+    const parts = line.split(',');
+    if(parts.length < 2) continue;
+    const [folder, sizeStr, guessedClient, guessedDate] = parts;
+    const sizeGB = parseFloat(sizeStr);
+    if(!folder || isNaN(sizeGB)) continue;
+    parsed.push({
+      name: folder.trim(),
+      sizeGB,
+      client: (guessedClient && guessedClient.trim()) || guessClientFromName(folder.trim()),
+      eventDate: (guessedDate && guessedDate.trim()) || guessDateFromName(folder.trim()),
+      include: true
+    });
+  }
+
+  if(parsed.length === 0){
+    progressEl.style.color = 'var(--danger)';
+    progressEl.textContent = "Couldn't read that — expected lines like: FolderName,123.4,Client Name,2026-02-14";
+    return;
+  }
+
+  scanResultsData = parsed;
+  progressEl.style.color = 'var(--ok)';
+  progressEl.textContent = `Loaded ${parsed.length} folder${parsed.length===1?'':'s'} from pasted results.`;
+  renderScanResults();
+});
 
 document.getElementById('btnChooseScanFolder').onclick = async () => {
   const progressEl = document.getElementById('scanProgress');
