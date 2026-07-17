@@ -57,10 +57,11 @@ SYSTEM_FOLDER_SKIPLIST = {
     ".fseventsd", ".spotlight-v100", ".temporaryitems",
     ".documentrevisions-v100", "lost+found",
 }
+FOUND_DOT_PATTERN = re.compile(r'^found\.\d{3}$', re.IGNORECASE)
 
 
 def is_system_folder(name):
-    return name.lower() in SYSTEM_FOLDER_SKIPLIST
+    return name.lower() in SYSTEM_FOLDER_SKIPLIST or bool(FOUND_DOT_PATTERN.match(name))
 
 
 def folder_size_bytes(path):
@@ -93,7 +94,9 @@ def main():
         print(f"\n'{root}' isn't a folder I can find. Check the path and try again.")
         sys.exit(1)
 
-    top_level = [e for e in os.scandir(root) if e.is_dir(follow_symlinks=False) and not is_system_folder(e.name)]
+    all_dirs = [e for e in os.scandir(root) if e.is_dir(follow_symlinks=False)]
+    top_level = [e for e in all_dirs if not is_system_folder(e.name)]
+    found_dot_skipped = sum(1 for e in all_dirs if FOUND_DOT_PATTERN.match(e.name))
     if not top_level:
         print(f"\nNo subfolders found inside '{root}'.")
         sys.exit(0)
@@ -116,6 +119,10 @@ def main():
 
     elapsed = time.time() - start
     print(f"\nDone in {elapsed:.1f} seconds — {len(top_level)} folders.")
+    if found_dot_skipped:
+        print(f"(Skipped {found_dot_skipped} 'FOUND.###' recovery folder(s) — this drive had a "
+              f"CHKDSK recovery at some point, which usually means an improper ejection or file "
+              f"system error. Worth running a health/SMART check on it.)")
 
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scan_results.csv")
     with open(out_path, "w", newline="", encoding="utf-8") as f:
