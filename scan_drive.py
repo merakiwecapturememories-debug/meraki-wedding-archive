@@ -52,6 +52,17 @@ def guess_client_from_name(name):
     return cleaned or name
 
 
+SYSTEM_FOLDER_SKIPLIST = {
+    "$recycle.bin", "system volume information", ".trashes", ".trash",
+    ".fseventsd", ".spotlight-v100", ".temporaryitems",
+    ".documentrevisions-v100", "lost+found",
+}
+
+
+def is_system_folder(name):
+    return name.lower() in SYSTEM_FOLDER_SKIPLIST
+
+
 def folder_size_bytes(path):
     total = 0
     try:
@@ -82,7 +93,7 @@ def main():
         print(f"\n'{root}' isn't a folder I can find. Check the path and try again.")
         sys.exit(1)
 
-    top_level = [e for e in os.scandir(root) if e.is_dir(follow_symlinks=False)]
+    top_level = [e for e in os.scandir(root) if e.is_dir(follow_symlinks=False) and not is_system_folder(e.name)]
     if not top_level:
         print(f"\nNo subfolders found inside '{root}'.")
         sys.exit(0)
