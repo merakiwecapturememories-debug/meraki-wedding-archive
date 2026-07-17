@@ -1909,11 +1909,17 @@ document.getElementById('btnChooseScanFolder').onclick = async () => {
 
   // First pass: list top-level folders only (fast) so we know the real total for a %
   const topLevelFolders = [];
-  const SYSTEM_FOLDER_SKIPLIST = /^(\$RECYCLE\.BIN|System Volume Information|\.Trashes|\.Trash|\.fseventsd|\.Spotlight-V100|\.TemporaryItems|\.DocumentRevisions-V100|lost\+found|\$Recycle\.Bin)$/i;
+  const SYSTEM_FOLDER_SKIPLIST = /^(\$RECYCLE\.BIN|System Volume Information|\.Trashes|\.Trash|\.fseventsd|\.Spotlight-V100|\.TemporaryItems|\.DocumentRevisions-V100|lost\+found|\$Recycle\.Bin|FOUND\.\d{3})$/i;
+  const FOUND_DOT_PATTERN = /^FOUND\.\d{3}$/i;
+  let foundDotSkipped = 0;
   for await (const [name, handle] of rootHandle.entries()){
-    if(handle.kind === 'directory' && !SYSTEM_FOLDER_SKIPLIST.test(name.trim())) topLevelFolders.push([name, handle]);
+    if(handle.kind === 'directory'){
+      if(FOUND_DOT_PATTERN.test(name.trim())) foundDotSkipped++;
+      if(!SYSTEM_FOLDER_SKIPLIST.test(name.trim())) topLevelFolders.push([name, handle]);
+    }
   }
   const total = topLevelFolders.length;
+  window.__scanFoundDotSkipped = foundDotSkipped; // surfaced in the done message below
 
   if(total === 0){
     progressEl.style.color = 'var(--danger)';
@@ -1964,7 +1970,10 @@ async function runScan(topLevelFolders, total, progressEl){
   }
 
   progressEl.style.color = 'var(--ok)';
-  progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).`;
+  const foundDotNote = window.__scanFoundDotSkipped > 0
+    ? ` (skipped ${window.__scanFoundDotSkipped} "FOUND.###" recovery folder${window.__scanFoundDotSkipped===1?'':'s'} — this drive had a CHKDSK recovery at some point, worth a health check)`
+    : '';
+  progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).${foundDotNote}`;
   renderScanResults();
 };
 
