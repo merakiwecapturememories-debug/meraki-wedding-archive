@@ -1263,13 +1263,14 @@ function renderTable(){
         if(e.deliveredDate) lineParts.push(`<dt>Delivered</dt><dd>${fmtDate(e.deliveredDate)}</dd>`);
         if(e.notes) lineParts.push(`<dt>Notes</dt><dd>${escapeHtml(e.notes)}</dd>`);
         const hasDetail = lineParts.length > 0 || folders.length > 0;
-        const folderChips = folders.length > 0 ? `<div class="folder-chip-list">${folders.map(f => `<span class="folder-chip"><span class="fname">${escapeHtml(f.name)}</span> · ${(f.sizeGB||0).toLocaleString()} GB</span>`).join('')}</div>` : '';
+        const folderChips = folders.length > 0 ? `<div class="folder-chip-list">${folders.map(f => `<span class="folder-chip"><span class="fname">${escapeHtml(f.name)}</span> · ${(f.sizeGB||0).toLocaleString()} GB${f.fileCount ? ' · ' + f.fileCount.toLocaleString() + ' files' : ''}</span>`).join('')}</div>` : '';
         const folderTable = folders.length > 0 ? `
           <table class="folder-detail-table">
-            <thead><tr><th>Folder</th><th>Type</th><th>Size</th><th>Copied by</th><th>Copied on</th></tr></thead>
+            <thead><tr><th>Folder</th><th>Type</th><th>Files</th><th>Size</th><th>Copied by</th><th>Copied on</th></tr></thead>
             <tbody>${folders.map(f => `<tr>
               <td>${escapeHtml(f.name)}</td>
               <td><span class="folder-type-tag">${escapeHtml(f.type||'Other')}</span></td>
+              <td>${f.fileCount ? f.fileCount.toLocaleString() : '—'}</td>
               <td>${(f.sizeGB||0).toLocaleString()} GB</td>
               <td>${f.copiedBy ? escapeHtml(f.copiedBy) : '—'}</td>
               <td>${f.copiedDate ? fmtDate(f.copiedDate) : '—'}</td>
@@ -1369,9 +1370,15 @@ function renderFolderRows(){
       </div>
       <div class="folder-entry-grid">
         <div>
+          <span class="folder-field-label">Number of files</span>
+          <input type="number" min="0" step="1" data-f="fileCount" value="${f.fileCount || ''}" placeholder="e.g. 3842">
+        </div>
+        <div>
           <span class="folder-field-label">Copied by</span>
           <input type="text" data-f="copiedBy" value="${escapeHtml(f.copiedBy||'')}" placeholder="Name">
         </div>
+      </div>
+      <div class="folder-entry-grid">
         <div>
           <span class="folder-field-label">Copied on</span>
           <input type="date" data-f="copiedDate" value="${f.copiedDate||''}">
@@ -1384,7 +1391,7 @@ function renderFolderRows(){
     row.querySelectorAll('[data-f]').forEach(inp => {
       inp.addEventListener('input', () => {
         const key = inp.getAttribute('data-f');
-        currentFolders[idx][key] = key === 'sizeGB' ? Number(inp.value)||0 : inp.value;
+        currentFolders[idx][key] = (key === 'sizeGB' || key === 'fileCount') ? Number(inp.value)||0 : inp.value;
         updateFolderTotal();
       });
     });
@@ -1412,7 +1419,7 @@ function updateFolderTotal(){
 }
 
 document.getElementById('btnAddFolderRow').addEventListener('click', () => {
-  currentFolders.push({ id: uid(), name: '', type: 'Photos', sizeGB: 0, copiedBy: whoAmI(), copiedDate: new Date().toISOString().slice(0,10) });
+  currentFolders.push({ id: uid(), name: '', type: 'Photos', sizeGB: 0, fileCount: 0, copiedBy: whoAmI(), copiedDate: new Date().toISOString().slice(0,10) });
   renderFolderRows();
   const rows = document.querySelectorAll('#folderRows [data-f="name"]');
   if(rows.length) rows[rows.length-1].focus();
@@ -1460,12 +1467,16 @@ function renderExplorer(){
       body.innerHTML = `<div class="explorer-empty">${search ? 'No folders match your search.' : 'No event folders on this drive yet.'}</div>`;
       return;
     }
-    body.innerHTML = `<div class="folder-icon-grid">${items.map(e => `
-      <button class="folder-icon-item" data-open-event="${e.id}" title="${escapeHtml(e.client)} — ${e.sizeGB ? fmtTB(e.sizeGB) : '0 GB'}">
+    body.innerHTML = `<div class="folder-icon-grid">${items.map(e => {
+      const totalFiles = Array.isArray(e.folders) ? e.folders.reduce((s,f) => s + (Number(f.fileCount)||0), 0) : 0;
+      const sizeLabel = e.sizeGB ? fmtTB(e.sizeGB) : '0 GB';
+      return `
+      <button class="folder-icon-item" data-open-event="${e.id}" title="${escapeHtml(e.client)} — ${sizeLabel}${totalFiles ? ' — ' + totalFiles.toLocaleString() + ' files' : ''}">
         ${folderIconSVG()}
         <div class="fi-label">${escapeHtml(e.eventName)}</div>
-        <div class="fi-caption">${e.sizeGB ? fmtTB(e.sizeGB) : '0 GB'}</div>
-      </button>`).join('')}</div>`;
+        <div class="fi-caption">${sizeLabel}${totalFiles ? ' · ' + totalFiles.toLocaleString() + ' files' : ''}</div>
+      </button>`;
+    }).join('')}</div>`;
     body.querySelectorAll('[data-open-event]').forEach(btn => {
       btn.addEventListener('click', () => {
         const ev = data.events.find(x => x.id === btn.getAttribute('data-open-event'));
@@ -1494,7 +1505,7 @@ function renderExplorer(){
         <div class="folder-icon-item" title="${f.copiedBy ? 'Copied by ' + escapeHtml(f.copiedBy) : 'Copied by —'}${f.copiedDate ? ' on ' + fmtDate(f.copiedDate) : ''}">
           ${folderIconSVG()}
           <div class="fi-label">${escapeHtml(f.name)}</div>
-          <div class="fi-caption">${(f.sizeGB||0).toLocaleString()} GB · ${escapeHtml(f.type||'Other')}</div>
+          <div class="fi-caption">${escapeHtml(f.type||'Other')} · ${f.fileCount ? f.fileCount.toLocaleString() + ' files · ' : ''}${(f.sizeGB||0).toLocaleString()} GB</div>
         </div>`).join('')}</div>`;
     }
     const backBtn = crumb.querySelector('[data-back-to-events]');
@@ -1616,7 +1627,7 @@ function buildEventRecord(){
         id: f.id || uid(),
         name: (f.name && f.name.trim()) || `Folder ${i + 1}`,
         type: f.type || 'Other',
-        sizeGB: Number(f.sizeGB)||0, copiedBy: (f.copiedBy||'').trim(), copiedDate: f.copiedDate || ''
+        sizeGB: Number(f.sizeGB)||0, fileCount: Number(f.fileCount)||0, copiedBy: (f.copiedBy||'').trim(), copiedDate: f.copiedDate || ''
       }))
   };
 }
