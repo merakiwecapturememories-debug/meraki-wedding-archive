@@ -1487,6 +1487,7 @@ function renderExplorer(){
           renderExplorer();
         } else {
           closeDriveContents();
+          toast(`"${ev.eventName}" has no Photos/Video folders logged yet — add them below`);
           openEventModal(ev);
         }
       });
@@ -1815,34 +1816,41 @@ document.getElementById('btnCancelScan').onclick = closeScanModal;
 scanOverlay.addEventListener('click', e => { if(e.target === scanOverlay) closeScanModal(); });
 
 // Recursively sum file sizes under a directory handle, in parallel, with live progress
-async function getFolderSizeBytes(dirHandle, depth, progress){
-  if(depth > 12) return 0; // safety cap against pathological nesting
+async function getFolderStats(dirHandle, depth, progress){
+  if(depth > 12) return {bytes: 0, files: 0}; // safety cap against pathological nesting
   const entries = [];
   for await (const [, handle] of dirHandle.entries()) entries.push(handle);
 
-  // Bounded concurrency: reading thousands of files at once via Promise.all can thrash
-  // physical/USB drives (random-access seek storms) and make things SLOWER, not faster.
-  // Batching keeps parallelism (per Chrome's own guidance) without overwhelming the disk.
   const BATCH_SIZE = 48;
-  let total = 0;
+  let totalBytes = 0, totalFiles = 0;
   for(let i = 0; i < entries.length; i += BATCH_SIZE){
     const batch = entries.slice(i, i + BATCH_SIZE);
-    const sizes = await Promise.all(batch.map(async (handle) => {
+    const results = await Promise.all(batch.map(async (handle) => {
       if(handle.kind === 'file'){
         try{
           const file = await handle.getFile();
           progress.filesRead++;
           if(progress.filesRead % 15 === 0) progress.onTick();
-          return file.size;
-        }catch(e){ return 0; } // skip unreadable file
+          return {bytes: file.size, files: 1};
+        }catch(e){ return {bytes: 0, files: 0}; }
       } else if(handle.kind === 'directory'){
-        return await getFolderSizeBytes(handle, depth + 1, progress);
+        return await getFolderStats(handle, depth + 1, progress);
       }
-      return 0;
+      return {bytes: 0, files: 0};
     }));
-    total += sizes.reduce((a,b) => a+b, 0);
+    for(const r of results){ totalBytes += r.bytes; totalFiles += r.files; }
   }
-  return total;
+  return {bytes: totalBytes, files: totalFiles};
+}
+
+// Guess a folder's media type from its name — same categories used in the Folders editor
+function guessFolderType(name){
+  const n = name.trim().toLowerCase();
+  if(/^(photo|photos|jpeg|jpegs|jpg|images?|pics?)$/.test(n)) return 'Photos';
+  if(/^(video|videos|footage|films?|cinematography)$/.test(n)) return 'Video';
+  if(/^(raw|raw data|rawdata|negatives?)$/.test(n)) return 'Raw';
+  if(/^(edited|edit|final|finals|deliverables?|export|exports|selects|highlights)$/.test(n)) return 'Edited';
+  return 'Other';
 }
 
 // Try to pull a date out of a folder name like "Ayesha & Rohan - 14 Feb 2026" or "2026-02-14 Sharma Wedding"
@@ -1970,12 +1978,36 @@ async function runScan(topLevelFolders, total, progressEl){
       }
     };
     progressEl.textContent = `Scanning… ${pct}% (${i+1}/${total} folders) — "${name}"`;
-    const bytes = await getFolderSizeBytes(handle, 0, progress);
-    const sizeGB = Math.round((bytes / (1024**3)) * 100) / 100;
+
+    // Look one level deep for named subfolders (Photo, Video, Raw, Edited...) so imported
+    // events already have a proper Photos/Video breakdown instead of just one flat size.
+    const immediateEntries = [];
+    for await (const [childName, childHandle] of handle.entries()) immediateEntries.push([childName, childHandle]);
+    const subDirs = immediateEntries.filter(([, h]) => h.kind === 'directory');
+    const looseFiles = immediateEntries.filter(([, h]) => h.kind === 'file');
+
+    let totalBytes = 0;
+    const subfolders = [];
+    for(const [childName, childHandle] of subDirs){
+      const stats = await getFolderStats(childHandle, 0, progress);
+      totalBytes += stats.bytes;
+      subfolders.push({
+        id: uid(), name: childName, type: guessFolderType(childName),
+        sizeGB: Math.round((stats.bytes / (1024**3)) * 100) / 100,
+        fileCount: stats.files, copiedBy: whoAmI(), copiedDate: new Date().toISOString().slice(0,10)
+      });
+    }
+    // Any loose files sitting directly in the event folder (not in a subfolder) still count toward total size
+    for(const [, fileHandle] of looseFiles){
+      try{ const file = await fileHandle.getFile(); totalBytes += file.size; progress.filesRead++; }catch(e){}
+    }
+
+    const sizeGB = Math.round((totalBytes / (1024**3)) * 100) / 100;
     scanResultsData.push({
       name, sizeGB,
       client: guessClientFromName(name),
       eventDate: guessDateFromName(name),
+      subfolders,
       include: true
     });
   }
@@ -2000,7 +2032,7 @@ function renderScanResults(){
       <input type="checkbox" data-scan-idx="${i}" class="scan-include" ${item.include ? 'checked' : ''}>
       <div style="flex:1;">
         <input type="text" data-scan-field="client" data-scan-idx="${i}" value="${escapeHtml(item.client)}" style="width:100%;font-size:13px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;margin-bottom:4px;">
-        <div style="font-size:11px;color:var(--ink-muted);">Folder: ${escapeHtml(item.name)} · ${item.sizeGB} GB${item.eventDate ? ' · ' + item.eventDate : ''}</div>
+        <div style="font-size:11px;color:var(--ink-muted);">Folder: ${escapeHtml(item.name)} · ${item.sizeGB} GB${item.eventDate ? ' · ' + item.eventDate : ''}${item.subfolders && item.subfolders.length ? ' · ' + item.subfolders.map(sf => `${escapeHtml(sf.name)} (${sf.fileCount.toLocaleString()} files)`).join(', ') : ''}</div>
       </div>
       <input type="date" data-scan-field="eventDate" data-scan-idx="${i}" value="${item.eventDate}" style="font-size:12px;padding:6px;border:1px solid var(--line-strong);border-radius:6px;">
     </div>
@@ -2044,7 +2076,8 @@ document.getElementById('btnImportScan').onclick = async () => {
       rawDeletedDate: '',
       notes: 'Auto-imported from drive scan',
       updatedBy: whoAmI(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      folders: Array.isArray(item.subfolders) ? item.subfolders : []
     };
     saveEventRecord(record);
     await persistEvent(record);
