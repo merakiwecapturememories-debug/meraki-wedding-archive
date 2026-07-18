@@ -667,6 +667,7 @@
       Plug in the HDD, then click "Choose folder" and select the <strong>drive's root folder</strong> — the top-level one that contains all your event folders side by side (e.g. "01 Chanchal &amp; Anupriya", "02 Priya &amp; Rahul"...). <strong>Don't select an individual event's folder</strong> — its Photo/Video subfolders would get mistaken for separate events.
       Each top-level folder you select becomes one event — its name becomes the client name and its size is measured automatically.
       Works in <strong>Chrome or Edge on desktop only</strong>.
+      <br><span style="color:var(--ink-muted);">Note: sizes here use standard decimal GB/TB (same as a drive's rated capacity, e.g. "5TB" on the box). Windows' own Properties dialog shows binary units but mislabels them the same way — so the numbers there will look ~7% smaller than here for the same data. That's a Windows quirk, not an error in either place.</span>
     </p>
     <div class="field">
       <label>Which drive is this?</label>
@@ -1991,7 +1992,7 @@ async function runScan(topLevelFolders, total, progressEl){
       totalBytes += stats.bytes;
       subfolders.push({
         id: uid(), name: childName, type: guessFolderType(childName),
-        sizeGB: Math.round((stats.bytes / (1024**3)) * 100) / 100,
+        sizeGB: Math.round((stats.bytes / (1000**3)) * 100) / 100, // decimal GB, matching drive capacity units
         fileCount: stats.files, copiedBy: whoAmI(), copiedDate: new Date().toISOString().slice(0,10)
       });
     }
@@ -2000,7 +2001,7 @@ async function runScan(topLevelFolders, total, progressEl){
       try{ const file = await fileHandle.getFile(); totalBytes += file.size; progress.filesRead++; }catch(e){}
     }
 
-    const sizeGB = Math.round((totalBytes / (1024**3)) * 100) / 100;
+    const sizeGB = Math.round((totalBytes / (1000**3)) * 100) / 100; // decimal GB, matching drive capacity units
     scanResultsData.push({
       name, sizeGB,
       client: guessClientFromName(name),
