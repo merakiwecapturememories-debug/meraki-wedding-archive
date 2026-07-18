@@ -105,6 +105,12 @@
   @media (max-width:820px){.layout{grid-template-columns:1fr;} .stats{grid-template-columns:repeat(2,1fr);}}
 
   .panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .view-panel{width:100%;}
+  .dashboard-hint{
+    background:var(--card);border:1px dashed var(--line-strong);border-radius:var(--radius);
+    padding:32px 20px;text-align:center;color:var(--ink-soft);font-size:13.5px;line-height:1.6;
+  }
+  .dashboard-hint strong{color:var(--ink);}
   .panel-title h2{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;margin:0;color:var(--ink);}
 
   button{font-family:'Inter',sans-serif;cursor:pointer;}
@@ -467,9 +473,9 @@
     </div>
     <div class="sidebar-section-label">Workspace</div>
     <div class="sidebar-nav">
-      <a href="#statsRoot" class="active">Dashboard <span class="count" id="navDashboardCount">–</span></a>
-      <a href="#driveRegistrySection">Drive registry <span class="count" id="navDriveCount">–</span></a>
-      <a href="#eventLedgerSection">Event ledger <span class="count" id="navEventCount">–</span></a>
+      <a href="#" data-view="dashboard" class="active">Dashboard <span class="count" id="navDashboardCount">–</span></a>
+      <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
+      <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
     </div>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-foot" id="sidebarFoot"></div>
@@ -493,7 +499,13 @@
     <div class="stat"><div class="label">Storage free</div><div class="value" id="statFree">–</div><div class="cue cue-neutral" id="cueFree"></div></div>
   </div>
 
-  <div class="layout">
+  <div id="viewDashboard" class="view-panel">
+    <div class="dashboard-hint">
+      Pick <strong>Drive registry</strong> or <strong>Event ledger</strong> from the sidebar to see the details.
+    </div>
+  </div>
+
+  <div id="viewDrives" class="view-panel" style="display:none;">
     <div id="driveRegistrySection">
       <div class="panel-title">
         <h2>Drive registry</h2>
@@ -501,7 +513,9 @@
       </div>
       <div id="driveList"></div>
     </div>
+  </div>
 
+  <div id="viewLedger" class="view-panel" style="display:none;">
     <div id="eventLedgerSection">
       <div class="panel-title">
         <h2>Event ledger</h2>
@@ -964,14 +978,19 @@ function renderUserBadge(){
   if(foot) foot.innerHTML = `${escapeHtml(currentUser.name||currentUser.email)}${isAdmin() ? ' · Admin' : ''}`;
 }
 
-document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(a => {
+function switchView(view){
+  document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
+  document.getElementById('viewDrives').style.display = view === 'drives' ? '' : 'none';
+  document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
+  document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.toggle('active', x.getAttribute('data-view') === view));
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
+}
+
+document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
   a.addEventListener('click', e => {
     e.preventDefault();
-    const target = document.querySelector(a.getAttribute('href'));
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(target) target.scrollIntoView({behavior: prefersReducedMotion ? 'auto' : 'smooth', block:'start'});
-    document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.remove('active'));
-    a.classList.add('active');
+    switchView(a.getAttribute('data-view'));
   });
 });
 
