@@ -1208,7 +1208,7 @@ function renderDrives(){
       <div class="drive-meta"><span>${fmtTB(usedGB)} used</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
       <div class="drive-actions">
         <button class="btn-ghost btn-sm" data-view-drive="${d.id}">View contents</button>
-        <button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>
+        ${isAdmin() ? `<button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>` : ''}
         ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-drive="${d.id}">Remove</button>` : ''}
       </div>
     </div>`;
