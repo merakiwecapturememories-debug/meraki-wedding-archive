@@ -32,7 +32,10 @@ import time
 
 
 def human_gb(num_bytes):
-    return round(num_bytes / (1024 ** 3), 2)
+    # Decimal GB (1000-based), matching how drive capacities are labeled by manufacturers
+    # and how the web app's drive capacity field works — NOT binary GiB (1024-based),
+    # which is what Windows' own Properties dialog confusingly shows as "GB"/"TB".
+    return round(num_bytes / (1000 ** 3), 2)
 
 
 def guess_date_from_name(name):
