@@ -1813,7 +1813,7 @@ scanOverlay.addEventListener('click', e => { if(e.target === scanOverlay) closeS
 
 // Recursively sum file sizes under a directory handle, in parallel, with live progress
 async function getFolderStats(dirHandle, depth, progress){
-  if(depth > 12) return {bytes: 0, files: 0}; // safety cap against pathological nesting
+  if(depth > 24){ progress.depthCapHits = (progress.depthCapHits||0) + 1; return {bytes: 0, files: 0}; } // safety cap against pathological nesting
   const entries = [];
   for await (const [, handle] of dirHandle.entries()) entries.push(handle);
 
@@ -1828,7 +1828,13 @@ async function getFolderStats(dirHandle, depth, progress){
           progress.filesRead++;
           if(progress.filesRead % 15 === 0) progress.onTick();
           return {bytes: file.size, files: 1};
-        }catch(e){ return {bytes: 0, files: 0}; }
+        }catch(e){
+          // Don't silently swallow this — a common cause is Windows' 260-character path
+          // limit, which deeply nested folders hit easily. Track it so the user can see
+          // if data is being undercounted, instead of a silent invisible gap.
+          progress.failedFiles = (progress.failedFiles||0) + 1;
+          return {bytes: 0, files: 0};
+        }
       } else if(handle.kind === 'directory'){
         return await getFolderStats(handle, depth + 1, progress);
       }
@@ -1963,6 +1969,7 @@ document.getElementById('btnChooseScanFolder').onclick = async () => {
 };
 
 async function runScan(topLevelFolders, total, progressEl){
+  let scanTotalFailed = 0, scanTotalDepthCapped = 0;
 
   for(let i = 0; i < total; i++){
     const [name, handle] = topLevelFolders[i];
@@ -1993,10 +2000,18 @@ async function runScan(topLevelFolders, total, progressEl){
         fileCount: stats.files, copiedBy: whoAmI(), copiedDate: new Date().toISOString().slice(0,10)
       });
     }
-    // Any loose files sitting directly in the event folder (not in a subfolder) still count toward total size
+    // Any loose files sitting directly in the event folder (not in a subfolder) still count toward total size.
+    // Failures here (e.g. path-too-long on Windows) are tracked, not silently dropped.
+    let looseFailed = 0;
     for(const [, fileHandle] of looseFiles){
-      try{ const file = await fileHandle.getFile(); totalBytes += file.size; progress.filesRead++; }catch(e){}
+      try{ const file = await fileHandle.getFile(); totalBytes += file.size; progress.filesRead++; }
+      catch(e){ looseFailed++; }
     }
+
+    const eventFailed = (progress.failedFiles||0) + looseFailed;
+    const eventDepthCapped = progress.depthCapHits||0;
+    scanTotalFailed += eventFailed;
+    scanTotalDepthCapped += eventDepthCapped;
 
     const sizeGB = Math.round((totalBytes / (1000**3)) * 100) / 100; // decimal GB, matching drive capacity units
     scanResultsData.push({
@@ -2004,15 +2019,23 @@ async function runScan(topLevelFolders, total, progressEl){
       client: guessClientFromName(name),
       eventDate: guessDateFromName(name),
       subfolders,
+      failedFiles: eventFailed,
+      depthCapped: eventDepthCapped,
       include: true
     });
   }
+  window.__scanFailureSummary = { failedFiles: scanTotalFailed, depthCapped: scanTotalDepthCapped };
 
-  progressEl.style.color = 'var(--ok)';
   const foundDotNote = window.__scanFoundDotSkipped > 0
     ? ` (skipped ${window.__scanFoundDotSkipped} "FOUND.###" recovery folder${window.__scanFoundDotSkipped===1?'':'s'} — this drive had a CHKDSK recovery at some point, worth a health check)`
     : '';
-  progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).${foundDotNote}`;
+  if(scanTotalFailed > 0){
+    progressEl.style.color = 'var(--danger)';
+    progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned), but ${scanTotalFailed} file${scanTotalFailed===1?'':'s'} couldn't be read (often caused by very long file paths on deeply-nested folders) — totals below may be undercounted. See ⚠ marks.${foundDotNote}`;
+  } else {
+    progressEl.style.color = 'var(--ok)';
+    progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).${foundDotNote}`;
+  }
   renderScanResults();
 };
 
@@ -2028,7 +2051,7 @@ function renderScanResults(){
       <input type="checkbox" data-scan-idx="${i}" class="scan-include" ${item.include ? 'checked' : ''}>
       <div style="flex:1;">
         <input type="text" data-scan-field="client" data-scan-idx="${i}" value="${escapeHtml(item.client)}" style="width:100%;font-size:13px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;margin-bottom:4px;">
-        <div style="font-size:11px;color:var(--ink-muted);">Folder: ${escapeHtml(item.name)} · ${item.sizeGB} GB${item.eventDate ? ' · ' + item.eventDate : ''}${item.subfolders && item.subfolders.length ? ' · ' + item.subfolders.map(sf => `${escapeHtml(sf.name)} (${sf.fileCount.toLocaleString()} files)`).join(', ') : ''}</div>
+        <div style="font-size:11px;color:var(--ink-muted);">Folder: ${escapeHtml(item.name)} · ${item.sizeGB} GB${item.eventDate ? ' · ' + item.eventDate : ''}${item.subfolders && item.subfolders.length ? ' · ' + item.subfolders.map(sf => `${escapeHtml(sf.name)} (${sf.fileCount.toLocaleString()} files)`).join(', ') : ''}${item.failedFiles ? ` <span style="color:var(--danger);font-weight:600;">⚠ ${item.failedFiles} file${item.failedFiles===1?'':'s'} couldn't be read — size may be undercounted</span>` : ''}</div>
       </div>
       <input type="date" data-scan-field="eventDate" data-scan-idx="${i}" value="${item.eventDate}" style="font-size:12px;padding:6px;border:1px solid var(--line-strong);border-radius:6px;">
     </div>
