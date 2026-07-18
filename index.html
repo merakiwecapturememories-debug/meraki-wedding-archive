@@ -1352,7 +1352,7 @@ function renderFolderRows(){
     <div class="folder-entry" data-folder-idx="${i}">
       <div class="folder-entry-head">
         <input type="text" data-f="name" value="${escapeHtml(f.name)}" placeholder="Folder name — e.g. Photos, Video">
-        <button type="button" class="folder-row-remove" data-remove-folder="${i}" aria-label="Remove folder">✕</button>
+        ${isAdmin() ? `<button type="button" class="folder-row-remove" data-remove-folder="${i}" aria-label="Remove folder">✕</button>` : `<span class="admin-only-tag" title="Only an admin can permanently remove a folder record">Admin only to remove</span>`}
       </div>
       <div class="folder-entry-grid">
         <div>
@@ -1394,8 +1394,18 @@ function renderFolderRows(){
   });
   wrap.querySelectorAll('[data-remove-folder]').forEach(btn => {
     btn.addEventListener('click', () => {
-      currentFolders.splice(Number(btn.getAttribute('data-remove-folder')), 1);
-      renderFolderRows();
+      const idx = Number(btn.getAttribute('data-remove-folder'));
+      const f = currentFolders[idx];
+      const label = f && f.name ? `"${f.name}"` : 'this folder';
+      askConfirm(
+        'Permanently remove this folder?',
+        `${label}${f && f.sizeGB ? ` (${f.sizeGB} GB` + (f.fileCount ? `, ${f.fileCount.toLocaleString()} files` : '') + ')' : ''} will be deleted, including its copy record (who copied it and when). This can't be undone.`,
+        () => {
+          currentFolders.splice(idx, 1);
+          renderFolderRows();
+        },
+        'Remove permanently'
+      );
     });
   });
 
