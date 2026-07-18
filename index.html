@@ -1263,7 +1263,6 @@ function renderTable(){
         if(e.deliveredDate) lineParts.push(`<dt>Delivered</dt><dd>${fmtDate(e.deliveredDate)}</dd>`);
         if(e.notes) lineParts.push(`<dt>Notes</dt><dd>${escapeHtml(e.notes)}</dd>`);
         const hasDetail = lineParts.length > 0 || folders.length > 0;
-        const folderChips = folders.length > 0 ? `<div class="folder-chip-list">${folders.map(f => `<span class="folder-chip"><span class="fname">${escapeHtml(f.name)}</span> · ${(f.sizeGB||0).toLocaleString()} GB${f.fileCount ? ' · ' + f.fileCount.toLocaleString() + ' files' : ''}</span>`).join('')}</div>` : '';
         const folderTable = folders.length > 0 ? `
           <table class="folder-detail-table">
             <thead><tr><th>Folder</th><th>Type</th><th>Files</th><th>Size</th><th>Copied by</th><th>Copied on</th></tr></thead>
@@ -1294,7 +1293,6 @@ function renderTable(){
             <span class="mono">${e.sizeGB ? fmtTB(e.sizeGB) : '—'} total${e.rawDeleted ? ' · raw freed' : ''}</span>
             ${rawChip(e)}
           </div>
-          ${folderChips}
           ${hasDetail ? `<button class="row-expand-toggle" data-toggle-detail="${e.id}"><span class="chev">▶</span> Details</button>
           <div class="row-detail" id="detail-${e.id}" style="display:none;">${folderTable}${lineParts.length ? `<dl style="${folders.length ? 'margin-top:10px;' : ''}">${lineParts.join('')}</dl>` : ''}</div>` : ''}
           <div class="event-card-actions">
