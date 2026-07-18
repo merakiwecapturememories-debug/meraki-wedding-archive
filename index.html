@@ -1924,7 +1924,7 @@ function guessClientFromName(name){
   return name.replace(/(\d{4})[-_.](\d{1,2})[-_.](\d{1,2})/, '').replace(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4})/, '').replace(/[-_]+/g, ' ').trim() || name;
 }
 
-document.getElementById('btnParsePastedScan').addEventListener('click', () => {
+document.getElementById('btnParsePastedScan').addEventListener('click', async () => {
   const raw = document.getElementById('scanPasteInput').value.trim();
   const progressEl = document.getElementById('scanProgress');
   if(!raw){
@@ -1932,7 +1932,16 @@ document.getElementById('btnParsePastedScan').addEventListener('click', () => {
     progressEl.textContent = 'Paste the CSV output from scan_drive.py first.';
     return;
   }
-  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const allLines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Pull out the #CAPACITY_GB metadata line (native-detected real drive capacity), if present
+  let detectedCapacityGB = null;
+  const lines = allLines.filter(line => {
+    const m = line.match(/^#CAPACITY_GB\s*,\s*([\d.]+)/i);
+    if(m){ detectedCapacityGB = parseFloat(m[1]); return false; }
+    return !line.startsWith('#'); // ignore any other metadata/comment lines
+  });
+
   // Tolerate an optional header row
   const dataLines = /^folder\s*,/i.test(lines[0]) ? lines.slice(1) : lines;
 
@@ -1952,15 +1961,38 @@ document.getElementById('btnParsePastedScan').addEventListener('click', () => {
     });
   }
 
-  if(parsed.length === 0){
+  if(parsed.length === 0 && detectedCapacityGB === null){
     progressEl.style.color = 'var(--danger)';
     progressEl.textContent = "Couldn't read that — expected lines like: FolderName,123.4,Client Name,2026-02-14";
     return;
   }
 
   scanResultsData = parsed;
+
+  // Auto-update the selected drive's registered capacity from the real, natively-detected value
+  let capacityNote = '';
+  if(detectedCapacityGB !== null){
+    const driveId = document.getElementById('scanDriveSelect').value;
+    const drive = data.drives.find(d => d.id === driveId);
+    if(drive){
+      const detectedTB = Math.round((detectedCapacityGB / 1000) * 100) / 100;
+      const currentTB = Number(drive.capacityTB) || 0;
+      if(Math.abs(detectedTB - currentTB) > 0.05){
+        drive.capacityTB = detectedTB;
+        drive.updatedBy = whoAmI();
+        drive.updatedAt = new Date().toISOString();
+        await persistDrive(drive);
+        renderAll();
+        capacityNote = ` Capacity updated: ${currentTB} TB → ${detectedTB} TB (auto-detected).`;
+        toast(`Drive capacity updated to ${detectedTB} TB`);
+      } else {
+        capacityNote = ` Capacity confirmed: ${detectedTB} TB (matches what's registered).`;
+      }
+    }
+  }
+
   progressEl.style.color = 'var(--ok)';
-  progressEl.textContent = `Loaded ${parsed.length} folder${parsed.length===1?'':'s'} from pasted results.`;
+  progressEl.textContent = `Loaded ${parsed.length} folder${parsed.length===1?'':'s'} from pasted results.${capacityNote}`;
   renderScanResults();
 });
 
