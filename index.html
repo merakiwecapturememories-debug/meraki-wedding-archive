@@ -474,7 +474,7 @@
     <div class="sidebar-section-label">Workspace</div>
     <div class="sidebar-nav">
       <a href="#" data-view="dashboard" class="active">Dashboard <span class="count" id="navDashboardCount">–</span></a>
-      <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
+      <a href="#" data-view="dashboard">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
     </div>
     <div class="sidebar-spacer"></div>
@@ -500,12 +500,6 @@
   </div>
 
   <div id="viewDashboard" class="view-panel">
-    <div class="dashboard-hint">
-      Pick <strong>Drive registry</strong> or <strong>Event ledger</strong> from the sidebar to see the details.
-    </div>
-  </div>
-
-  <div id="viewDrives" class="view-panel" style="display:none;">
     <div id="driveRegistrySection">
       <div class="panel-title">
         <h2>Drive registry</h2>
@@ -978,11 +972,11 @@ function renderUserBadge(){
   if(foot) foot.innerHTML = `${escapeHtml(currentUser.name||currentUser.email)}${isAdmin() ? ' · Admin' : ''}`;
 }
 
-function switchView(view){
+function switchView(view, clickedLink){
   document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
-  document.getElementById('viewDrives').style.display = view === 'drives' ? '' : 'none';
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
-  document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.toggle('active', x.getAttribute('data-view') === view));
+  document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.remove('active'));
+  (clickedLink || document.querySelector(`.sidebar-nav a[data-view="${view}"]`)).classList.add('active');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -990,7 +984,7 @@ function switchView(view){
 document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
   a.addEventListener('click', e => {
     e.preventDefault();
-    switchView(a.getAttribute('data-view'));
+    switchView(a.getAttribute('data-view'), a);
   });
 });
 
