@@ -29,6 +29,7 @@ import sys
 import csv
 import re
 import time
+import shutil
 
 
 def human_gb(num_bytes):
@@ -109,6 +110,19 @@ def main():
         print(f"\n'{root}' isn't a folder I can find. Check the path and try again.")
         sys.exit(1)
 
+    # Native OS call — this is accurate and instant, unlike a browser, which deliberately
+    # can't see a real external drive's true capacity for privacy/fingerprinting reasons.
+    detected_capacity_gb = None
+    detected_free_gb = None
+    try:
+        disk_total, disk_used, disk_free = shutil.disk_usage(root)
+        detected_capacity_gb = round(disk_total / (1000**3), 2)
+        detected_free_gb = round(disk_free / (1000**3), 2)
+        print(f"\nDetected drive capacity: {detected_capacity_gb:,.2f} GB "
+              f"({round(detected_capacity_gb/1000, 2)} TB) — {detected_free_gb:,.2f} GB free right now.")
+    except OSError:
+        print("\n(Couldn't auto-detect drive capacity — you'll need to enter it manually in the app.)")
+
     all_dirs = [e for e in os.scandir(root) if e.is_dir(follow_symlinks=False)]
     top_level = [e for e in all_dirs if not is_system_folder(e.name)]
     found_dot_skipped = sum(1 for e in all_dirs if FOUND_DOT_PATTERN.match(e.name))
@@ -156,14 +170,18 @@ def main():
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scan_results.csv")
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
+        if detected_capacity_gb is not None:
+            writer.writerow([f"#CAPACITY_GB", detected_capacity_gb])
         writer.writerow(["folder", "size_gb", "guessed_client", "guessed_date", "failed_reads"])
         for r in rows:
             writer.writerow([r["folder"], r["size_gb"], r["guessed_client"], r["guessed_date"], r["failed_reads"]])
 
     print(f"\nSaved: {out_path}")
     print("\nOpen the Meraki Archive app -> Scan connected drive -> 'Paste scan results',")
-    print("then paste the contents below (the app only reads the first 4 columns):\n")
+    print("then paste the contents below (the app auto-detects the #CAPACITY_GB line too):\n")
     print("-" * 60)
+    if detected_capacity_gb is not None:
+        print(f"#CAPACITY_GB,{detected_capacity_gb}")
     print("folder,size_gb,guessed_client,guessed_date")
     for r in rows:
         print(f'{r["folder"]},{r["size_gb"]},{r["guessed_client"]},{r["guessed_date"]}')
