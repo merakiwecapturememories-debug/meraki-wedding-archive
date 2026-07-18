@@ -854,15 +854,12 @@ async function loadData(isBackgroundRefresh){
     if(drivesRes.error) throw drivesRes.error;
     if(eventsRes.error) throw eventsRes.error;
 
-    if(!drivesRes.data.length){
-      // first-ever load: seed the drive registry
-      const seeded = seedDrives();
-      const { error } = await sb.from('drives').insert(seeded.map(driveToRow));
-      if(error) throw error;
-      data.drives = seeded;
-    } else {
-      data.drives = drivesRes.data.map(rowToDrive);
-    }
+    // NOTE: this used to auto-seed 12 default drives whenever the drives query came back
+    // empty, assuming that meant "first-ever load." That was unsafe — a transient network
+    // blip or a momentary empty read (not necessarily an error) could trigger it again on
+    // an already-populated database, silently duplicating the drive registry. Removed.
+    // If someone genuinely needs a fresh registry, they add drives manually via "+ Add drive".
+    data.drives = drivesRes.data.map(rowToDrive);
     data.events = eventsRes.data.map(rowToEvent);
 
     setStatus('Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
