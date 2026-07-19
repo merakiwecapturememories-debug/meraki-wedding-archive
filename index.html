@@ -517,7 +517,7 @@
     <div id="driveRegistrySection">
       <div class="panel-title">
         <h2>Drive registry</h2>
-        <button class="btn btn-sm" id="btnAddDrive">+ Add drive</button>
+        <button class="btn btn-sm" id="btnAddDrive" style="display:none;">+ Add drive</button>
       </div>
       <div id="driveList"></div>
     </div>
@@ -978,6 +978,9 @@ function renderUserBadge(){
 
   const scanBtn = document.getElementById('btnScanDrive');
   scanBtn.style.display = (isAdmin() && 'showDirectoryPicker' in window) ? 'inline-flex' : 'none';
+
+  const addDriveBtn = document.getElementById('btnAddDrive');
+  if(addDriveBtn) addDriveBtn.style.display = isAdmin() ? '' : 'none';
 
   const firstName = (currentUser.name || currentUser.email || '').split(/[ @]/)[0];
   const heading = document.getElementById('welcomeHeading');
