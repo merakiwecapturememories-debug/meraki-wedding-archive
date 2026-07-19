@@ -313,6 +313,13 @@
 
   /* Event ledger — card grid (replaces the old table) */
   .event-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+  .group-section{margin-bottom:22px;}
+  .group-section:last-child{margin-bottom:0;}
+  .group-section-head{
+    font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:10px;padding-bottom:7px;
+    border-bottom:1px solid var(--line-strong);display:flex;align-items:center;gap:8px;
+  }
+  .group-section-count{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;color:var(--ink-muted);background:var(--card-sunken);padding:1px 7px;border-radius:20px;}
   .event-card{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
     padding:15px 16px 14px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;
@@ -543,6 +550,20 @@
             <option value="Raw Deleted">Raw deleted</option>
           </select>
           <select id="filterDrive"><option value="">All drives</option></select>
+          <select id="sortBy" title="Sort by">
+            <option value="date_desc">Newest first</option>
+            <option value="date_asc">Oldest first</option>
+            <option value="client_asc">Client A → Z</option>
+            <option value="client_desc">Client Z → A</option>
+            <option value="size_desc">Largest first</option>
+            <option value="size_asc">Smallest first</option>
+          </select>
+          <select id="groupBy" title="Group by">
+            <option value="none">No grouping</option>
+            <option value="drive">Group by drive</option>
+            <option value="status">Group by status</option>
+            <option value="type">Group by event type</option>
+          </select>
         </div>
       </div>
       <div id="rawAlert"></div>
@@ -1308,11 +1329,89 @@ function renderRawAlert(){
 
 let rawEligibleFilterActive = false;
 
+function sortEvents(rows, sortBy){
+  const sorted = rows.slice();
+  switch(sortBy){
+    case 'date_asc': return sorted.sort((a,b) => (a.eventDate||'').localeCompare(b.eventDate||''));
+    case 'client_asc': return sorted.sort((a,b) => (a.client||'').localeCompare(b.client||''));
+    case 'client_desc': return sorted.sort((a,b) => (b.client||'').localeCompare(a.client||''));
+    case 'size_desc': return sorted.sort((a,b) => (Number(b.sizeGB)||0) - (Number(a.sizeGB)||0));
+    case 'size_asc': return sorted.sort((a,b) => (Number(a.sizeGB)||0) - (Number(b.sizeGB)||0));
+    case 'date_desc': default: return sorted.sort((a,b) => (b.eventDate||'').localeCompare(a.eventDate||''));
+  }
+}
+
+function groupEvents(rows, groupBy, driveMap){
+  if(groupBy === 'none') return null;
+  const keyFn = {
+    drive: e => e.driveId && driveMap[e.driveId] ? driveMap[e.driveId] : 'Unassigned',
+    status: e => e.status || 'In Editing',
+    type: e => e.eventType || 'Other'
+  }[groupBy];
+  const groups = new Map();
+  rows.forEach(e => {
+    const key = keyFn(e);
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
+  });
+  return groups; // preserves insertion order, i.e. the sort order already applied to rows
+}
+
+function buildEventCardHTML(e, driveMap){
+  const folders = Array.isArray(e.folders) ? e.folders : [];
+  let lineParts = [];
+  if(e.copiedBy || e.copiedTo) lineParts.push(`<dt>Copied</dt><dd>${e.copiedBy ? escapeHtml(e.copiedBy) : ''}${e.copiedTo ? ' → ' + escapeHtml(e.copiedTo) : ''}</dd>`);
+  if(e.editedDate) lineParts.push(`<dt>Edited</dt><dd>${fmtDate(e.editedDate)}</dd>`);
+  if(e.deliveredDate) lineParts.push(`<dt>Delivered</dt><dd>${fmtDate(e.deliveredDate)}</dd>`);
+  if(e.notes) lineParts.push(`<dt>Notes</dt><dd>${escapeHtml(e.notes)}</dd>`);
+  const hasDetail = lineParts.length > 0 || folders.length > 0;
+  const folderTable = folders.length > 0 ? `
+    <table class="folder-detail-table">
+      <thead><tr><th>Folder</th><th>Type</th><th>Files</th><th>Size</th><th>Copied by</th><th>Copied on</th></tr></thead>
+      <tbody>${folders.map(f => `<tr>
+        <td>${escapeHtml(f.name)}</td>
+        <td><span class="folder-type-tag">${escapeHtml(f.type||'Other')}</span></td>
+        <td>${f.fileCount ? f.fileCount.toLocaleString() : '—'}</td>
+        <td>${(f.sizeGB||0).toLocaleString()} GB</td>
+        <td>${f.copiedBy ? escapeHtml(f.copiedBy) : '—'}</td>
+        <td>${f.copiedDate ? fmtDate(f.copiedDate) : '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>` : '';
+  const initials = (e.client||'?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
+  const driveLabel = e.driveId && driveMap[e.driveId] ? driveMap[e.driveId] : null;
+  return `<article class="event-card">
+    <div class="event-card-top">
+      <div class="event-card-avatar">${initials}</div>
+      <div class="event-card-headline">
+        <div class="event-card-client">${escapeHtml(e.client)}</div>
+      </div>
+      <span class="status-badge ${statusClass(e.status)}">${escapeHtml(e.status||'In Editing')}</span>
+    </div>
+    <div class="event-card-meta">
+      <span class="event-type-tag">${escapeHtml(e.eventType||'')} · ${fmtDate(e.eventDate)}</span>
+      ${driveLabel ? `<span class="drive-pill">${escapeHtml(driveLabel)}</span>` : `<span style="color:var(--ink-soft);font-size:12px;">Unassigned</span>`}
+    </div>
+    <div class="event-card-size-row">
+      <span class="mono">${e.sizeGB ? fmtTB(e.sizeGB) : '—'} total${e.rawDeleted ? ' · raw freed' : ''}</span>
+      ${rawChip(e)}
+    </div>
+    ${hasDetail ? `<button class="row-expand-toggle" data-toggle-detail="${e.id}"><span class="chev">▶</span> Details</button>
+    <div class="row-detail" id="detail-${e.id}" style="display:none;">${folderTable}${lineParts.length ? `<dl style="${folders.length ? 'margin-top:10px;' : ''}">${lineParts.join('')}</dl>` : ''}</div>` : ''}
+    <div class="event-card-actions">
+      <button class="btn-ghost btn-sm" data-edit-event="${e.id}">Edit</button>
+      ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-event="${e.id}">Remove</button>` : ''}
+    </div>
+    ${e.updatedBy ? `<div class="event-card-updated">by ${escapeHtml(e.updatedBy)}</div>` : ''}
+  </article>`;
+}
+
 function renderTable(){
   const wrap = document.getElementById('tableWrap');
   const search = document.getElementById('searchInput').value.trim().toLowerCase();
   const statusFilter = document.getElementById('filterStatus').value;
   const driveFilter = document.getElementById('filterDrive').value;
+  const sortBy = document.getElementById('sortBy').value;
+  const groupBy = document.getElementById('groupBy').value;
 
   let rows = data.events.filter(e => {
     const matchesSearch = !search || (e.client||'').toLowerCase().includes(search) || (e.eventName||'').toLowerCase().includes(search);
@@ -1320,7 +1419,8 @@ function renderTable(){
     const matchesDrive = !driveFilter || e.driveId === driveFilter;
     const matchesEligible = !rawEligibleFilterActive || (!e.rawDeleted && e.deliveredDate && daysSince(e.deliveredDate) >= DELETE_BUFFER_DAYS);
     return matchesSearch && matchesStatus && matchesDrive && matchesEligible;
-  }).sort((a,b) => (b.eventDate||'').localeCompare(a.eventDate||''));
+  });
+  rows = sortEvents(rows, sortBy);
 
   const countEl = document.getElementById('entriesCount');
   if(countEl) countEl.textContent = rows.length === data.events.length ? `${rows.length}` : `${rows.length} of ${data.events.length}`;
@@ -1342,56 +1442,17 @@ function renderTable(){
   }
 
   const driveMap = Object.fromEntries(data.drives.map(d => [d.id, d.label]));
+  const groups = groupEvents(rows, groupBy, driveMap);
 
-  wrap.innerHTML = `<div class="event-grid">
-      ${rows.map(e => {
-        const folders = Array.isArray(e.folders) ? e.folders : [];
-        let lineParts = [];
-        if(e.copiedBy || e.copiedTo) lineParts.push(`<dt>Copied</dt><dd>${e.copiedBy ? escapeHtml(e.copiedBy) : ''}${e.copiedTo ? ' → ' + escapeHtml(e.copiedTo) : ''}</dd>`);
-        if(e.editedDate) lineParts.push(`<dt>Edited</dt><dd>${fmtDate(e.editedDate)}</dd>`);
-        if(e.deliveredDate) lineParts.push(`<dt>Delivered</dt><dd>${fmtDate(e.deliveredDate)}</dd>`);
-        if(e.notes) lineParts.push(`<dt>Notes</dt><dd>${escapeHtml(e.notes)}</dd>`);
-        const hasDetail = lineParts.length > 0 || folders.length > 0;
-        const folderTable = folders.length > 0 ? `
-          <table class="folder-detail-table">
-            <thead><tr><th>Folder</th><th>Type</th><th>Files</th><th>Size</th><th>Copied by</th><th>Copied on</th></tr></thead>
-            <tbody>${folders.map(f => `<tr>
-              <td>${escapeHtml(f.name)}</td>
-              <td><span class="folder-type-tag">${escapeHtml(f.type||'Other')}</span></td>
-              <td>${f.fileCount ? f.fileCount.toLocaleString() : '—'}</td>
-              <td>${(f.sizeGB||0).toLocaleString()} GB</td>
-              <td>${f.copiedBy ? escapeHtml(f.copiedBy) : '—'}</td>
-              <td>${f.copiedDate ? fmtDate(f.copiedDate) : '—'}</td>
-            </tr>`).join('')}</tbody>
-          </table>` : '';
-        const initials = (e.client||'?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
-        const driveLabel = e.driveId && driveMap[e.driveId] ? driveMap[e.driveId] : null;
-        return `<article class="event-card">
-          <div class="event-card-top">
-            <div class="event-card-avatar">${initials}</div>
-            <div class="event-card-headline">
-              <div class="event-card-client">${escapeHtml(e.client)}</div>
-            </div>
-            <span class="status-badge ${statusClass(e.status)}">${escapeHtml(e.status||'In Editing')}</span>
-          </div>
-          <div class="event-card-meta">
-            <span class="event-type-tag">${escapeHtml(e.eventType||'')} · ${fmtDate(e.eventDate)}</span>
-            ${driveLabel ? `<span class="drive-pill">${escapeHtml(driveLabel)}</span>` : `<span style="color:var(--ink-soft);font-size:12px;">Unassigned</span>`}
-          </div>
-          <div class="event-card-size-row">
-            <span class="mono">${e.sizeGB ? fmtTB(e.sizeGB) : '—'} total${e.rawDeleted ? ' · raw freed' : ''}</span>
-            ${rawChip(e)}
-          </div>
-          ${hasDetail ? `<button class="row-expand-toggle" data-toggle-detail="${e.id}"><span class="chev">▶</span> Details</button>
-          <div class="row-detail" id="detail-${e.id}" style="display:none;">${folderTable}${lineParts.length ? `<dl style="${folders.length ? 'margin-top:10px;' : ''}">${lineParts.join('')}</dl>` : ''}</div>` : ''}
-          <div class="event-card-actions">
-            <button class="btn-ghost btn-sm" data-edit-event="${e.id}">Edit</button>
-            ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-del-event="${e.id}">Remove</button>` : ''}
-          </div>
-          ${e.updatedBy ? `<div class="event-card-updated">by ${escapeHtml(e.updatedBy)}</div>` : ''}
-        </article>`;
-      }).join('')}
-    </div>`;
+  if(groups){
+    wrap.innerHTML = Array.from(groups.entries()).map(([groupLabel, groupRows]) => `
+      <div class="group-section">
+        <div class="group-section-head">${escapeHtml(String(groupLabel))} <span class="group-section-count">${groupRows.length}</span></div>
+        <div class="event-grid">${groupRows.map(e => buildEventCardHTML(e, driveMap)).join('')}</div>
+      </div>`).join('');
+  } else {
+    wrap.innerHTML = `<div class="event-grid">${rows.map(e => buildEventCardHTML(e, driveMap)).join('')}</div>`;
+  }
 
   wrap.querySelectorAll('[data-toggle-detail]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2272,6 +2333,8 @@ document.getElementById('btnImportScan').onclick = async () => {
 document.getElementById('searchInput').addEventListener('input', () => { rawEligibleFilterActive = false; renderTable(); });
 document.getElementById('filterStatus').addEventListener('change', () => { rawEligibleFilterActive = false; renderTable(); });
 document.getElementById('filterDrive').addEventListener('change', () => { rawEligibleFilterActive = false; renderTable(); });
+document.getElementById('sortBy').addEventListener('change', () => renderTable());
+document.getElementById('groupBy').addEventListener('change', () => renderTable());
 
 // App initializes once a session is confirmed (see onAuthStateChange above).
 </script>
