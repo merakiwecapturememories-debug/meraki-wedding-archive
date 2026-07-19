@@ -60,12 +60,19 @@ SYSTEM_FOLDER_SKIPLIST = {
     "$recycle.bin", "system volume information", ".trashes", ".trash",
     ".fseventsd", ".spotlight-v100", ".temporaryitems",
     ".documentrevisions-v100", "lost+found",
+    "catalogpreviews.lrdata", "smart previews.lrdata",
+    "adobe premiere pro video previews", "adobe premiere pro audio previews",
+    "adobe premiere pro auto-save", "media cache", "media cache files",
+    "peak files", ".cache",
 }
 FOUND_DOT_PATTERN = re.compile(r'^found\.\d{3}$', re.IGNORECASE)
+LRDATA_PATTERN = re.compile(r'.*\.lrdata$', re.IGNORECASE)
 
 
 def is_system_folder(name):
-    return name.lower() in SYSTEM_FOLDER_SKIPLIST or bool(FOUND_DOT_PATTERN.match(name))
+    return (name.lower() in SYSTEM_FOLDER_SKIPLIST
+            or bool(FOUND_DOT_PATTERN.match(name))
+            or bool(LRDATA_PATTERN.match(name)))
 
 
 def long_path_safe(path):
@@ -78,16 +85,20 @@ def long_path_safe(path):
     return path
 
 
-def folder_size_bytes(path, failure_counter):
+def folder_size_bytes(path, failure_counter, junk_counter=None):
     total = 0
     safe_path = long_path_safe(path)
     try:
         for entry in os.scandir(safe_path):
             try:
+                if entry.is_dir(follow_symlinks=False) and is_system_folder(entry.name):
+                    if junk_counter is not None:
+                        junk_counter[0] += 1
+                    continue  # skip cache/junk folders at ANY nesting depth, not just top-level
                 if entry.is_file(follow_symlinks=False):
                     total += entry.stat(follow_symlinks=False).st_size
                 elif entry.is_dir(follow_symlinks=False):
-                    total += folder_size_bytes(entry.path, failure_counter)
+                    total += folder_size_bytes(entry.path, failure_counter, junk_counter)
             except (PermissionError, OSError):
                 failure_counter[0] += 1  # track, don't silently drop — often a long-path issue
                 continue
@@ -134,13 +145,17 @@ def main():
 
     rows = []
     total_failures = 0
+    total_junk_skipped = 0
     start = time.time()
     for i, entry in enumerate(top_level, 1):
         t0 = time.time()
+        print(f"  [{i}/{len(top_level)}] {entry.name} ... scanning", end="", flush=True)
         failure_counter = [0]
-        size_bytes = folder_size_bytes(entry.path, failure_counter)
+        junk_counter = [0]
+        size_bytes = folder_size_bytes(entry.path, failure_counter, junk_counter)
         size_gb = human_gb(size_bytes)
         total_failures += failure_counter[0]
+        total_junk_skipped += junk_counter[0]
         rows.append({
             "folder": entry.name,
             "size_gb": size_gb,
@@ -149,10 +164,14 @@ def main():
             "failed_reads": failure_counter[0],
         })
         warn = f"  ⚠ {failure_counter[0]} unreadable item(s)" if failure_counter[0] else ""
-        print(f"  [{i}/{len(top_level)}] {entry.name:<45} {size_gb:>10.2f} GB   ({time.time()-t0:.1f}s){warn}")
+        junk_note = f"  (skipped {junk_counter[0]} cache/junk folder(s))" if junk_counter[0] else ""
+        print(f"\r  [{i}/{len(top_level)}] {entry.name:<45} {size_gb:>10.2f} GB   ({time.time()-t0:.1f}s){warn}{junk_note}")
 
     elapsed = time.time() - start
     print(f"\nDone in {elapsed:.1f} seconds — {len(top_level)} folders.")
+    if total_junk_skipped:
+        print(f"Skipped {total_junk_skipped} cache/junk folder(s) total (recycle bin, Lightroom/Premiere "
+              f"caches, etc.) — these were slowing things down without holding real data.")
     if total_failures:
         print(f"\n⚠ WARNING: {total_failures} file(s)/folder(s) couldn't be read across this scan.")
         print("This almost always means Windows' 260-character path limit was hit somewhere")
