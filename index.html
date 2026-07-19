@@ -93,6 +93,7 @@
     background:var(--wine-tint);padding:1px 6px;border-radius:999px;width:fit-content;
   }
   .user-badge-role-member{color:var(--ink-soft);background:var(--card-sunken);}
+  .user-badge-title{font-size:10.5px;color:var(--ink-soft);margin:0 0 2px;}
   .brandmark{display:flex;align-items:center;gap:12px;}
   .brandmark .mark{
     width:38px;height:38px;border-radius:9px;background:var(--wine);color:#fff;
@@ -1011,11 +1012,13 @@ function renderUserBadge(){
   const displayName = capitalizeName(rawName);
   const initials = displayName.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
   const adminTag = isAdmin() ? '<span class="user-badge-role">Admin</span>' : '<span class="user-badge-role user-badge-role-member">Employee</span>';
+  const titleLine = currentUser.title ? `<div class="user-badge-title">${escapeHtml(currentUser.title)}</div>` : '';
 
   el.innerHTML = `
     <div class="user-badge-avatar">${escapeHtml(initials)}</div>
     <div class="user-badge-text">
       <div class="user-badge-name">${escapeHtml(displayName)}</div>
+      ${titleLine}
       ${adminTag}
     </div>
   `;
@@ -1035,7 +1038,7 @@ function renderUserBadge(){
   const heading = document.getElementById('welcomeHeading');
   if(heading) heading.textContent = firstName ? `Welcome back, ${firstName}` : 'Welcome back';
   const foot = document.getElementById('sidebarFoot');
-  if(foot) foot.innerHTML = `${escapeHtml(currentUser.name||currentUser.email)}${isAdmin() ? ' · Admin' : ''}`;
+  if(foot) foot.innerHTML = `${escapeHtml(displayName)}${currentUser.title ? ' · ' + escapeHtml(currentUser.title) : (isAdmin() ? ' · Admin' : '')}`;
 }
 
 function switchView(view, clickedLink){
@@ -1108,6 +1111,7 @@ sb.auth.onAuthStateChange((event, session) => {
       id: session.user.id,
       email: session.user.email,
       name: (session.user.user_metadata && session.user.user_metadata.full_name) || '',
+      title: (session.user.user_metadata && session.user.user_metadata.title) || '',
       role: (session.user.user_metadata && session.user.user_metadata.role) || 'member'
     };
     renderUserBadge();
