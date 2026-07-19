@@ -80,6 +80,19 @@
     background:transparent;border-bottom:1px solid var(--line);margin-bottom:1.75rem;
   }
   .welcome-heading{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;}
+
+  #userBadge{display:flex;align-items:center;gap:10px;}
+  .user-badge-avatar{
+    width:32px;height:32px;border-radius:9px;background:var(--wine-tint);color:var(--wine-dark);
+    display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex-shrink:0;
+  }
+  .user-badge-text{display:flex;flex-direction:column;gap:2px;line-height:1.2;}
+  .user-badge-name{font-size:12.5px;font-weight:600;color:var(--ink);}
+  .user-badge-role{
+    font-size:9px;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;color:var(--wine-dark);
+    background:var(--wine-tint);padding:1px 6px;border-radius:999px;width:fit-content;
+  }
+  .user-badge-role-member{color:var(--ink-soft);background:var(--card-sunken);}
   .brandmark{display:flex;align-items:center;gap:12px;}
   .brandmark .mark{
     width:38px;height:38px;border-radius:9px;background:var(--wine);color:#fff;
@@ -986,11 +999,26 @@ function showApp(){
   document.getElementById('appRoot').style.display = 'block';
 }
 
+function capitalizeName(raw){
+  if(!raw) return '';
+  return raw.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 function renderUserBadge(){
   const el = document.getElementById('userBadge');
   if(!currentUser){ el.innerHTML = ''; return; }
-  const adminTag = isAdmin() ? ' <span style="background:var(--wine);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:0.04em;padding:2px 7px;border-radius:999px;vertical-align:middle;">ADMIN</span>' : '';
-  el.innerHTML = `<span>Signed in as <strong>${(currentUser.name||currentUser.email)}</strong>${adminTag}</span>`;
+  const rawName = currentUser.name || (currentUser.email || '').split('@')[0];
+  const displayName = capitalizeName(rawName);
+  const initials = displayName.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
+  const adminTag = isAdmin() ? '<span class="user-badge-role">Admin</span>' : '<span class="user-badge-role user-badge-role-member">Employee</span>';
+
+  el.innerHTML = `
+    <div class="user-badge-avatar">${escapeHtml(initials)}</div>
+    <div class="user-badge-text">
+      <div class="user-badge-name">${escapeHtml(displayName)}</div>
+      ${adminTag}
+    </div>
+  `;
   const btn = document.createElement('button');
   btn.className = 'btn btn-sm';
   btn.textContent = 'Log out';
@@ -1003,7 +1031,7 @@ function renderUserBadge(){
   const addDriveBtn = document.getElementById('btnAddDrive');
   if(addDriveBtn) addDriveBtn.style.display = isAdmin() ? '' : 'none';
 
-  const firstName = (currentUser.name || currentUser.email || '').split(/[ @]/)[0];
+  const firstName = displayName.split(' ')[0];
   const heading = document.getElementById('welcomeHeading');
   if(heading) heading.textContent = firstName ? `Welcome back, ${firstName}` : 'Welcome back';
   const foot = document.getElementById('sidebarFoot');
