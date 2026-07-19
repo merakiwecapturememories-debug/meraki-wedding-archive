@@ -2290,10 +2290,21 @@ document.getElementById('btnCancelScan').onclick = closeScanModal;
 scanOverlay.addEventListener('click', e => { if(e.target === scanOverlay) closeScanModal(); });
 
 // Recursively sum file sizes under a directory handle, in parallel, with live progress
+// Same junk-folder patterns as the drive-root skip, plus common photo/video editing
+// software cache folders — these can silently contain tens of thousands of tiny files
+// that make a scan look "stuck" while contributing nothing meaningful to real usage.
+const NESTED_JUNK_SKIPLIST = /^(\$RECYCLE\.BIN|System Volume Information|\.Trashes|\.Trash|\.fseventsd|\.Spotlight-V100|\.TemporaryItems|\.DocumentRevisions-V100|lost\+found|FOUND\.\d{3}|CatalogPreviews\.lrdata|Smart Previews\.lrdata|.*\.lrdata|Adobe Premiere Pro (Video|Audio) Previews|Adobe Premiere Pro Auto-Save|Media Cache( Files)?|Peak Files|\.cache|Thumbs\.db|\$RECYCLE\.BIN)$/i;
+
 async function getFolderStats(dirHandle, depth, progress){
   if(depth > 24){ progress.depthCapHits = (progress.depthCapHits||0) + 1; return {bytes: 0, files: 0}; } // safety cap against pathological nesting
   const entries = [];
-  for await (const [, handle] of dirHandle.entries()) entries.push(handle);
+  for await (const [name, handle] of dirHandle.entries()){
+    if(handle.kind === 'directory' && NESTED_JUNK_SKIPLIST.test(name.trim())){
+      progress.skippedJunkFolders = (progress.skippedJunkFolders||0) + 1;
+      continue; // skip cache/junk folders entirely, at any nesting depth
+    }
+    entries.push(handle);
+  }
 
   const BATCH_SIZE = 48;
   let totalBytes = 0, totalFiles = 0;
@@ -2304,7 +2315,11 @@ async function getFolderStats(dirHandle, depth, progress){
         try{
           const file = await handle.getFile();
           progress.filesRead++;
-          if(progress.filesRead % 15 === 0) progress.onTick();
+          const now = Date.now();
+          if(!progress.lastTick || now - progress.lastTick > 200){ // throttle to ~5x/sec, not every file
+            progress.lastTick = now;
+            progress.onTick();
+          }
           return {bytes: file.size, files: 1};
         }catch(e){
           // Don't silently swallow this — a common cause is Windows' 260-character path
@@ -2479,7 +2494,7 @@ document.getElementById('btnChooseScanFolder').onclick = async () => {
 };
 
 async function runScan(topLevelFolders, total, progressEl){
-  let scanTotalFailed = 0, scanTotalDepthCapped = 0;
+  let scanTotalFailed = 0, scanTotalDepthCapped = 0, scanTotalJunkSkipped = 0;
 
   for(let i = 0; i < total; i++){
     const [name, handle] = topLevelFolders[i];
@@ -2496,7 +2511,7 @@ async function runScan(topLevelFolders, total, progressEl){
     // events already have a proper Photos/Video breakdown instead of just one flat size.
     const immediateEntries = [];
     for await (const [childName, childHandle] of handle.entries()) immediateEntries.push([childName, childHandle]);
-    const subDirs = immediateEntries.filter(([, h]) => h.kind === 'directory');
+    const subDirs = immediateEntries.filter(([n, h]) => h.kind === 'directory' && !NESTED_JUNK_SKIPLIST.test(n.trim()));
     const looseFiles = immediateEntries.filter(([, h]) => h.kind === 'file');
 
     let totalBytes = 0;
@@ -2522,6 +2537,7 @@ async function runScan(topLevelFolders, total, progressEl){
     const eventDepthCapped = progress.depthCapHits||0;
     scanTotalFailed += eventFailed;
     scanTotalDepthCapped += eventDepthCapped;
+    scanTotalJunkSkipped += (progress.skippedJunkFolders||0);
 
     const sizeGB = Math.round((totalBytes / (1000**3)) * 100) / 100; // decimal GB, matching drive capacity units
     scanResultsData.push({
@@ -2539,12 +2555,15 @@ async function runScan(topLevelFolders, total, progressEl){
   const foundDotNote = window.__scanFoundDotSkipped > 0
     ? ` (skipped ${window.__scanFoundDotSkipped} "FOUND.###" recovery folder${window.__scanFoundDotSkipped===1?'':'s'} — this drive had a CHKDSK recovery at some point, worth a health check)`
     : '';
+  const junkNote = scanTotalJunkSkipped > 0
+    ? ` Skipped ${scanTotalJunkSkipped} cache/junk folder${scanTotalJunkSkipped===1?'':'s'} (recycle bin, Lightroom/Premiere caches, etc.) that would have slowed things down without adding real data.`
+    : '';
   if(scanTotalFailed > 0){
     progressEl.style.color = 'var(--danger)';
-    progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned), but ${scanTotalFailed} file${scanTotalFailed===1?'':'s'} couldn't be read (often caused by very long file paths on deeply-nested folders) — totals below may be undercounted. See ⚠ marks.${foundDotNote}`;
+    progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned), but ${scanTotalFailed} file${scanTotalFailed===1?'':'s'} couldn't be read (often caused by very long file paths on deeply-nested folders) — totals below may be undercounted. See ⚠ marks.${foundDotNote}${junkNote}`;
   } else {
     progressEl.style.color = 'var(--ok)';
-    progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).${foundDotNote}`;
+    progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).${foundDotNote}${junkNote}`;
   }
   renderScanResults();
 };
