@@ -128,12 +128,18 @@
   .panel-title h2{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;margin:0;color:var(--ink);}
 
   button{font-family:'Inter',sans-serif;cursor:pointer;}
-  .btn{border:1px solid var(--line-strong);background:var(--card);color:var(--ink);border-radius:7px;padding:7px 13px;font-size:13px;font-weight:500;transition:background 0.12s, border-color 0.12s, transform 0.05s;}
+  .btn{border:1px solid var(--line-strong);background:var(--card);color:var(--ink);border-radius:7px;padding:7px 13px;font-size:13px;font-weight:500;transition:background 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.12s;}
   .btn:hover{background:var(--card-sunken);border-color:var(--ink-muted);}
   .btn:active{transform:scale(0.98);}
   .btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--wine-tint);}
-  .btn-primary{background:var(--wine);border-color:var(--wine);color:#fff;}
-  .btn-primary:hover{background:var(--wine-dark);border-color:var(--wine-dark);}
+  .btn-primary{background:var(--wine);border-color:var(--wine);color:#fff;position:relative;overflow:hidden;}
+  .btn-primary::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.22) 48%, rgba(255,255,255,0.22) 52%, transparent 70%);
+    transform:translateX(-120%);transition:transform 0.55s ease;
+  }
+  .btn-primary:hover{background:var(--wine-dark);border-color:var(--wine-dark);transform:translateY(-1px);box-shadow:0 6px 18px rgba(193,84,107,0.35);}
+  .btn-primary:hover::before{transform:translateX(120%);}
   .btn-ghost{border-color:transparent;background:transparent;padding:5px 8px;font-size:12.5px;color:var(--ink-soft);font-weight:500;transition:color 0.12s, background 0.12s;}
   .btn-ghost:hover{color:var(--ink);background:var(--card-sunken);border-radius:6px;}
   .btn-danger-ghost{border-color:transparent;background:transparent;padding:5px 8px;font-size:12.5px;color:var(--danger);font-weight:500;}
@@ -213,7 +219,7 @@
   .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
   .field input, .field select, .field textarea{
     width:100%;font-family:'Inter',sans-serif;font-size:13.5px;padding:9px 11px;border:1px solid var(--line-strong);
-    border-radius:7px;background:var(--card-sunken);color:var(--ink);
+    border-radius:7px;background:var(--card-sunken);color:var(--ink);transition:border-color 0.15s, box-shadow 0.15s;
   }
   .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 3px var(--wine-tint);}
   .field textarea{resize:vertical;min-height:56px;font-family:'Inter',sans-serif;}
@@ -431,9 +437,10 @@
   .auth-field input{
     width:100%;font-family:'Poppins',sans-serif;font-size:14px;padding:15px 44px 15px 20px;
     border:1.5px solid #2A2A30;border-radius:999px;background:#17171A;color:#F1F1F4;box-sizing:border-box;
+    transition:border-color 0.18s, box-shadow 0.18s;
   }
   .auth-field input::placeholder{color:#6C6E78;}
-  .auth-field input:focus{outline:none;border-color:#C1546B;}
+  .auth-field input:focus{outline:none;border-color:#C1546B;box-shadow:0 0 0 4px rgba(193,84,107,0.18);}
   .auth-field .auth-eye{
     position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#6C6E78;
     cursor:pointer;display:flex;align-items:center;background:none;border:none;padding:2px;
@@ -443,9 +450,17 @@
   .auth-forgot a:hover{color:#F1F1F4;text-decoration:underline;}
   .auth-submit{
     width:100%;padding:16px;border-radius:999px;border:none;background:#C1546B;color:#fff;
-    font-family:'Poppins',sans-serif;font-weight:600;font-size:15px;cursor:pointer;transition:background 0.12s;
+    font-family:'Poppins',sans-serif;font-weight:600;font-size:15px;cursor:pointer;
+    transition:background 0.12s, transform 0.12s, box-shadow 0.12s;position:relative;overflow:hidden;
   }
-  .auth-submit:hover{background:#A8455A;}
+  .auth-submit::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 48%, rgba(255,255,255,0.25) 52%, transparent 70%);
+    transform:translateX(-120%);transition:transform 0.55s ease;
+  }
+  .auth-submit:hover{background:#A8455A;transform:translateY(-1px);box-shadow:0 8px 22px rgba(193,84,107,0.4);}
+  .auth-submit:hover::before{transform:translateX(120%);}
+  .auth-submit:active{transform:translateY(0) scale(0.99);}
   .auth-help{
     display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;
     margin-top:22px;padding-top:18px;border-top:1px solid #202024;
