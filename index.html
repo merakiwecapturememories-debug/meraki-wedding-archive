@@ -925,6 +925,8 @@ function renderSkeleton(){
     </div>`).join('')}</div>`;
 }
 
+let consecutiveSyncFailures = 0;
+
 async function loadData(isBackgroundRefresh){
   if(!isBackgroundRefresh){ setStatus('Loading…'); renderSkeleton(); }
   try{
@@ -943,9 +945,24 @@ async function loadData(isBackgroundRefresh){
     data.drives = drivesRes.data.map(rowToDrive);
     data.events = eventsRes.data.map(rowToEvent);
 
+    consecutiveSyncFailures = 0;
     setStatus('Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
     renderAll();
   }catch(e){
+    if(!isBackgroundRefresh){
+      // A failure on the initial/manual load is worth surfacing right away — it's actionable.
+      setStatus("Offline — showing last loaded data (check connection or Supabase config)", true);
+      return;
+    }
+    // A single failed background poll is usually just a transient blip (WiFi handoff, a
+    // brief timeout) — don't alarm the user over it. Retry quickly and quietly first;
+    // only show the "Offline" status once failures are consecutive, meaning something
+    // is actually wrong rather than a one-off hiccup.
+    consecutiveSyncFailures++;
+    if(consecutiveSyncFailures === 1){
+      setTimeout(() => loadData(true), 3000); // quiet retry a few seconds later
+      return;
+    }
     setStatus("Offline — showing last loaded data (check connection or Supabase config)", true);
   }
 }
