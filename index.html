@@ -458,6 +458,20 @@
       <button class="auth-submit" id="btnLogin">Login</button>
       <div class="auth-help">Need access? <strong>Contact Meraki Admin</strong></div>
     </div>
+
+    <div id="resetPasswordForm" style="display:none;">
+      <p style="font-size:12.5px;color:#9A9CA6;line-height:1.6;margin:0 0 16px;text-align:center;">You clicked a password reset link. Choose a new password below.</p>
+      <div class="auth-field">
+        <input type="password" id="resetPassword1" placeholder="New password">
+        <button type="button" class="auth-eye" data-target="resetPassword1">👁</button>
+      </div>
+      <div class="auth-field">
+        <input type="password" id="resetPassword2" placeholder="Confirm new password">
+        <button type="button" class="auth-eye" data-target="resetPassword2">👁</button>
+      </div>
+      <div id="resetPasswordError" style="font-size:12.5px;color:var(--danger);margin-bottom:10px;display:none;"></div>
+      <button class="auth-submit" id="btnSetNewPassword">Set new password</button>
+    </div>
   </div>
 </div>
 
@@ -1029,6 +1043,14 @@ document.getElementById('forgotPasswordLink').onclick = async (e) => {
 };
 
 sb.auth.onAuthStateChange((event, session) => {
+  if(event === 'PASSWORD_RECOVERY'){
+    // Someone clicked a reset-password email link. Supabase creates a valid session for this,
+    // but we must NOT let them straight into the app — show the "set new password" form instead.
+    showAuthGate();
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('resetPasswordForm').style.display = 'block';
+    return;
+  }
   if(session && session.user){
     currentUser = {
       id: session.user.id,
@@ -1047,6 +1069,50 @@ sb.auth.onAuthStateChange((event, session) => {
     showAuthGate();
   }
 });
+
+document.getElementById('btnSetNewPassword').onclick = async () => {
+  const p1 = document.getElementById('resetPassword1').value;
+  const p2 = document.getElementById('resetPassword2').value;
+  const errEl = document.getElementById('resetPasswordError');
+  errEl.style.display = 'none';
+
+  if(p1.length < 6){
+    errEl.textContent = 'Password must be at least 6 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(p1 !== p2){
+    errEl.textContent = "Passwords don't match.";
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('btnSetNewPassword');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const { error } = await sb.auth.updateUser({ password: p1 });
+
+  btn.disabled = false;
+  btn.textContent = 'Set new password';
+
+  if(error){
+    errEl.style.color = 'var(--danger)';
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Sign out so they log in fresh with the new password, rather than silently
+  // continuing in a session that started from an emailed link.
+  await sb.auth.signOut();
+  document.getElementById('resetPasswordForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
+  const loginErrEl = document.getElementById('loginError');
+  loginErrEl.style.color = 'var(--ok)';
+  loginErrEl.textContent = 'Password updated. Log in with your new password.';
+  loginErrEl.style.display = 'block';
+};
 function isAdmin(){ return !!(currentUser && currentUser.role === 'admin'); }
 // ===================== /AUTH =====================
 
