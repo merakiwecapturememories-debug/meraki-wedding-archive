@@ -186,6 +186,34 @@
   }
   .entries-panel-head .entries-count{font-family:'IBM Plex Mono',monospace;text-transform:none;letter-spacing:0;color:var(--ink-soft);font-weight:500;}
   .entries-panel #tableWrap{padding:18px;}
+
+  /* Crew Schedule — spreadsheet-style grid matching the studio's existing Google Sheet look */
+  .sched-empty{padding:52px 20px;text-align:center;color:var(--ink-soft);}
+  .sched-wrap{overflow-x:auto;border:1px solid var(--line-strong);border-radius:var(--radius);}
+  .sched-table{width:100%;border-collapse:collapse;min-width:560px;}
+  .sched-table th, .sched-table td{border:1px solid var(--line-strong);padding:0;}
+  .sched-event-header{background:#E3A63C;color:#1a1200;font-weight:700;font-size:13.5px;text-align:center;padding:9px 12px;}
+  .sched-role-header{background:#6EA8E8;color:#0a1626;font-weight:700;font-size:12px;text-align:center;padding:8px 6px;position:relative;}
+  .sched-role-header input{
+    width:100%;background:transparent;border:none;color:inherit;font-weight:700;font-size:12px;text-align:center;
+    padding:2px;font-family:'Inter',sans-serif;
+  }
+  .sched-role-header input:focus{outline:none;background:rgba(255,255,255,0.25);border-radius:4px;}
+  .sched-role-remove{position:absolute;top:1px;right:2px;background:none;border:none;color:#0a1626;opacity:0.5;cursor:pointer;font-size:11px;line-height:1;padding:2px;}
+  .sched-role-remove:hover{opacity:1;}
+  .sched-date-header{background:var(--card-sunken);color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;font-weight:700;text-align:center;padding:7px 6px;}
+  .sched-date-cell{background:var(--card-sunken);padding:6px 8px;}
+  .sched-date-cell input{width:100%;background:transparent;border:none;color:var(--ink);font-size:12.5px;font-family:'IBM Plex Mono',monospace;text-align:center;}
+  .sched-date-cell input:focus{outline:none;}
+  .sched-cell input{
+    width:100%;background:var(--card);border:none;color:var(--ink);font-size:13px;text-align:center;
+    padding:8px 6px;font-family:'Inter',sans-serif;font-weight:500;
+  }
+  .sched-cell input:focus{outline:none;background:var(--wine-tint);}
+  .sched-row-remove-cell{background:var(--card);text-align:center;width:32px;}
+  .sched-row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;opacity:0.5;padding:6px;}
+  .sched-row-remove:hover{opacity:1;background:var(--danger-tint);border-radius:5px;}
+  .sched-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
   .entries-panel .empty-state{border:none;background:none;box-shadow:none;padding:40px 20px;}
   .toolbar input[type=text], .toolbar select{
     font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;border:1px solid var(--line-strong);
@@ -550,6 +578,7 @@
       <a href="#" data-view="dashboard" class="active">Dashboard <span class="count" id="navDashboardCount">–</span></a>
       <a href="#" data-view="dashboard">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
+      <a href="#" data-view="schedule">Crew Schedule</a>
     </div>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-foot" id="sidebarFoot"></div>
@@ -628,6 +657,18 @@
         <div id="tableWrap"></div>
       </div>
     </div>
+  </div>
+
+  <div id="viewSchedule" class="view-panel" style="display:none;">
+    <div class="panel-title">
+      <h2>Crew Schedule</h2>
+    </div>
+    <div class="toolbar-panel">
+      <div class="toolbar">
+        <select id="scheduleEventSelect"><option value="">Select an event…</option></select>
+      </div>
+    </div>
+    <div id="scheduleBody"></div>
   </div>
 </div>
 
@@ -1092,7 +1133,8 @@ function eventToRow(e){
     edited_date: e.editedDate || '', delivered_date: e.deliveredDate || '',
     raw_deleted: !!e.rawDeleted, raw_deleted_date: e.rawDeletedDate || '',
     notes: e.notes || '', updated_by: e.updatedBy || null, updated_at: e.updatedAt || new Date().toISOString(),
-    folders: Array.isArray(e.folders) ? e.folders : []
+    folders: Array.isArray(e.folders) ? e.folders : [],
+    schedule: (e.schedule && typeof e.schedule === 'object') ? e.schedule : { roles: ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'], days: [] }
   };
 }
 function rowToEvent(r){
@@ -1103,7 +1145,8 @@ function rowToEvent(r){
     editedDate: r.edited_date, deliveredDate: r.delivered_date,
     rawDeleted: !!r.raw_deleted, rawDeletedDate: r.raw_deleted_date,
     notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at,
-    folders: Array.isArray(r.folders) ? r.folders : []
+    folders: Array.isArray(r.folders) ? r.folders : [],
+    schedule: (r.schedule && typeof r.schedule === 'object') ? r.schedule : { roles: ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'], days: [] }
   };
 }
 
@@ -1280,8 +1323,10 @@ function renderUserBadge(){
 function switchView(view, clickedLink){
   document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
+  document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
   document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.remove('active'));
   (clickedLink || document.querySelector(`.sidebar-nav a[data-view="${view}"]`)).classList.add('active');
+  if(view === 'schedule') renderScheduleView();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -2664,6 +2709,145 @@ document.getElementById('filterStatus').addEventListener('change', () => { rawEl
 document.getElementById('filterDrive').addEventListener('change', () => { rawEligibleFilterActive = false; renderTable(); });
 document.getElementById('sortBy').addEventListener('change', () => renderTable());
 document.getElementById('groupBy').addEventListener('change', () => renderTable());
+
+// ---- Crew Schedule ----
+let currentScheduleEventId = null;
+let currentScheduleData = null; // {roles: [...], days: [{date, assignments: {role: name}}]}
+
+function renderScheduleView(){
+  const select = document.getElementById('scheduleEventSelect');
+  const keepValue = select.value;
+  select.innerHTML = '<option value="">Select an event…</option>' +
+    data.events.slice().sort((a,b) => (a.client||'').localeCompare(b.client||'')).map(e =>
+      `<option value="${e.id}">${escapeHtml(e.client)}</option>`
+    ).join('');
+  if(keepValue && data.events.some(e => e.id === keepValue)) select.value = keepValue;
+  if(currentScheduleEventId && data.events.some(e => e.id === currentScheduleEventId)){
+    select.value = currentScheduleEventId;
+    renderScheduleTable();
+  } else {
+    currentScheduleEventId = null;
+    document.getElementById('scheduleBody').innerHTML = `<div class="sched-empty">Pick an event above to see or build its shoot-day crew schedule.</div>`;
+  }
+}
+
+document.getElementById('scheduleEventSelect').addEventListener('change', (e) => {
+  currentScheduleEventId = e.target.value || null;
+  renderScheduleTable();
+});
+
+function renderScheduleTable(){
+  const body = document.getElementById('scheduleBody');
+  if(!currentScheduleEventId){
+    body.innerHTML = `<div class="sched-empty">Pick an event above to see or build its shoot-day crew schedule.</div>`;
+    return;
+  }
+  const ev = data.events.find(e => e.id === currentScheduleEventId);
+  if(!ev){ body.innerHTML = `<div class="sched-empty">Event not found.</div>`; return; }
+
+  currentScheduleData = ev.schedule && Array.isArray(ev.schedule.roles)
+    ? JSON.parse(JSON.stringify(ev.schedule))
+    : { roles: ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'], days: [] };
+
+  drawScheduleTable(ev);
+}
+
+function drawScheduleTable(ev){
+  const body = document.getElementById('scheduleBody');
+  const s = currentScheduleData;
+
+  const roleHeaders = s.roles.map((r, ri) => `
+    <th class="sched-role-header">
+      <input type="text" data-role-idx="${ri}" value="${escapeHtml(r)}" placeholder="Role name">
+      ${isAdmin() ? `<button type="button" class="sched-role-remove" data-remove-role="${ri}" title="Remove this role column">✕</button>` : ''}
+    </th>`).join('');
+
+  const dayRows = s.days.map((d, di) => `
+    <tr>
+      <td class="sched-date-cell"><input type="date" data-day-idx="${di}" value="${d.date||''}"></td>
+      ${s.roles.map((r, ri) => `<td class="sched-cell"><input type="text" data-day-idx="${di}" data-role-idx="${ri}" value="${escapeHtml((d.assignments && d.assignments[r]) || '')}" placeholder="Name"></td>`).join('')}
+      <td class="sched-row-remove-cell"><button type="button" class="sched-row-remove" data-remove-day="${di}" title="Remove this day" aria-label="Remove day">✕</button></td>
+    </tr>`).join('');
+
+  body.innerHTML = `
+    <div class="sched-wrap">
+      <table class="sched-table">
+        <thead>
+          <tr><th class="sched-event-header" colspan="${s.roles.length + 2}">${escapeHtml(ev.client)}</th></tr>
+          <tr><th class="sched-date-header">Date</th>${roleHeaders}<th class="sched-date-header"></th></tr>
+        </thead>
+        <tbody id="schedDaysBody">${dayRows || `<tr><td class="sched-empty" colspan="${s.roles.length + 2}" style="padding:24px;">No shoot days added yet.</td></tr>`}</tbody>
+      </table>
+    </div>
+    <div class="sched-actions">
+      <button class="btn btn-sm" id="btnAddSchedDay">+ Add day</button>
+      ${isAdmin() ? `<button class="btn btn-sm" id="btnAddSchedRole">+ Add role</button>` : ''}
+      <button class="btn btn-primary btn-sm" id="btnSaveSchedule">Save schedule</button>
+      <span id="scheduleSaveStatus" style="font-size:12px;color:var(--ink-soft);align-self:center;"></span>
+    </div>
+  `;
+
+  // Role name edits
+  body.querySelectorAll('[data-role-idx]:not([data-day-idx])').forEach(inp => {
+    inp.addEventListener('input', () => {
+      s.roles[Number(inp.getAttribute('data-role-idx'))] = inp.value;
+    });
+  });
+  // Date edits
+  body.querySelectorAll('.sched-date-cell input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      s.days[Number(inp.getAttribute('data-day-idx'))].date = inp.value;
+    });
+  });
+  // Assignment cell edits
+  body.querySelectorAll('.sched-cell input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const di = Number(inp.getAttribute('data-day-idx'));
+      const ri = Number(inp.getAttribute('data-role-idx'));
+      const roleName = s.roles[ri];
+      if(!s.days[di].assignments) s.days[di].assignments = {};
+      s.days[di].assignments[roleName] = inp.value;
+    });
+  });
+  // Remove day
+  body.querySelectorAll('[data-remove-day]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      s.days.splice(Number(btn.getAttribute('data-remove-day')), 1);
+      drawScheduleTable(ev);
+    });
+  });
+  // Remove role (admin only, button only rendered for admins anyway)
+  body.querySelectorAll('[data-remove-role]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ri = Number(btn.getAttribute('data-remove-role'));
+      const roleName = s.roles[ri];
+      s.roles.splice(ri, 1);
+      s.days.forEach(d => { if(d.assignments) delete d.assignments[roleName]; });
+      drawScheduleTable(ev);
+    });
+  });
+
+  document.getElementById('btnAddSchedDay').addEventListener('click', () => {
+    s.days.push({ date: new Date().toISOString().slice(0,10), assignments: {} });
+    drawScheduleTable(ev);
+  });
+  const addRoleBtn = document.getElementById('btnAddSchedRole');
+  if(addRoleBtn) addRoleBtn.addEventListener('click', () => {
+    s.roles.push('New Role');
+    drawScheduleTable(ev);
+  });
+
+  document.getElementById('btnSaveSchedule').addEventListener('click', async () => {
+    ev.schedule = s;
+    ev.updatedBy = whoAmI();
+    ev.updatedAt = new Date().toISOString();
+    const statusEl = document.getElementById('scheduleSaveStatus');
+    statusEl.textContent = 'Saving…';
+    await persistEvent(ev);
+    statusEl.textContent = 'Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    toast('Schedule saved');
+  });
+}
 
 // App initializes once a session is confirmed (see onAuthStateChange above).
 </script>
