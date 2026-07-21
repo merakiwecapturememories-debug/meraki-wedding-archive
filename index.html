@@ -2263,16 +2263,28 @@ document.getElementById('driveList').addEventListener('click', e => {
   }
   if(delId){
     const dr = data.drives.find(x => x.id === delId);
-    const count = data.events.filter(x => x.driveId === delId).length;
-    askConfirm('Remove this drive?', count > 0 ? `${count} event${count===1?'':'s'} on "${dr.label}" will be marked unassigned.` : `"${dr.label}" will be removed from the registry.`, async () => {
-      const ok = await deleteDriveRemote(delId);
-      if(ok){
-        data.drives = data.drives.filter(x => x.id !== delId);
-        data.events.forEach(ev => { if(ev.driveId === delId) ev.driveId = null; });
-        renderAll();
-        toast('Drive removed');
-      }
-    });
+    const affectedEvents = data.events.filter(x => x.driveId === delId);
+    const count = affectedEvents.length;
+    askConfirm(
+      'Remove this drive?',
+      count > 0
+        ? `"${dr.label}" will be removed from the registry, and its ${count} event${count===1?'':'s'} will be permanently deleted from the Event ledger too — not just unassigned. This can't be undone.`
+        : `"${dr.label}" will be removed from the registry.`,
+      async () => {
+        // Delete the drive's events first (cascade), then the drive itself.
+        for(const ev of affectedEvents){
+          await deleteEventRemote(ev.id);
+        }
+        const ok = await deleteDriveRemote(delId);
+        if(ok){
+          data.drives = data.drives.filter(x => x.id !== delId);
+          data.events = data.events.filter(x => x.driveId !== delId);
+          renderAll();
+          toast(count > 0 ? `Drive and ${count} event${count===1?'':'s'} removed` : 'Drive removed');
+        }
+      },
+      'Remove permanently'
+    );
   }
 });
 
