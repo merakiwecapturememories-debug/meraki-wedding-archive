@@ -2167,22 +2167,30 @@ function saveEventRecord(record){
 let sessionAddCount = 0;
 
 document.getElementById('btnSaveEvent').onclick = async () => {
+  const btn = document.getElementById('btnSaveEvent');
+  if(btn.disabled) return;
   const record = buildEventRecord();
   if(!record) return;
+  btn.disabled = true;
   saveEventRecord(record);
   await persistEvent(record);
   renderAll();
   closeEventModal();
   toast('Event saved');
+  btn.disabled = false;
 };
 
 document.getElementById('btnSaveAddAnother').onclick = async () => {
+  const btn = document.getElementById('btnSaveAddAnother');
+  if(btn.disabled) return;
   const record = buildEventRecord();
   if(!record) return;
+  btn.disabled = true;
   saveEventRecord(record);
   await persistEvent(record);
   renderAll();
   toast('Event saved');
+  btn.disabled = false;
 
   // Keep whichever drive / copied-by this operator is working through,
   // clear only the per-event fields, and get ready for the next entry.
@@ -2239,11 +2247,14 @@ document.getElementById('btnCancelDrive').onclick = closeDriveModal;
 driveOverlay.addEventListener('click', e => { if(e.target === driveOverlay) closeDriveModal(); });
 
 document.getElementById('btnSaveDrive').onclick = async () => {
+  const btn = document.getElementById('btnSaveDrive');
+  if(btn.disabled) return;
   const label = document.getElementById('dLabel').value.trim();
   if(!label){
     document.getElementById('dLabel').style.borderColor = 'var(--danger)';
     return;
   }
+  btn.disabled = true;
   const id = document.getElementById('driveId').value || uid();
   const record = {
     id, label,
@@ -2257,6 +2268,7 @@ document.getElementById('btnSaveDrive').onclick = async () => {
   await persistDrive(record);
   renderAll();
   closeDriveModal();
+  btn.disabled = false;
   toast('Drive saved');
 };
 
@@ -2664,43 +2676,50 @@ function renderScanResults(){
 }
 
 document.getElementById('btnImportScan').onclick = async () => {
+  const btn = document.getElementById('btnImportScan');
+  if(btn.disabled) return; // already importing — ignore a second click
   const driveId = document.getElementById('scanDriveSelect').value;
   const toImport = scanResultsData.filter(x => x.include);
   if(!toImport.length) return;
 
+  btn.disabled = true;
   const progressEl = document.getElementById('scanProgress');
   let done = 0;
-  for(const item of toImport){
-    const record = {
-      id: uid(),
-      client: item.client || item.name,
-      eventName: item.name,
-      eventType: '',
-      eventDate: item.eventDate || '',
-      sizeGB: Math.round((item.sizeGB || 0) * 100) / 100,
-      driveId: driveId,
-      status: 'In Editing',
-      copiedBy: whoAmI(),
-      copiedTo: '',
-      editedDate: '',
-      deliveredDate: '',
-      rawDeleted: false,
-      rawDeletedDate: '',
-      notes: 'Created by Admin',
-      updatedBy: whoAmI(),
-      updatedAt: new Date().toISOString(),
-      folders: Array.isArray(item.subfolders) ? item.subfolders : []
-    };
-    saveEventRecord(record);
-    await persistEvent(record);
-    done++;
-    progressEl.style.color = 'var(--ink-soft)';
-    progressEl.textContent = `Importing… ${done}/${toImport.length}`;
+  try{
+    for(const item of toImport){
+      const record = {
+        id: uid(),
+        client: item.client || item.name,
+        eventName: item.name,
+        eventType: '',
+        eventDate: item.eventDate || '',
+        sizeGB: Math.round((item.sizeGB || 0) * 100) / 100,
+        driveId: driveId,
+        status: 'In Editing',
+        copiedBy: whoAmI(),
+        copiedTo: '',
+        editedDate: '',
+        deliveredDate: '',
+        rawDeleted: false,
+        rawDeletedDate: '',
+        notes: 'Created by Admin',
+        updatedBy: whoAmI(),
+        updatedAt: new Date().toISOString(),
+        folders: Array.isArray(item.subfolders) ? item.subfolders : []
+      };
+      saveEventRecord(record);
+      await persistEvent(record);
+      done++;
+      progressEl.style.color = 'var(--ink-soft)';
+      progressEl.textContent = `Importing… ${done}/${toImport.length}`;
+    }
+    progressEl.style.color = 'var(--ok)';
+    progressEl.textContent = `Imported ${done} event${done===1?'':'s'}.`;
+    renderAll();
+    setTimeout(closeScanModal, 900);
+  } finally {
+    btn.disabled = false;
   }
-  progressEl.style.color = 'var(--ok)';
-  progressEl.textContent = `Imported ${done} event${done===1?'':'s'}.`;
-  renderAll();
-  setTimeout(closeScanModal, 900);
 };
 
 // ---- Filters ----
