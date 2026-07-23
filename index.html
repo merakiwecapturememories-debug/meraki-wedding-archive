@@ -214,6 +214,39 @@
   .sched-row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;opacity:0.5;padding:6px;}
   .sched-row-remove:hover{opacity:1;background:var(--danger-tint);border-radius:5px;}
   .sched-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+
+  /* Crew Schedule subtabs */
+  .sched-subtabs{display:flex;gap:4px;background:var(--card-sunken);border-radius:8px;padding:3px;}
+  .sched-subtab{
+    background:none;border:none;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;
+    color:var(--ink-soft);cursor:pointer;transition:background 0.12s, color 0.12s;
+  }
+  .sched-subtab:hover{color:var(--ink);}
+  .sched-subtab.active{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+
+  /* Crew directory */
+  .crew-directory{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:820px){.crew-directory{grid-template-columns:1fr;}}
+  .crew-column{background:var(--card);border:1px solid var(--line-strong);border-radius:var(--radius);box-shadow:var(--shadow-card);overflow:hidden;}
+  .crew-column-head{
+    padding:13px 16px;border-bottom:1px solid var(--line-strong);background:var(--card-sunken);
+    font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:var(--ink-soft);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .crew-add-row{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .crew-add-row input{flex:1;min-width:100px;font-family:'Inter',sans-serif;font-size:12.5px;padding:7px 9px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card-sunken);color:var(--ink);}
+  .crew-add-row input:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 2px var(--wine-tint);}
+  .crew-list{padding:6px;}
+  .crew-member-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;}
+  .crew-member-row:hover{background:var(--card-sunken);}
+  .crew-member-avatar{
+    width:28px;height:28px;border-radius:8px;background:var(--wine-tint);color:var(--wine-dark);
+    display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex-shrink:0;
+  }
+  .crew-member-info{flex:1;min-width:0;}
+  .crew-member-name{font-size:13px;font-weight:600;color:var(--ink);}
+  .crew-member-role{font-size:11px;color:var(--ink-soft);}
+  .crew-empty{padding:24px 16px;text-align:center;color:var(--ink-soft);font-size:12.5px;}
   .entries-panel .empty-state{border:none;background:none;box-shadow:none;padding:40px 20px;}
   .toolbar input[type=text], .toolbar select{
     font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;border:1px solid var(--line-strong);
@@ -662,13 +695,44 @@
   <div id="viewSchedule" class="view-panel" style="display:none;">
     <div class="panel-title">
       <h2>Crew Schedule</h2>
-    </div>
-    <div class="toolbar-panel">
-      <div class="toolbar">
-        <select id="scheduleEventSelect"><option value="">Select an event…</option></select>
+      <div class="sched-subtabs">
+        <button type="button" class="sched-subtab active" data-schedtab="shoots">Shoot Schedule</button>
+        <button type="button" class="sched-subtab" data-schedtab="crew">Crew Directory</button>
       </div>
     </div>
-    <div id="scheduleBody"></div>
+
+    <div id="schedTabShoots">
+      <div class="toolbar-panel">
+        <div class="toolbar">
+          <select id="scheduleEventSelect"><option value="">Select an event…</option></select>
+          <button class="btn btn-primary btn-sm" id="btnCreateSchedEvent">+ Create event</button>
+        </div>
+      </div>
+      <div id="scheduleBody"></div>
+    </div>
+
+    <div id="schedTabCrew" style="display:none;">
+      <div class="crew-directory">
+        <div class="crew-column">
+          <div class="crew-column-head">Team Crew Members <span class="entries-count" id="teamCrewCount"></span></div>
+          <div class="crew-add-row">
+            <input type="text" id="newTeamCrewName" placeholder="Name">
+            <input type="text" id="newTeamCrewRole" placeholder="Role (optional)">
+            <button class="btn btn-sm" id="btnAddTeamCrew">+ Add</button>
+          </div>
+          <div id="teamCrewList"></div>
+        </div>
+        <div class="crew-column">
+          <div class="crew-column-head">Freelancers <span class="entries-count" id="freelancerCount"></span></div>
+          <div class="crew-add-row">
+            <input type="text" id="newFreelancerName" placeholder="Name">
+            <input type="text" id="newFreelancerRole" placeholder="Role (optional)">
+            <button class="btn btn-sm" id="btnAddFreelancer">+ Add</button>
+          </div>
+          <div id="freelancerList"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -802,6 +866,21 @@
     <div class="modal-actions">
       <button class="btn" id="btnConfirmCancel">Cancel</button>
       <button class="btn btn-primary" style="background:var(--danger);border-color:var(--danger);" id="btnConfirmOk">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="newSchedEventOverlay">
+  <div class="modal" style="max-width:380px;">
+    <h3>New shoot event</h3>
+    <div class="field">
+      <label>Event / client name <span class="required-mark">*</span></label>
+      <input type="text" id="newSchedEventTitle" placeholder="e.g. Nitesh Weds Ishu">
+    </div>
+    <div id="newSchedEventError" style="font-size:12.5px;color:var(--danger);margin-bottom:10px;display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelNewSchedEvent">Cancel</button>
+      <button class="btn btn-primary" id="btnConfirmNewSchedEvent">Create</button>
     </div>
   </div>
 </div>
@@ -1070,7 +1149,7 @@ const POLL_INTERVAL_MS = 15000;     // how often to pull remote changes
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let data = { events: [], drives: [] };
+let data = { events: [], drives: [], scheduleEvents: [], crewMembers: [] };
 let pendingDelete = null;
 let pollTimer = null;
 let currentUser = null; // { id, email, name }
@@ -1125,6 +1204,38 @@ function rowToDrive(r){
     notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at
   };
 }
+
+function scheduleEventToRow(s){
+  return {
+    id: s.id, title: s.title,
+    roles: Array.isArray(s.roles) ? s.roles : ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
+    days: Array.isArray(s.days) ? s.days : [],
+    notes: s.notes || '', created_by: s.createdBy || null,
+    updated_by: s.updatedBy || null, updated_at: s.updatedAt || new Date().toISOString()
+  };
+}
+function rowToScheduleEvent(r){
+  return {
+    id: r.id, title: r.title,
+    roles: Array.isArray(r.roles) ? r.roles : ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
+    days: Array.isArray(r.days) ? r.days : [],
+    notes: r.notes || '', createdBy: r.created_by || '',
+    updatedBy: r.updated_by || '', updatedAt: r.updated_at
+  };
+}
+
+function crewMemberToRow(c){
+  return {
+    id: c.id, name: c.name, type: c.type || 'team', role: c.role || '', phone: c.phone || '',
+    updated_by: c.updatedBy || null, updated_at: c.updatedAt || new Date().toISOString()
+  };
+}
+function rowToCrewMember(r){
+  return {
+    id: r.id, name: r.name, type: r.type || 'team', role: r.role || '', phone: r.phone || '',
+    updatedBy: r.updated_by || '', updatedAt: r.updated_at
+  };
+}
 function eventToRow(e){
   return {
     id: e.id, client: e.client, event_name: e.eventName, event_type: e.eventType || '',
@@ -1177,12 +1288,16 @@ let consecutiveSyncFailures = 0;
 async function loadData(isBackgroundRefresh){
   if(!isBackgroundRefresh){ setStatus('Loading…'); renderSkeleton(); }
   try{
-    const [drivesRes, eventsRes] = await Promise.all([
+    const [drivesRes, eventsRes, schedEventsRes, crewRes] = await Promise.all([
       sb.from('drives').select('*').order('label'),
-      sb.from('events').select('*').order('event_date', { ascending: false })
+      sb.from('events').select('*').order('event_date', { ascending: false }),
+      sb.from('schedule_events').select('*').order('title'),
+      sb.from('crew_members').select('*').order('name')
     ]);
     if(drivesRes.error) throw drivesRes.error;
     if(eventsRes.error) throw eventsRes.error;
+    if(schedEventsRes.error) throw schedEventsRes.error;
+    if(crewRes.error) throw crewRes.error;
 
     // NOTE: this used to auto-seed 12 default drives whenever the drives query came back
     // empty, assuming that meant "first-ever load." That was unsafe — a transient network
@@ -1191,6 +1306,8 @@ async function loadData(isBackgroundRefresh){
     // If someone genuinely needs a fresh registry, they add drives manually via "+ Add drive".
     data.drives = drivesRes.data.map(rowToDrive);
     data.events = eventsRes.data.map(rowToEvent);
+    data.scheduleEvents = schedEventsRes.data.map(rowToScheduleEvent);
+    data.crewMembers = crewRes.data.map(rowToCrewMember);
 
     consecutiveSyncFailures = 0;
     setStatus('Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
@@ -1222,6 +1339,44 @@ async function persistDrive(record){
   }catch(e){
     setStatus("Couldn't save — check your connection and try again", true);
     toast("Couldn't save drive", true);
+  }
+}
+
+async function persistScheduleEvent(record){
+  try{
+    const { error } = await sb.from('schedule_events').upsert(scheduleEventToRow(record));
+    if(error) throw error;
+  }catch(e){
+    toast("Couldn't save schedule", true);
+  }
+}
+async function deleteScheduleEventRemote(id){
+  try{
+    const { error } = await sb.from('schedule_events').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){
+    toast("Couldn't remove event", true);
+    return false;
+  }
+}
+
+async function persistCrewMember(record){
+  try{
+    const { error } = await sb.from('crew_members').upsert(crewMemberToRow(record));
+    if(error) throw error;
+  }catch(e){
+    toast("Couldn't save crew member", true);
+  }
+}
+async function deleteCrewMemberRemote(id){
+  try{
+    const { error } = await sb.from('crew_members').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){
+    toast("Couldn't remove crew member", true);
+    return false;
   }
 }
 
@@ -2729,24 +2884,36 @@ document.getElementById('filterDrive').addEventListener('change', () => { rawEli
 document.getElementById('sortBy').addEventListener('change', () => renderTable());
 document.getElementById('groupBy').addEventListener('change', () => renderTable());
 
-// ---- Crew Schedule ----
+// ---- Crew Schedule (fully independent of Event Ledger) ----
 let currentScheduleEventId = null;
-let currentScheduleData = null; // {roles: [...], days: [{date, assignments: {role: name}}]}
+let currentScheduleData = null; // {title, roles, days}
+
+// Subtab switching
+document.querySelectorAll('.sched-subtab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sched-subtab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const which = tab.getAttribute('data-schedtab');
+    document.getElementById('schedTabShoots').style.display = which === 'shoots' ? '' : 'none';
+    document.getElementById('schedTabCrew').style.display = which === 'crew' ? '' : 'none';
+    if(which === 'crew') renderCrewDirectory();
+  });
+});
 
 function renderScheduleView(){
   const select = document.getElementById('scheduleEventSelect');
   const keepValue = select.value;
-  select.innerHTML = '<option value="">Select an event…</option>' +
-    data.events.slice().sort((a,b) => (a.client||'').localeCompare(b.client||'')).map(e =>
-      `<option value="${e.id}">${escapeHtml(e.client)}</option>`
+  select.innerHTML = '<option value="">Select an event\u2026</option>' +
+    data.scheduleEvents.slice().sort((a,b) => (a.title||'').localeCompare(b.title||'')).map(s =>
+      `<option value="${s.id}">${escapeHtml(s.title)}</option>`
     ).join('');
-  if(keepValue && data.events.some(e => e.id === keepValue)) select.value = keepValue;
-  if(currentScheduleEventId && data.events.some(e => e.id === currentScheduleEventId)){
+  if(keepValue && data.scheduleEvents.some(s => s.id === keepValue)) select.value = keepValue;
+  if(currentScheduleEventId && data.scheduleEvents.some(s => s.id === currentScheduleEventId)){
     select.value = currentScheduleEventId;
     renderScheduleTable();
   } else {
     currentScheduleEventId = null;
-    document.getElementById('scheduleBody').innerHTML = `<div class="sched-empty">Pick an event above to see or build its shoot-day crew schedule.</div>`;
+    document.getElementById('scheduleBody').innerHTML = `<div class="sched-empty">Click "+ Create event" above to start a new shoot schedule, or pick an existing one.</div>`;
   }
 }
 
@@ -2755,44 +2922,82 @@ document.getElementById('scheduleEventSelect').addEventListener('change', (e) =>
   renderScheduleTable();
 });
 
+// ---- Create new schedule event (independent of Event Ledger) ----
+const newSchedEventOverlay = document.getElementById('newSchedEventOverlay');
+document.getElementById('btnCreateSchedEvent').addEventListener('click', () => {
+  document.getElementById('newSchedEventTitle').value = '';
+  document.getElementById('newSchedEventError').style.display = 'none';
+  newSchedEventOverlay.classList.add('open');
+  document.getElementById('newSchedEventTitle').focus();
+});
+document.getElementById('btnCancelNewSchedEvent').addEventListener('click', () => newSchedEventOverlay.classList.remove('open'));
+newSchedEventOverlay.addEventListener('click', (e) => { if(e.target === newSchedEventOverlay) newSchedEventOverlay.classList.remove('open'); });
+document.getElementById('btnConfirmNewSchedEvent').addEventListener('click', async () => {
+  const btn = document.getElementById('btnConfirmNewSchedEvent');
+  if(btn.disabled) return;
+  const title = document.getElementById('newSchedEventTitle').value.trim();
+  const errEl = document.getElementById('newSchedEventError');
+  if(!title){
+    errEl.textContent = 'Enter an event or client name.';
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  const record = {
+    id: uid(), title,
+    roles: ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
+    days: [],
+    notes: '', createdBy: whoAmI(), updatedBy: whoAmI(), updatedAt: new Date().toISOString()
+  };
+  data.scheduleEvents.push(record);
+  await persistScheduleEvent(record);
+  btn.disabled = false;
+  newSchedEventOverlay.classList.remove('open');
+  currentScheduleEventId = record.id;
+  renderScheduleView();
+  toast('Event created');
+});
+
 function renderScheduleTable(){
   const body = document.getElementById('scheduleBody');
   if(!currentScheduleEventId){
-    body.innerHTML = `<div class="sched-empty">Pick an event above to see or build its shoot-day crew schedule.</div>`;
+    body.innerHTML = `<div class="sched-empty">Click "+ Create event" above to start a new shoot schedule, or pick an existing one.</div>`;
     return;
   }
-  const ev = data.events.find(e => e.id === currentScheduleEventId);
-  if(!ev){ body.innerHTML = `<div class="sched-empty">Event not found.</div>`; return; }
+  const se = data.scheduleEvents.find(s => s.id === currentScheduleEventId);
+  if(!se){ body.innerHTML = `<div class="sched-empty">Event not found.</div>`; return; }
 
-  currentScheduleData = ev.schedule && Array.isArray(ev.schedule.roles)
-    ? JSON.parse(JSON.stringify(ev.schedule))
-    : { roles: ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'], days: [] };
+  currentScheduleData = {
+    title: se.title,
+    roles: Array.isArray(se.roles) && se.roles.length ? JSON.parse(JSON.stringify(se.roles)) : ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
+    days: Array.isArray(se.days) ? JSON.parse(JSON.stringify(se.days)) : []
+  };
 
-  drawScheduleTable(ev);
+  drawScheduleTable(se);
 }
 
-function drawScheduleTable(ev){
+function drawScheduleTable(se){
   const body = document.getElementById('scheduleBody');
   const s = currentScheduleData;
 
   const roleHeaders = s.roles.map((r, ri) => `
     <th class="sched-role-header">
       <input type="text" data-role-idx="${ri}" value="${escapeHtml(r)}" placeholder="Role name">
-      ${isAdmin() ? `<button type="button" class="sched-role-remove" data-remove-role="${ri}" title="Remove this role column">✕</button>` : ''}
+      ${isAdmin() ? `<button type="button" class="sched-role-remove" data-remove-role="${ri}" title="Remove this role column">\u2715</button>` : ''}
     </th>`).join('');
 
   const dayRows = s.days.map((d, di) => `
     <tr>
       <td class="sched-date-cell"><input type="date" data-day-idx="${di}" value="${d.date||''}"></td>
       ${s.roles.map((r, ri) => `<td class="sched-cell"><input type="text" data-day-idx="${di}" data-role-idx="${ri}" value="${escapeHtml((d.assignments && d.assignments[r]) || '')}" placeholder="Name"></td>`).join('')}
-      <td class="sched-row-remove-cell"><button type="button" class="sched-row-remove" data-remove-day="${di}" title="Remove this day" aria-label="Remove day">✕</button></td>
+      <td class="sched-row-remove-cell"><button type="button" class="sched-row-remove" data-remove-day="${di}" title="Remove this day" aria-label="Remove day">\u2715</button></td>
     </tr>`).join('');
 
   body.innerHTML = `
     <div class="sched-wrap">
       <table class="sched-table">
         <thead>
-          <tr><th class="sched-event-header" colspan="${s.roles.length + 2}">${escapeHtml(ev.client)}</th></tr>
+          <tr><th class="sched-event-header" colspan="${s.roles.length + 2}">${escapeHtml(s.title)}</th></tr>
           <tr><th class="sched-date-header">Date</th>${roleHeaders}<th class="sched-date-header"></th></tr>
         </thead>
         <tbody id="schedDaysBody">${dayRows || `<tr><td class="sched-empty" colspan="${s.roles.length + 2}" style="padding:24px;">No shoot days added yet.</td></tr>`}</tbody>
@@ -2802,6 +3007,7 @@ function drawScheduleTable(ev){
       <button class="btn btn-sm" id="btnAddSchedDay">+ Add day</button>
       ${isAdmin() ? `<button class="btn btn-sm" id="btnAddSchedRole">+ Add role</button>` : ''}
       <button class="btn btn-primary btn-sm" id="btnSaveSchedule">Save schedule</button>
+      ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" id="btnDeleteSchedEvent" style="margin-left:auto;">Remove event</button>` : ''}
       <span id="scheduleSaveStatus" style="font-size:12px;color:var(--ink-soft);align-self:center;"></span>
     </div>
   `;
@@ -2832,7 +3038,7 @@ function drawScheduleTable(ev){
   body.querySelectorAll('[data-remove-day]').forEach(btn => {
     btn.addEventListener('click', () => {
       s.days.splice(Number(btn.getAttribute('data-remove-day')), 1);
-      drawScheduleTable(ev);
+      drawScheduleTable(se);
     });
   });
   // Remove role (admin only, button only rendered for admins anyway)
@@ -2842,31 +3048,111 @@ function drawScheduleTable(ev){
       const roleName = s.roles[ri];
       s.roles.splice(ri, 1);
       s.days.forEach(d => { if(d.assignments) delete d.assignments[roleName]; });
-      drawScheduleTable(ev);
+      drawScheduleTable(se);
     });
   });
 
   document.getElementById('btnAddSchedDay').addEventListener('click', () => {
     s.days.push({ date: new Date().toISOString().slice(0,10), assignments: {} });
-    drawScheduleTable(ev);
+    drawScheduleTable(se);
   });
   const addRoleBtn = document.getElementById('btnAddSchedRole');
   if(addRoleBtn) addRoleBtn.addEventListener('click', () => {
     s.roles.push('New Role');
-    drawScheduleTable(ev);
+    drawScheduleTable(se);
   });
 
   document.getElementById('btnSaveSchedule').addEventListener('click', async () => {
-    ev.schedule = s;
-    ev.updatedBy = whoAmI();
-    ev.updatedAt = new Date().toISOString();
+    se.roles = s.roles;
+    se.days = s.days;
+    se.updatedBy = whoAmI();
+    se.updatedAt = new Date().toISOString();
     const statusEl = document.getElementById('scheduleSaveStatus');
-    statusEl.textContent = 'Saving…';
-    await persistEvent(ev);
+    statusEl.textContent = 'Saving\u2026';
+    await persistScheduleEvent(se);
     statusEl.textContent = 'Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
     toast('Schedule saved');
   });
+
+  const delBtn = document.getElementById('btnDeleteSchedEvent');
+  if(delBtn) delBtn.addEventListener('click', () => {
+    askConfirm(
+      'Remove this shoot event?',
+      `"${se.title}" and its entire crew schedule will be permanently deleted. This can't be undone.`,
+      async () => {
+        const ok = await deleteScheduleEventRemote(se.id);
+        if(ok){
+          data.scheduleEvents = data.scheduleEvents.filter(x => x.id !== se.id);
+          currentScheduleEventId = null;
+          renderScheduleView();
+          toast('Event removed');
+        }
+      },
+      'Remove permanently'
+    );
+  });
 }
+
+// ---- Crew Directory (Team Crew Members / Freelancers) ----
+function crewInitials(name){
+  return (name||'?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
+}
+
+function renderCrewList(type, containerId, countId){
+  const container = document.getElementById(containerId);
+  const members = data.crewMembers.filter(c => c.type === type).sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  document.getElementById(countId).textContent = members.length;
+  if(members.length === 0){
+    container.innerHTML = `<div class="crew-empty">No one added yet.</div>`;
+    return;
+  }
+  container.innerHTML = `<div class="crew-list">${members.map(c => `
+    <div class="crew-member-row">
+      <div class="crew-member-avatar">${escapeHtml(crewInitials(c.name))}</div>
+      <div class="crew-member-info">
+        <div class="crew-member-name">${escapeHtml(c.name)}</div>
+        ${c.role ? `<div class="crew-member-role">${escapeHtml(c.role)}</div>` : ''}
+      </div>
+      ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-remove-crew="${c.id}">Remove</button>` : ''}
+    </div>`).join('')}</div>`;
+
+  container.querySelectorAll('[data-remove-crew]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-remove-crew');
+      const member = data.crewMembers.find(c => c.id === id);
+      askConfirm('Remove this person?', `"${member.name}" will be removed from the crew directory.`, async () => {
+        const ok = await deleteCrewMemberRemote(id);
+        if(ok){
+          data.crewMembers = data.crewMembers.filter(c => c.id !== id);
+          renderCrewDirectory();
+          toast('Removed');
+        }
+      });
+    });
+  });
+}
+
+function renderCrewDirectory(){
+  renderCrewList('team', 'teamCrewList', 'teamCrewCount');
+  renderCrewList('freelancer', 'freelancerList', 'freelancerCount');
+}
+
+async function addCrewMember(type, nameInputId, roleInputId){
+  const nameInput = document.getElementById(nameInputId);
+  const roleInput = document.getElementById(roleInputId);
+  const name = nameInput.value.trim();
+  if(!name) return;
+  const record = { id: uid(), name, type, role: roleInput.value.trim(), phone: '', updatedBy: whoAmI(), updatedAt: new Date().toISOString() };
+  data.crewMembers.push(record);
+  await persistCrewMember(record);
+  nameInput.value = '';
+  roleInput.value = '';
+  renderCrewDirectory();
+  toast(`${type === 'team' ? 'Team member' : 'Freelancer'} added`);
+}
+
+document.getElementById('btnAddTeamCrew').addEventListener('click', () => addCrewMember('team', 'newTeamCrewName', 'newTeamCrewRole'));
+document.getElementById('btnAddFreelancer').addEventListener('click', () => addCrewMember('freelancer', 'newFreelancerName', 'newFreelancerRole'));
 
 // App initializes once a session is confirmed (see onAuthStateChange above).
 </script>
