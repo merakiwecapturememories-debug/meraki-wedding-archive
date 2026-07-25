@@ -205,11 +205,12 @@
   .sched-date-cell{background:var(--card-sunken);padding:6px 8px;}
   .sched-date-cell input{width:100%;background:transparent;border:none;color:var(--ink);font-size:12.5px;font-family:'IBM Plex Mono',monospace;text-align:center;}
   .sched-date-cell input:focus{outline:none;}
-  .sched-cell input{
+  .sched-cell input, .sched-cell select{
     width:100%;background:var(--card);border:none;color:var(--ink);font-size:13px;text-align:center;
-    padding:8px 6px;font-family:'Inter',sans-serif;font-weight:500;
+    padding:8px 6px;font-family:'Inter',sans-serif;font-weight:500;cursor:pointer;
   }
-  .sched-cell input:focus{outline:none;background:var(--wine-tint);}
+  .sched-cell select{text-align-last:center;}
+  .sched-cell input:focus, .sched-cell select:focus{outline:none;background:var(--wine-tint);}
   .sched-row-remove-cell{background:var(--card);text-align:center;width:32px;}
   .sched-row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;opacity:0.5;padding:6px;}
   .sched-row-remove:hover{opacity:1;background:var(--danger-tint);border-radius:5px;}
@@ -2897,6 +2898,12 @@ document.querySelectorAll('.sched-subtab').forEach(tab => {
     document.getElementById('schedTabShoots').style.display = which === 'shoots' ? '' : 'none';
     document.getElementById('schedTabCrew').style.display = which === 'crew' ? '' : 'none';
     if(which === 'crew') renderCrewDirectory();
+    if(which === 'shoots' && currentScheduleEventId && currentScheduleData){
+      // Redraw from the in-memory (possibly unsaved) edit state, not the last-saved copy —
+      // switching tabs shouldn't discard anything the person was in the middle of typing.
+      const se = data.scheduleEvents.find(x => x.id === currentScheduleEventId);
+      if(se) drawScheduleTable(se);
+    }
   });
 });
 
@@ -2976,6 +2983,22 @@ function renderScheduleTable(){
   drawScheduleTable(se);
 }
 
+const SCHED_ADD_NEW_SENTINEL = '__add_new_person__';
+
+function buildCrewOptionsHTML(currentValue){
+  const team = data.crewMembers.filter(c => c.type === 'team').sort((a,b) => a.name.localeCompare(b.name));
+  const freelancers = data.crewMembers.filter(c => c.type === 'freelancer').sort((a,b) => a.name.localeCompare(b.name));
+  const knownNames = new Set(data.crewMembers.map(c => c.name));
+  const legacyName = currentValue && !knownNames.has(currentValue) ? currentValue : null;
+
+  let html = `<option value="">— none —</option>`;
+  if(legacyName) html += `<option value="${escapeHtml(legacyName)}" selected>${escapeHtml(legacyName)} (not in directory)</option>`;
+  if(team.length) html += `<optgroup label="Team Crew">${team.map(c => `<option value="${escapeHtml(c.name)}" ${c.name===currentValue?'selected':''}>${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
+  if(freelancers.length) html += `<optgroup label="Freelancers">${freelancers.map(c => `<option value="${escapeHtml(c.name)}" ${c.name===currentValue?'selected':''}>${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
+  html += `<option value="${SCHED_ADD_NEW_SENTINEL}">+ Add new person…</option>`;
+  return html;
+}
+
 function drawScheduleTable(se){
   const body = document.getElementById('scheduleBody');
   const s = currentScheduleData;
@@ -2989,7 +3012,7 @@ function drawScheduleTable(se){
   const dayRows = s.days.map((d, di) => `
     <tr>
       <td class="sched-date-cell"><input type="date" data-day-idx="${di}" value="${d.date||''}"></td>
-      ${s.roles.map((r, ri) => `<td class="sched-cell"><input type="text" data-day-idx="${di}" data-role-idx="${ri}" value="${escapeHtml((d.assignments && d.assignments[r]) || '')}" placeholder="Name"></td>`).join('')}
+      ${s.roles.map((r, ri) => `<td class="sched-cell"><select data-day-idx="${di}" data-role-idx="${ri}">${buildCrewOptionsHTML((d.assignments && d.assignments[r]) || '')}</select></td>`).join('')}
       <td class="sched-row-remove-cell"><button type="button" class="sched-row-remove" data-remove-day="${di}" title="Remove this day" aria-label="Remove day">\u2715</button></td>
     </tr>`).join('');
 
@@ -3024,14 +3047,34 @@ function drawScheduleTable(se){
       s.days[Number(inp.getAttribute('data-day-idx'))].date = inp.value;
     });
   });
-  // Assignment cell edits
-  body.querySelectorAll('.sched-cell input').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const di = Number(inp.getAttribute('data-day-idx'));
-      const ri = Number(inp.getAttribute('data-role-idx'));
+  // Assignment cell edits (dropdown, with inline "add new person" support)
+  body.querySelectorAll('.sched-cell select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const di = Number(sel.getAttribute('data-day-idx'));
+      const ri = Number(sel.getAttribute('data-role-idx'));
       const roleName = s.roles[ri];
+
+      if(sel.value === SCHED_ADD_NEW_SENTINEL){
+        const name = (window.prompt('Name of the new crew member or freelancer:') || '').trim();
+        if(!name){
+          sel.value = (s.days[di].assignments && s.days[di].assignments[roleName]) || '';
+          return;
+        }
+        const existing = data.crewMembers.find(c => c.name.toLowerCase() === name.toLowerCase());
+        if(!existing){
+          const record = { id: uid(), name, type: 'freelancer', role: '', phone: '', updatedBy: whoAmI(), updatedAt: new Date().toISOString() };
+          data.crewMembers.push(record);
+          await persistCrewMember(record);
+          toast(`${name} added to Freelancers`);
+        }
+        if(!s.days[di].assignments) s.days[di].assignments = {};
+        s.days[di].assignments[roleName] = name;
+        drawScheduleTable(se); // rebuild all dropdowns so the new person appears everywhere
+        return;
+      }
+
       if(!s.days[di].assignments) s.days[di].assignments = {};
-      s.days[di].assignments[roleName] = inp.value;
+      s.days[di].assignments[roleName] = sel.value;
     });
   });
   // Remove day
