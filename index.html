@@ -205,12 +205,19 @@
   .sched-date-cell{background:var(--card-sunken);padding:6px 8px;}
   .sched-date-cell input{width:100%;background:transparent;border:none;color:var(--ink);font-size:12.5px;font-family:'IBM Plex Mono',monospace;text-align:center;}
   .sched-date-cell input:focus{outline:none;}
-  .sched-cell input, .sched-cell select{
-    width:100%;background:var(--card);border:none;color:var(--ink);font-size:13px;text-align:center;
-    padding:8px 6px;font-family:'Inter',sans-serif;font-weight:500;cursor:pointer;
+  .sched-cell{background:var(--card);vertical-align:top;min-width:130px;}
+  .sched-cell-chips{display:flex;flex-wrap:wrap;gap:4px;padding:6px 6px 4px;}
+  .sched-chip{
+    display:inline-flex;align-items:center;gap:4px;background:var(--wine-tint);color:var(--wine-dark);
+    font-size:11.5px;font-weight:600;padding:3px 4px 3px 8px;border-radius:20px;line-height:1.3;
   }
-  .sched-cell select{text-align-last:center;}
-  .sched-cell input:focus, .sched-cell select:focus{outline:none;background:var(--wine-tint);}
+  .sched-chip button{background:none;border:none;color:inherit;opacity:0.6;cursor:pointer;font-size:9px;padding:2px 4px;line-height:1;}
+  .sched-chip button:hover{opacity:1;}
+  .sched-cell-add{
+    width:100%;background:transparent;border:none;color:var(--ink-muted);font-size:11px;text-align:center;
+    padding:5px 6px 6px;font-family:'Inter',sans-serif;font-weight:500;cursor:pointer;text-align-last:center;
+  }
+  .sched-cell-add:focus{outline:none;color:var(--ink);}
   .sched-row-remove-cell{background:var(--card);text-align:center;width:32px;}
   .sched-row-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;opacity:0.5;padding:6px;}
   .sched-row-remove:hover{opacity:1;background:var(--danger-tint);border-radius:5px;}
@@ -2985,18 +2992,24 @@ function renderScheduleTable(){
 
 const SCHED_ADD_NEW_SENTINEL = '__add_new_person__';
 
-function buildCrewOptionsHTML(currentValue){
-  const team = data.crewMembers.filter(c => c.type === 'team').sort((a,b) => a.name.localeCompare(b.name));
-  const freelancers = data.crewMembers.filter(c => c.type === 'freelancer').sort((a,b) => a.name.localeCompare(b.name));
-  const knownNames = new Set(data.crewMembers.map(c => c.name));
-  const legacyName = currentValue && !knownNames.has(currentValue) ? currentValue : null;
+function buildCrewOptionsHTML(excludeNames){
+  const exclude = new Set(excludeNames || []);
+  const team = data.crewMembers.filter(c => c.type === 'team' && !exclude.has(c.name)).sort((a,b) => a.name.localeCompare(b.name));
+  const freelancers = data.crewMembers.filter(c => c.type === 'freelancer' && !exclude.has(c.name)).sort((a,b) => a.name.localeCompare(b.name));
 
-  let html = `<option value="">— none —</option>`;
-  if(legacyName) html += `<option value="${escapeHtml(legacyName)}" selected>${escapeHtml(legacyName)} (not in directory)</option>`;
-  if(team.length) html += `<optgroup label="Team Crew">${team.map(c => `<option value="${escapeHtml(c.name)}" ${c.name===currentValue?'selected':''}>${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
-  if(freelancers.length) html += `<optgroup label="Freelancers">${freelancers.map(c => `<option value="${escapeHtml(c.name)}" ${c.name===currentValue?'selected':''}>${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
+  let html = `<option value="" selected disabled>+ Add person…</option>`;
+  if(team.length) html += `<optgroup label="Team Crew">${team.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
+  if(freelancers.length) html += `<optgroup label="Freelancers">${freelancers.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
   html += `<option value="${SCHED_ADD_NEW_SENTINEL}">+ Add new person…</option>`;
   return html;
+}
+
+// An assignment can be a legacy single string (old data) or an array of names (new).
+// This always normalizes to an array so old and new data both work.
+function assignmentNames(day, role){
+  const v = day.assignments && day.assignments[role];
+  if(!v) return [];
+  return Array.isArray(v) ? v : [v];
 }
 
 function drawScheduleTable(se){
@@ -3012,7 +3025,15 @@ function drawScheduleTable(se){
   const dayRows = s.days.map((d, di) => `
     <tr>
       <td class="sched-date-cell"><input type="date" data-day-idx="${di}" value="${d.date||''}"></td>
-      ${s.roles.map((r, ri) => `<td class="sched-cell"><select data-day-idx="${di}" data-role-idx="${ri}">${buildCrewOptionsHTML((d.assignments && d.assignments[r]) || '')}</select></td>`).join('')}
+      ${s.roles.map((r, ri) => {
+        const names = assignmentNames(d, r);
+        return `<td class="sched-cell">
+          <div class="sched-cell-chips">
+            ${names.map((n, ni) => `<span class="sched-chip">${escapeHtml(n)}<button type="button" data-day-idx="${di}" data-role-idx="${ri}" data-remove-name="${ni}" aria-label="Remove ${escapeHtml(n)}">✕</button></span>`).join('')}
+          </div>
+          <select class="sched-cell-add" data-day-idx="${di}" data-role-idx="${ri}">${buildCrewOptionsHTML(names)}</select>
+        </td>`;
+      }).join('')}
       <td class="sched-row-remove-cell"><button type="button" class="sched-row-remove" data-remove-day="${di}" title="Remove this day" aria-label="Remove day">\u2715</button></td>
     </tr>`).join('');
 
@@ -3047,19 +3068,18 @@ function drawScheduleTable(se){
       s.days[Number(inp.getAttribute('data-day-idx'))].date = inp.value;
     });
   });
-  // Assignment cell edits (dropdown, with inline "add new person" support)
-  body.querySelectorAll('.sched-cell select').forEach(sel => {
+  // Assignment cell edits — each cell can now hold multiple people (chips + an add-picker)
+  body.querySelectorAll('.sched-cell-add').forEach(sel => {
     sel.addEventListener('change', async () => {
       const di = Number(sel.getAttribute('data-day-idx'));
       const ri = Number(sel.getAttribute('data-role-idx'));
       const roleName = s.roles[ri];
+      if(!s.days[di].assignments) s.days[di].assignments = {};
+      let names = assignmentNames(s.days[di], roleName);
 
       if(sel.value === SCHED_ADD_NEW_SENTINEL){
         const name = (window.prompt('Name of the new crew member or freelancer:') || '').trim();
-        if(!name){
-          sel.value = (s.days[di].assignments && s.days[di].assignments[roleName]) || '';
-          return;
-        }
+        if(!name) return;
         const existing = data.crewMembers.find(c => c.name.toLowerCase() === name.toLowerCase());
         if(!existing){
           const record = { id: uid(), name, type: 'freelancer', role: '', phone: '', updatedBy: whoAmI(), updatedAt: new Date().toISOString() };
@@ -3067,14 +3087,27 @@ function drawScheduleTable(se){
           await persistCrewMember(record);
           toast(`${name} added to Freelancers`);
         }
-        if(!s.days[di].assignments) s.days[di].assignments = {};
-        s.days[di].assignments[roleName] = name;
-        drawScheduleTable(se); // rebuild all dropdowns so the new person appears everywhere
-        return;
+        if(!names.includes(name)) names.push(name);
+      } else if(sel.value){
+        if(!names.includes(sel.value)) names.push(sel.value);
       }
 
+      s.days[di].assignments[roleName] = names;
+      drawScheduleTable(se); // rebuild so the new chip and updated add-list show everywhere
+    });
+  });
+  // Remove one person from a cell
+  body.querySelectorAll('[data-remove-name]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const di = Number(btn.getAttribute('data-day-idx'));
+      const ri = Number(btn.getAttribute('data-role-idx'));
+      const ni = Number(btn.getAttribute('data-remove-name'));
+      const roleName = s.roles[ri];
+      const names = assignmentNames(s.days[di], roleName);
+      names.splice(ni, 1);
       if(!s.days[di].assignments) s.days[di].assignments = {};
-      s.days[di].assignments[roleName] = sel.value;
+      s.days[di].assignments[roleName] = names;
+      drawScheduleTable(se);
     });
   });
   // Remove day
