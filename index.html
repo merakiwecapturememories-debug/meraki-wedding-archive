@@ -752,7 +752,7 @@
     <div class="field-row">
       <div class="field">
         <label>Client name <span class="required-mark">*</span></label>
-        <input type="text" id="fClient" placeholder="e.g. Priya &amp; Arjun Sharma">
+        <input type="text" id="fClient" placeholder="e.g. Priya &amp; Arjun Sharma" maxlength="120">
       </div>
       <div class="field">
         <label>Event type</label>
@@ -806,11 +806,11 @@
       <div class="field-row">
         <div class="field">
           <label>Copied by</label>
-          <input type="text" id="fCopiedBy" placeholder="e.g. Rahul">
+          <input type="text" id="fCopiedBy" placeholder="e.g. Rahul" maxlength="80">
         </div>
         <div class="field">
           <label>Copied to</label>
-          <input type="text" id="fCopiedTo" placeholder="e.g. Meraki HDD 03, Editing PC">
+          <input type="text" id="fCopiedTo" placeholder="e.g. Meraki HDD 03, Editing PC" maxlength="120">
         </div>
       </div>
       <div class="field-row" id="editedDeliveredRow">
@@ -834,7 +834,7 @@
     </div>
     <div class="field">
       <label>Notes</label>
-      <textarea id="fNotes" placeholder="Contact number, delivery notes, raw + edited status…"></textarea>
+      <textarea id="fNotes" placeholder="Contact number, delivery notes, raw + edited status…" maxlength="500"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn" id="btnCancelEvent">Cancel</button>
@@ -1512,16 +1512,59 @@ document.getElementById('btnLogin').onclick = async () => {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('btnLogin');
   errEl.style.display = 'none';
+
   if(!email || !password){
+    errEl.style.color = 'var(--danger)';
     errEl.textContent = 'Enter your email and password.';
     errEl.style.display = 'block';
     return;
   }
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){
-    errEl.textContent = error.message;
+
+  // Throttle: block for 30s after 5 failed attempts
+  if(Date.now() < loginCooldownUntil){
+    const secsLeft = Math.ceil((loginCooldownUntil - Date.now()) / 1000);
+    errEl.style.color = 'var(--amber)';
+    errEl.textContent = `Too many failed attempts — try again in ${secsLeft} second${secsLeft===1?'':'s'}.`;
     errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  btn.textContent = 'Login';
+
+  if(error){
+    loginAttempts++;
+    if(loginAttempts >= LOGIN_MAX_ATTEMPTS){
+      loginCooldownUntil = Date.now() + LOGIN_COOLDOWN_MS;
+      loginAttempts = 0;
+      let secsLeft = LOGIN_COOLDOWN_MS / 1000;
+      errEl.style.color = 'var(--amber)';
+      errEl.textContent = `Too many failed attempts — wait ${secsLeft}s before trying again.`;
+      errEl.style.display = 'block';
+      const countdown = setInterval(() => {
+        secsLeft--;
+        if(secsLeft <= 0){
+          clearInterval(countdown);
+          errEl.style.display = 'none';
+        } else {
+          errEl.textContent = `Too many failed attempts — wait ${secsLeft}s before trying again.`;
+        }
+      }, 1000);
+    } else {
+      const remaining = LOGIN_MAX_ATTEMPTS - loginAttempts;
+      errEl.style.color = 'var(--danger)';
+      errEl.textContent = `${error.message} (${remaining} attempt${remaining===1?'':'s'} left before temporary lock)`;
+      errEl.style.display = 'block';
+    }
+  } else {
+    loginAttempts = 0; // reset on successful login
   }
 };
 
@@ -1648,12 +1691,42 @@ function isAdmin(){ return !!(currentUser && currentUser.role === 'admin'); }
 
 // ===================== IDLE AUTO-LOGOUT =====================
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const IDLE_WARNING_MS = 30 * 1000;      // warn 30 seconds before logout
 let idleTimer = null;
+let idleWarnTimer = null;
+let idleWarnToast = null;
 const IDLE_ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
 
+function dismissIdleWarning(){
+  if(idleWarnToast){
+    idleWarnToast.remove();
+    idleWarnToast = null;
+  }
+}
+
+function showIdleWarning(){
+  dismissIdleWarning();
+  const host = document.getElementById('toastHost');
+  const el = document.createElement('div');
+  el.className = 'toast toast-warn show';
+  el.style.cssText = 'background:var(--amber);color:#1a1200;max-width:320px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+  el.innerHTML = `<span>You'll be signed out in 30s due to inactivity.</span>
+    <button style="background:rgba(0,0,0,0.2);border:none;color:inherit;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px;" id="btnStaySignedIn">Stay signed in</button>`;
+  host.appendChild(el);
+  idleWarnToast = el;
+  el.querySelector('#btnStaySignedIn').addEventListener('click', () => {
+    resetIdleTimer();
+  });
+}
+
 function resetIdleTimer(){
+  dismissIdleWarning();
   if(idleTimer) clearTimeout(idleTimer);
+  if(idleWarnTimer) clearTimeout(idleWarnTimer);
+  // Fire the warning 30s before logout
+  idleWarnTimer = setTimeout(showIdleWarning, IDLE_TIMEOUT_MS - IDLE_WARNING_MS);
   idleTimer = setTimeout(async () => {
+    dismissIdleWarning();
     toast("Signed out after 5 minutes of inactivity");
     await sb.auth.signOut();
   }, IDLE_TIMEOUT_MS);
@@ -1665,11 +1738,48 @@ function startIdleTimer(){
 }
 
 function stopIdleTimer(){
+  dismissIdleWarning();
   if(idleTimer) clearTimeout(idleTimer);
+  if(idleWarnTimer) clearTimeout(idleWarnTimer);
   idleTimer = null;
+  idleWarnTimer = null;
   IDLE_ACTIVITY_EVENTS.forEach(evt => document.removeEventListener(evt, resetIdleTimer));
 }
 // ===================== /IDLE AUTO-LOGOUT =====================
+
+// ===================== OFFLINE DETECTION =====================
+(function initOfflineBanner(){
+  const banner = document.createElement('div');
+  banner.id = 'offlineBanner';
+  banner.setAttribute('role', 'status');
+  banner.setAttribute('aria-live', 'polite');
+  banner.style.cssText = `
+    position:fixed;top:0;left:0;right:0;z-index:200;
+    background:var(--amber);color:#1a1200;
+    font-size:13px;font-weight:600;text-align:center;
+    padding:10px 16px;display:none;
+  `;
+  banner.textContent = '⚠ No internet connection — changes won\'t save until you\'re back online.';
+  document.body.prepend(banner);
+
+  function updateBanner(){
+    banner.style.display = navigator.onLine ? 'none' : 'block';
+  }
+  window.addEventListener('offline', updateBanner);
+  window.addEventListener('online', () => {
+    banner.style.display = 'none';
+    toast('Back online — connection restored');
+  });
+  updateBanner();
+})();
+// ===================== /OFFLINE DETECTION =====================
+
+// ===================== LOGIN THROTTLING =====================
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_COOLDOWN_MS = 30 * 1000;
+let loginAttempts = 0;
+let loginCooldownUntil = 0;
+// ===================== /LOGIN THROTTLING =====================
 
 function fmtTB(gb){
   return (gb/1000).toFixed(2).replace(/\.00$/,'') + ' TB';
@@ -2335,6 +2445,25 @@ document.getElementById('btnSaveEvent').onclick = async () => {
   const record = buildEventRecord();
   if(!record) return;
   btn.disabled = true;
+
+  // Concurrent-edit protection: check whether this event was updated by someone
+  // else since the modal was opened. "Last write wins silently" is dangerous in a
+  // multi-employee tool — warn instead of blindly overwriting.
+  if(record.id && data.events.find(e => e.id === record.id)){
+    const { data: fresh } = await sb.from('events').select('updated_at, updated_by').eq('id', record.id).single();
+    const original = data.events.find(e => e.id === record.id);
+    if(fresh && original && fresh.updated_at && original.updatedAt &&
+       fresh.updated_at !== original.updatedAt){
+      btn.disabled = false;
+      const who = fresh.updated_by || 'someone else';
+      const proceed = window.confirm(
+        `This event was updated by ${who} since you opened it.\n\nSave anyway and overwrite their changes?`
+      );
+      if(!proceed) return;
+      btn.disabled = true;
+    }
+  }
+
   saveEventRecord(record);
   await persistEvent(record);
   renderAll();
