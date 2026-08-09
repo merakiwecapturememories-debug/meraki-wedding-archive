@@ -79,7 +79,83 @@
   .sidebar-foot{border-top:1px solid var(--line);padding-top:12px;font-size:11.5px;color:var(--ink-muted);}
   .content-area{flex:1;min-width:0;padding:0 0 3rem;}
   .content-inner{max-width:1180px;margin:0 auto;padding:0 1.75rem;}
-  @media (max-width:900px){.sidebar{display:none;}}
+  /* ===================== MOBILE RESPONSIVE ===================== */
+  /* Bottom nav — hidden on desktop, becomes the primary navigation on mobile
+     since the sidebar is hidden there. */
+  .mobile-nav{display:none;}
+
+  @media (max-width:900px){
+    .sidebar{display:none;}
+
+    .mobile-nav{
+      display:flex;position:fixed;bottom:0;left:0;right:0;z-index:90;
+      background:var(--card);border-top:1px solid var(--line-strong);
+      box-shadow:0 -2px 12px rgba(16,24,40,0.08);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    }
+    .mobile-nav a{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+      padding:8px 4px;min-height:52px;border-radius:10px;text-decoration:none;
+      font-size:10.5px;font-weight:600;color:var(--ink-soft);text-align:center;line-height:1.2;
+    }
+    .mobile-nav a.active{color:var(--wine);background:var(--wine-tint);}
+    .mobile-nav a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;}
+
+    /* Leave room so the fixed bottom nav never covers the last row of content */
+    .content-area{padding-bottom:84px;}
+
+    /* Header: stack cleanly instead of cramming into one row */
+    header.top{padding:1rem 1rem;gap:0.75rem;margin-bottom:1.25rem;}
+    .welcome-heading{font-size:18px;}
+    .content-inner{padding:0 1rem;}
+    .wrap{padding:0 1rem 3rem;}
+
+    /* Stats: 2-up on tablets, 1-up on small phones */
+    .stats{grid-template-columns:repeat(2,1fr);gap:10px;}
+    .stat .value{font-size:20px;}
+
+    /* Toolbars and filters: let controls wrap and fill width rather than overflow */
+    .toolbar{flex-direction:column;align-items:stretch;}
+    .toolbar input[type=text], .toolbar select{width:100%;min-width:0;}
+    .toolbar-panel{position:static;}
+
+    /* Modals: full-width sheets with room to scroll */
+    .modal{max-width:100%;max-height:92vh;padding:18px 16px 16px;}
+    .field-row{grid-template-columns:1fr;}
+
+    /* Comfortable tap targets everywhere (WCAG-recommended minimum) */
+    .btn, .btn-sm, .btn-ghost, .btn-danger-ghost{min-height:44px;padding:10px 14px;}
+    .sidebar-nav a, .mobile-nav a{min-height:44px;}
+  }
+
+  @media (max-width:560px){
+    .stats{grid-template-columns:1fr;}
+    .event-grid{grid-template-columns:1fr;}
+    .panel-title{flex-wrap:wrap;gap:10px;}
+    .panel-title > div{width:100%;display:flex;gap:8px;}
+    .panel-title > div .btn{flex:1;}
+
+    /* Wide data tables scroll horizontally instead of breaking the layout */
+    .sched-wrap, #tableWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .folder-detail-table{min-width:520px;}
+  }
+
+  /* iOS Safari auto-zooms (and shifts the whole layout) whenever a focused input has a
+     font-size below 16px. Bumping every text input to 16px on touch screens prevents
+     that jarring jump. Applies to the roster's inputs too. */
+  @media (max-width:900px){
+    input[type=text], input[type=email], input[type=password], input[type=number],
+    input[type=date], input[type=time], input[type=tel], select, textarea,
+    .field input, .field select, .field textarea,
+    .toolbar input, .toolbar select,
+    .auth-field input,
+    #viewSchedule input, #viewSchedule select, #viewSchedule textarea,
+    #rosEventModalOverlay input, #rosEventModalOverlay select, #rosEventModalOverlay textarea,
+    #rosCrewModalOverlay input, #rosCrewModalOverlay select, #rosCrewModalOverlay textarea{
+      font-size:16px;
+    }
+  }
+  /* ===================== /MOBILE RESPONSIVE ===================== */
 
   header.top{
     display:flex;justify-content:space-between;align-items:center;gap:1.5rem;
@@ -721,10 +797,20 @@
     .ros-tabs { padding: 0 16px; }
     .ros-content { padding: 22px 14px 90px; }
     .ros-field-row.ros-two-col { grid-template-columns: 1fr; }
+    .ros-card-grid { grid-template-columns: 1fr; }
+    .ros-badge-grid { grid-template-columns: 1fr 1fr; }
+    .ros-day-roles { grid-template-columns: 1fr; }
+    .ros-tab-btn { flex: 1; text-align: center; min-height: 44px; }
+    .ros-btn, .ros-link-btn { min-height: 44px; }
+    .ros-event-block-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .ros-callsheet-top { flex-direction: column; align-items: flex-start; gap: 8px; }
   }
   @media (max-width: 480px) {
-    .ros-modal-overlay { padding: 10px; }
+    .ros-modal-overlay { padding: 0; align-items: flex-end; }
+    .ros-modal { max-width: 100%; max-height: 94vh; border-radius: 16px 16px 0 0; }
     .ros-modal-header, .ros-modal-body, .ros-modal-footer { padding-left: 16px; padding-right: 16px; }
+    .ros-modal-footer { position: sticky; bottom: 0; background: var(--ros-surface); border-top: 1px solid var(--ros-border); }
+    .ros-modal-footer .ros-btn { flex: 1; }
   }
 
 </style>
@@ -897,6 +983,22 @@
     <div class="sidebar-spacer"></div>
     <div class="sidebar-foot" id="sidebarFoot"></div>
   </nav>
+
+  <nav class="mobile-nav" aria-label="Main navigation">
+    <a href="#" data-view="dashboard" class="active">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+      Dashboard
+    </a>
+    <a href="#" data-view="ledger">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+      Ledger
+    </a>
+    <a href="#" data-view="schedule">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      Schedule
+    </a>
+  </nav>
+
   <div class="content-area">
 
 <div class="wrap">
@@ -1509,12 +1611,27 @@ function switchView(view, clickedLink){
   document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
   document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
-  document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.remove('active'));
-  (clickedLink || document.querySelector(`.sidebar-nav a[data-view="${view}"]`)).classList.add('active');
+
+  // Keep both navs (desktop sidebar + mobile bottom bar) visually in sync
+  document.querySelectorAll('.sidebar-nav a, .mobile-nav a').forEach(x => x.classList.remove('active'));
+  if(clickedLink) clickedLink.classList.add('active');
+  document.querySelectorAll(`.mobile-nav a[data-view="${view}"]`).forEach(x => x.classList.add('active'));
+  if(!clickedLink || !clickedLink.closest('.sidebar-nav')){
+    const sidebarLink = document.querySelector(`.sidebar-nav a[data-view="${view}"]`);
+    if(sidebarLink) sidebarLink.classList.add('active');
+  }
+
   if(view === 'schedule') initRoster();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
+
+document.querySelectorAll('.mobile-nav a[data-view]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    switchView(a.getAttribute('data-view'), a);
+  });
+});
 
 document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
   a.addEventListener('click', e => {
