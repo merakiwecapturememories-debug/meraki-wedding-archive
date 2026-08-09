@@ -832,7 +832,8 @@
     position:relative;overflow:hidden;
   }
   .auth-card{position:relative;z-index:2;width:100%;max-width:400px;background:var(--card);
-    border:1px solid var(--line);border-radius:20px;padding:36px 32px;box-shadow:var(--shadow-card);
+    border:1px solid var(--line);border-radius:20px;padding:36px 32px;
+    box-shadow:0 4px 12px rgba(16,24,40,0.08), 0 20px 48px -12px rgba(16,24,40,0.22);
     animation:auth-card-in 0.5s cubic-bezier(0.16,1,0.3,1);
   }
   @keyframes auth-card-in{
@@ -849,12 +850,12 @@
   .auth-gradient{position:absolute;inset:0;pointer-events:none;z-index:0;}
   .auth-gradient span{
     position:absolute;inset:0;opacity:0;
-    animation:auth-gradient-cycle 40s ease-in-out infinite;
+    animation:auth-gradient-cycle 24s ease-in-out infinite;
   }
-  .auth-gradient span:nth-child(1){background:linear-gradient(135deg,#FBF3F6 0%,#F2F6FD 100%);animation-delay:0s;}
-  .auth-gradient span:nth-child(2){background:linear-gradient(135deg,#FDF8F0 0%,#FAF3F6 100%);animation-delay:10s;}
-  .auth-gradient span:nth-child(3){background:linear-gradient(135deg,#F1F6FC 0%,#F2F9F5 100%);animation-delay:20s;}
-  .auth-gradient span:nth-child(4){background:linear-gradient(135deg,#F6F7FA 0%,#FDF9F1 100%);animation-delay:30s;}
+  .auth-gradient span:nth-child(1){background:linear-gradient(135deg,#F3D3E0 0%,#D3E1F7 100%);animation-delay:0s;}
+  .auth-gradient span:nth-child(2){background:linear-gradient(135deg,#FAE5C4 0%,#F0D2DE 100%);animation-delay:6s;}
+  .auth-gradient span:nth-child(3){background:linear-gradient(135deg,#D2E3F8 0%,#D3EFE0 100%);animation-delay:12s;}
+  .auth-gradient span:nth-child(4){background:linear-gradient(135deg,#DFE3F2 0%,#FBE6CB 100%);animation-delay:18s;}
   @keyframes auth-gradient-cycle{
     0%{opacity:0;}
     5%{opacity:1;}
@@ -872,22 +873,22 @@
      replacement for the old WebGL terrain (which was designed for a black background). */
   .auth-glow{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
   .auth-glow span{
-    position:absolute;border-radius:50%;filter:blur(90px);opacity:0.55;
+    position:absolute;border-radius:50%;filter:blur(80px);opacity:0.75;
     will-change:transform;
   }
   .auth-glow span:nth-child(1){
     width:52vw;height:52vw;top:-12%;left:-10%;
-    background:radial-gradient(circle at 30% 30%, rgba(139,58,80,0.38), transparent 68%);
+    background:radial-gradient(circle at 30% 30%, rgba(139,58,80,0.55), transparent 68%);
     animation:auth-drift-a 22s ease-in-out infinite alternate;
   }
   .auth-glow span:nth-child(2){
     width:46vw;height:46vw;bottom:-14%;right:-8%;
-    background:radial-gradient(circle at 60% 40%, rgba(154,98,0,0.30), transparent 68%);
+    background:radial-gradient(circle at 60% 40%, rgba(154,98,0,0.45), transparent 68%);
     animation:auth-drift-b 26s ease-in-out infinite alternate;
   }
   .auth-glow span:nth-child(3){
     width:40vw;height:40vw;top:38%;right:16%;
-    background:radial-gradient(circle at 50% 50%, rgba(29,95,184,0.24), transparent 68%);
+    background:radial-gradient(circle at 50% 50%, rgba(29,95,184,0.38), transparent 68%);
     animation:auth-drift-c 30s ease-in-out infinite alternate;
   }
   @keyframes auth-drift-a{
