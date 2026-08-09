@@ -16,30 +16,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#F1F1F4;
-    --ink-soft:#9A9CA6;
-    --ink-muted:#82848A;
-    --paper:#0B0B0D;
-    --card:#17171A;
-    --card-sunken:#111113;
-    --line:#27272C;
-    --line-strong:#3A3A41;
-    --wine:#B44861;
-    --wine-fg:#D6647A;
-    --wine-dark:#E07890;
-    --wine-tint:rgba(193,84,107,0.16);
-    --amber:#E3A63C;
-    --amber-tint:rgba(227,166,60,0.15);
-    --blue:#6EA8E8;
-    --blue-tint:rgba(110,168,232,0.15);
-    --ok:#57C08C;
-    --ok-tint:rgba(87,192,140,0.15);
-    --danger:#E56B66;
-    --danger-tint:rgba(229,107,102,0.15);
-    --slate:#9A9CA6;
-    --slate-tint:rgba(154,156,166,0.13);
+    --ink:#141A2E;
+    --ink-soft:#5B6178;
+    --ink-muted:#6C6F7E;
+    --paper:#F5F6F8;
+    --card:#FFFFFF;
+    --card-sunken:#F1F3F6;
+    --line:#E4E7EC;
+    --line-strong:#D0D5DD;
+    --wine:#8B3A50;
+    --wine-fg:#7A2F44;
+    --wine-dark:#6F2D3F;
+    --wine-tint:rgba(139,58,80,0.10);
+    --amber:#9A6200;
+    --amber-tint:rgba(154,98,0,0.10);
+    --blue:#1D5FB8;
+    --blue-tint:rgba(29,95,184,0.10);
+    --ok:#0F7A4C;
+    --ok-tint:rgba(15,122,76,0.10);
+    --danger:#C22A2A;
+    --danger-tint:rgba(194,42,42,0.10);
+    --slate:#5B6178;
+    --slate-tint:rgba(91,97,120,0.10);
     --radius:12px;
-    --shadow-card:0 6px 20px rgba(0,0,0,0.35);
+    --shadow-card:0 1px 3px rgba(16,24,40,0.06), 0 4px 12px -2px rgba(16,24,40,0.08);
   }
   *{box-sizing:border-box;}
   body{
@@ -113,7 +113,7 @@
 
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.75rem;}
   .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-card);border-left:2.5px solid var(--stat-accent, var(--wine));transition:transform 0.15s, box-shadow 0.15s;}
-  .stat:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+  .stat:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(16,24,40,0.10);}
   .stat:nth-child(1){--stat-accent:var(--wine);}
   .stat:nth-child(2){--stat-accent:var(--blue);}
   .stat:nth-child(3){--stat-accent:var(--amber);}
@@ -156,7 +156,7 @@
   /* Drive registry */
   #driveList{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
   .drive-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative;box-shadow:var(--shadow-card);transition:border-color 0.15s, box-shadow 0.15s;}
-  .drive-card:hover{border-color:var(--line-strong);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+  .drive-card:hover{border-color:var(--line-strong);box-shadow:0 8px 20px rgba(16,24,40,0.10);}
   .drive-card .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
   .drive-name{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;letter-spacing:-0.005em;color:var(--ink);}
   .drive-name-link{background:none;border:none;padding:0;text-align:left;cursor:pointer;}
@@ -177,7 +177,7 @@
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .entries-panel{
     background:var(--card);border:1px solid var(--line-strong);border-radius:var(--radius);
-    box-shadow:0 10px 30px rgba(0,0,0,0.45);overflow:hidden;
+    box-shadow:0 4px 16px rgba(16,24,40,0.08);overflow:hidden;
   }
   .entries-panel-head{
     display:flex;justify-content:space-between;align-items:center;
@@ -230,7 +230,7 @@
     color:var(--ink-soft);cursor:pointer;transition:background 0.12s, color 0.12s;
   }
   .sched-subtab:hover{color:var(--ink);}
-  .sched-subtab.active{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+  .sched-subtab.active{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,0.12);}
 
   /* Crew directory */
   .crew-directory{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -289,7 +289,7 @@
   .overlay.open{display:flex;animation:overlay-fade 0.15s ease-out;}
   @keyframes overlay-fade{from{opacity:0;}to{opacity:1;}}
   @keyframes modal-in{from{opacity:0;transform:translateY(8px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
-  .modal{background:var(--card);border-radius:12px;width:100%;max-width:440px;padding:22px 22px 18px;border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,0.5);max-height:88vh;overflow-y:auto;animation:modal-in 0.18s cubic-bezier(0.16,1,0.3,1);}
+  .modal{background:var(--card);border-radius:12px;width:100%;max-width:440px;padding:22px 22px 18px;border:1px solid var(--line);box-shadow:0 20px 50px rgba(16,24,40,0.18);max-height:88vh;overflow-y:auto;animation:modal-in 0.18s cubic-bezier(0.16,1,0.3,1);}
   .modal h3{font-family:'Inter',sans-serif;font-weight:600;font-size:16px;margin:0 0 16px;color:var(--ink);}
   .field{margin-bottom:13px;}
   .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
@@ -324,7 +324,7 @@
   .raw-deleted{background:var(--ok-tint);color:var(--ok);}
   .raw-none{color:var(--ink-muted);font-size:12px;}
 
-  .alert-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--amber-tint);border:1px solid #ECD6A8;color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;}
+  .alert-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--amber-tint);border:1px solid rgba(154,98,0,0.35);color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;}
   .alert-banner strong{font-weight:600;}
   .alert-banner button{background:transparent;border:none;color:var(--amber);font-weight:600;font-size:12.5px;text-decoration:underline;padding:0;}
 
@@ -421,7 +421,7 @@
     padding:15px 16px 14px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;
     transition:border-color 0.15s, box-shadow 0.15s;
   }
-  .event-card:hover{border-color:var(--line-strong);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+  .event-card:hover{border-color:var(--line-strong);box-shadow:0 8px 20px rgba(16,24,40,0.10);}
   .event-card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
   .event-card-avatar{
     width:34px;height:34px;border-radius:9px;background:var(--wine-tint);color:var(--wine-dark);
@@ -729,10 +729,12 @@
 <style>
   .auth-gate{
     min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:60px 20px;background:#0B0B0D;font-family:'Poppins',sans-serif;
+    padding:60px 20px;background:var(--paper);font-family:'Poppins',sans-serif;
     position:relative;overflow:hidden;
   }
-  .auth-card{position:relative;z-index:2;width:100%;max-width:400px;}
+  .auth-card{position:relative;z-index:2;width:100%;max-width:400px;background:var(--card);
+    border:1px solid var(--line);border-radius:20px;padding:36px 32px;box-shadow:var(--shadow-card);
+  }
 
   /* Soft ambient glow blobs behind the 3D hills, for color depth */
   .auth-glow{position:absolute;inset:0;pointer-events:none;z-index:0;
@@ -740,41 +742,41 @@
     mask-image:radial-gradient(90% 60% at 50% 50%, #000 40%, transparent);
   }
   .auth-glow::before, .auth-glow::after{content:'';position:absolute;inset:0;border-radius:50%;}
-  .auth-glow::before{background:radial-gradient(ellipse at center, rgba(193,84,107,0.16), transparent 70%);filter:blur(120px);}
-  .auth-glow::after{background:radial-gradient(ellipse at center, rgba(214,163,68,0.10), transparent);filter:blur(80px);}
+  .auth-glow::before{background:radial-gradient(ellipse at center, rgba(139,58,80,0.10), transparent 70%);filter:blur(120px);}
+  .auth-glow::after{background:radial-gradient(ellipse at center, rgba(154,98,0,0.07), transparent);filter:blur(80px);}
 
   /* Animated 3D terrain (Three.js/WebGL) — sits behind everything */
   #authHillsCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
 
   .auth-logo{
-    width:60px;height:60px;border-radius:16px;background:#C1546B;
+    width:60px;height:60px;border-radius:16px;background:var(--wine);
     display:flex;align-items:center;justify-content:center;
     margin:0 auto 22px;padding:10px;
   }
   .auth-logo img{width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1);}
   .auth-hero{text-align:center;margin-bottom:30px;}
   .auth-hero h1{
-    font-family:'Poppins',sans-serif;font-weight:800;color:#F1F1F4;font-size:30px;margin:0 0 10px;letter-spacing:-0.01em;
+    font-family:'Poppins',sans-serif;font-weight:800;color:var(--ink);font-size:30px;margin:0 0 10px;letter-spacing:-0.01em;
   }
-  .auth-hero p{color:#9A9CA6;font-size:13.5px;line-height:1.6;margin:0;}
-  .auth-hero p strong{color:#F1F1F4;font-weight:600;}
+  .auth-hero p{color:var(--ink-soft);font-size:13.5px;line-height:1.6;margin:0;}
+  .auth-hero p strong{color:var(--ink);font-weight:600;}
   .auth-field{position:relative;margin-bottom:16px;}
   .auth-field input{
     width:100%;font-family:'Poppins',sans-serif;font-size:14px;padding:15px 44px 15px 20px;
-    border:1.5px solid #2A2A30;border-radius:999px;background:#17171A;color:#F1F1F4;box-sizing:border-box;
+    border:1.5px solid var(--line-strong);border-radius:999px;background:var(--card-sunken);color:var(--ink);box-sizing:border-box;
     transition:border-color 0.18s, box-shadow 0.18s;
   }
-  .auth-field input::placeholder{color:#6C6E78;}
-  .auth-field input:focus{outline:none;border-color:#C1546B;box-shadow:0 0 0 4px rgba(193,84,107,0.18);}
+  .auth-field input::placeholder{color:var(--ink-muted);}
+  .auth-field input:focus{outline:none;border-color:var(--wine);box-shadow:0 0 0 4px var(--wine-tint);}
   .auth-field .auth-eye{
-    position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#6C6E78;
+    position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--ink-muted);
     cursor:pointer;display:flex;align-items:center;background:none;border:none;padding:2px;
   }
   .auth-forgot{display:flex;justify-content:flex-end;margin:-4px 0 18px;}
-  .auth-forgot a{font-size:12.5px;color:#9A9CA6;text-decoration:none;font-weight:500;}
-  .auth-forgot a:hover{color:#F1F1F4;text-decoration:underline;}
+  .auth-forgot a{font-size:12.5px;color:var(--ink-soft);text-decoration:none;font-weight:500;}
+  .auth-forgot a:hover{color:var(--ink);text-decoration:underline;}
   .auth-submit{
-    width:100%;padding:16px;border-radius:999px;border:none;background:#C1546B;color:#fff;
+    width:100%;padding:16px;border-radius:999px;border:none;background:var(--wine);color:#fff;
     font-family:'Poppins',sans-serif;font-weight:600;font-size:15px;cursor:pointer;
     transition:background 0.12s, transform 0.12s, box-shadow 0.12s;position:relative;overflow:hidden;
   }
@@ -783,15 +785,15 @@
     background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 48%, rgba(255,255,255,0.25) 52%, transparent 70%);
     transform:translateX(-120%);transition:transform 0.55s ease;
   }
-  .auth-submit:hover{background:#A8455A;transform:translateY(-1px);box-shadow:0 8px 22px rgba(193,84,107,0.4);}
+  .auth-submit:hover{background:var(--wine-dark);transform:translateY(-1px);box-shadow:0 8px 22px rgba(139,58,80,0.35);}
   .auth-submit:hover::before{transform:translateX(120%);}
   .auth-submit:active{transform:translateY(0) scale(0.99);}
   .auth-help{
     display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;
-    margin-top:22px;padding-top:18px;border-top:1px solid #202024;
-    font-size:12.5px;color:#9A9CA6;font-family:'Poppins',sans-serif;
+    margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:12.5px;color:var(--ink-soft);font-family:'Poppins',sans-serif;
   }
-  .auth-help strong{color:#F1F1F4;font-weight:600;}
+  .auth-help strong{color:var(--ink);font-weight:600;}
 </style>
 </head>
 
@@ -823,7 +825,7 @@
     </div>
 
     <div id="resetPasswordForm" style="display:none;">
-      <p id="resetPasswordIntro" style="font-size:12.5px;color:#9A9CA6;line-height:1.6;margin:0 0 16px;text-align:center;">You clicked a password reset link. Choose a new password below.</p>
+      <p id="resetPasswordIntro" style="font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0 0 16px;text-align:center;">You clicked a password reset link. Choose a new password below.</p>
       <div class="auth-field">
         <input type="password" id="resetPassword1" placeholder="New password">
         <button type="button" class="auth-eye" data-target="resetPassword1">👁</button>
@@ -1308,7 +1310,7 @@
     varying vec3 vPosition;
     void main(void) {
       float opacity = (96.0 - length(vPosition)) / 256.0 * 0.5;
-      vec3 color = vec3(0.72, 0.55, 0.6);
+      vec3 color = vec3(0.55, 0.35, 0.42);
       gl_FragColor = vec4(color, opacity);
     }
   `;
