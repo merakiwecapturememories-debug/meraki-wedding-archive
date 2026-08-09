@@ -517,6 +517,14 @@
   .explorer-titlebar{display:flex;justify-content:space-between;align-items:center;gap:12px;}
   .explorer-breadcrumb{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .explorer-breadcrumb button{background:none;border:none;color:var(--wine-dark);cursor:pointer;font-size:13px;font-weight:600;padding:0;}
+  .explorer-breadcrumb .explorer-back{
+    display:inline-flex;align-items:center;gap:4px;
+    background:var(--card-sunken);border:1px solid var(--line-strong);
+    padding:6px 12px;border-radius:8px;margin-right:10px;color:var(--ink);
+    min-height:36px;transition:background 0.12s, border-color 0.12s;
+  }
+  .explorer-breadcrumb .explorer-back:hover{background:var(--wine-tint);border-color:var(--wine);color:var(--wine-fg);}
+  .explorer-breadcrumb .explorer-back:focus-visible{outline:none;box-shadow:0 0 0 3px var(--wine-tint);}
   .explorer-breadcrumb button:hover{text-decoration:underline;}
   .explorer-breadcrumb .crumb-current{color:var(--ink);font-weight:600;}
   .explorer-breadcrumb .crumb-sep{color:var(--ink-muted);}
@@ -2380,6 +2388,22 @@ function closeDriveContents(){
   document.getElementById('contentsOverlay').classList.remove('open');
 }
 
+// Escape steps back one level (sub-folders → drive root → closed), matching how
+// people expect "back" to behave in a file browser.
+document.addEventListener('keydown', (e) => {
+  if(e.key !== 'Escape') return;
+  const overlay = document.getElementById('contentsOverlay');
+  if(!overlay || !overlay.classList.contains('open')) return;
+  if(contentsState.level === 'folders'){
+    contentsState.level = 'events';
+    contentsState.eventId = null;
+    document.getElementById('explorerSearch').value = '';
+    renderExplorer();
+  } else {
+    closeDriveContents();
+  }
+});
+
 function renderExplorer(){
   const drive = data.drives.find(d => d.id === contentsState.driveId);
   if(!drive){ closeDriveContents(); return; }
@@ -2388,8 +2412,14 @@ function renderExplorer(){
   const body = document.getElementById('explorerBody');
   const search = document.getElementById('explorerSearch').value.trim().toLowerCase();
 
+  // Delegated so the "← Back" button works in every render path, including the
+  // early-return empty-state branches below.
+  crumb.onclick = (e) => {
+    if(e.target.closest('[data-close-explorer]')) closeDriveContents();
+  };
+
   if(contentsState.level === 'events'){
-    crumb.innerHTML = `<span class="crumb-current">${escapeHtml(drive.label)}</span>`;
+    crumb.innerHTML = `<button class="explorer-back" data-close-explorer aria-label="Back to drive registry">← Back</button><span class="crumb-current">${escapeHtml(drive.label)}</span>`;
     let items = data.events.filter(e => e.driveId === drive.id);
     if(search) items = items.filter(e => (e.eventName||'').toLowerCase().includes(search) || (e.client||'').toLowerCase().includes(search));
     subhead.textContent = `File folder (${items.length})`;
@@ -2425,7 +2455,7 @@ function renderExplorer(){
   } else {
     const ev = data.events.find(x => x.id === contentsState.eventId);
     if(!ev){ contentsState.level = 'events'; renderExplorer(); return; }
-    crumb.innerHTML = `<button data-back-to-events>${escapeHtml(drive.label)}</button><span class="crumb-sep">›</span><span class="crumb-current">${escapeHtml(ev.eventName)}</span>`;
+    crumb.innerHTML = `<button class="explorer-back" data-back-to-events aria-label="Back to ${escapeHtml(drive.label)}">← Back</button><button data-back-to-events>${escapeHtml(drive.label)}</button><span class="crumb-sep">›</span><span class="crumb-current">${escapeHtml(ev.eventName)}</span>`;
     let items = ev.folders || [];
     if(search) items = items.filter(f => (f.name||'').toLowerCase().includes(search));
     subhead.innerHTML = `File folder (${items.length}) · <button class="row-expand-toggle" style="display:inline;padding:0;" data-edit-this-event="${ev.id}">Edit event details</button>`;
@@ -2440,11 +2470,12 @@ function renderExplorer(){
           <div class="fi-caption">${escapeHtml(f.type||'Other')} · ${f.fileCount ? f.fileCount.toLocaleString() + ' files · ' : ''}${(f.sizeGB||0).toLocaleString()} GB</div>
         </div>`).join('')}</div>`;
     }
-    const backBtn = crumb.querySelector('[data-back-to-events]');
-    if(backBtn) backBtn.addEventListener('click', () => {
-      contentsState.level = 'events'; contentsState.eventId = null;
-      document.getElementById('explorerSearch').value = '';
-      renderExplorer();
+    crumb.querySelectorAll('[data-back-to-events]').forEach(backBtn => {
+      backBtn.addEventListener('click', () => {
+        contentsState.level = 'events'; contentsState.eventId = null;
+        document.getElementById('explorerSearch').value = '';
+        renderExplorer();
+      });
     });
     const editBtn = subhead.querySelector('[data-edit-this-event]');
     if(editBtn) editBtn.addEventListener('click', () => { closeDriveContents(); openEventModal(ev); });
