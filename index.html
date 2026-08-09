@@ -784,6 +784,14 @@
   .ros-role-na-btn { flex-shrink: 0; font-family: var(--ros-font-mono); font-size: 10px; padding: 0 10px; min-height: 36px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); color: var(--ros-ink-soft); cursor: pointer; box-sizing: border-box; }
   .ros-role-na-btn:hover { border-color: var(--ros-accent); color: var(--ros-accent); }
   .ros-add-day-btn { margin-top: 4px; }
+  .ros-field-hint { font-size: 12px; line-height: 1.5; color: var(--ros-ink-soft); margin: -2px 0 10px; }
+  .ros-field-hint em { font-style: normal; font-family: var(--ros-font-mono); color: var(--ros-ink); }
+  .ros-field-hint strong { color: var(--ros-ink); font-weight: 600; }
+  .ros-name-chip {
+    display: inline-block; background: var(--ros-accent-soft-bg); color: var(--ros-accent);
+    border: 1px solid var(--ros-accent-soft-border); border-radius: 20px;
+    padding: 1px 9px; font-size: 12px; font-weight: 600; margin: 0 4px 3px 0;
+  }
 
   button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 2px solid var(--ros-accent); outline-offset: 2px;
@@ -3314,7 +3322,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   var ROLE_KEYS = ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video','Drone'];
   var ROLE_SUGGESTIONS = ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video','Drone','Photo Editor','Assistant'];
   var FUNCTION_SUGGESTIONS = ['Prewedding','Haldi','Mehendi','Sangeet','Wedding Day','Reception','Engagement','Other'];
-  var ALBUM_SIDE_OPTIONS = ['', 'Both Side', 'Single Side'];
+  var RENTAL_STATUS_OPTIONS = ['', 'Booked', 'Confirmed', 'Returned'];
   var NOT_REQUIRED_PATTERNS = ['not required','not req','notreq','not r','na','n/a','nr','-'];
 
   /* ---------- storage helpers (Supabase-backed, single shared row) ---------- */
@@ -3418,7 +3426,13 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   function roleCellValue(val) {
     if (!val || !String(val).trim()) return '<span class="ros-cell-empty">—</span>';
     if (isNotRequiredValue(val)) return '<span class="ros-cell-na">Not required</span>';
-    return escapeHtml(String(val).trim());
+    // Two or more people can share a role — show each as its own chip so it's
+    // obvious at a glance that more than one person is covering it.
+    var names = namesInRoleValue(val);
+    if (names.length <= 1) return escapeHtml(String(val).trim());
+    return names.map(function (n) {
+      return '<span class="ros-name-chip">' + escapeHtml(n) + '</span>';
+    }).join('');
   }
   function renameGlobally(oldName, newName) {
     if (!oldName || oldName === newName) return false;
@@ -3463,7 +3477,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     if ((ev.title || '').toLowerCase().indexOf(q) !== -1) return true;
     if ((ev.venue || '').toLowerCase().indexOf(q) !== -1) return true;
     if ((ev.eventType || '').toLowerCase().indexOf(q) !== -1) return true;
-    if ((ev.albumBy || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((ev.rentalFrom || '').toLowerCase().indexOf(q) !== -1) return true;
     return (ev.days || []).some(function (day) {
       if ((day.function || '').toLowerCase().indexOf(q) !== -1) return true;
       return ROLE_KEYS.some(function (role) { return ((day.roles && day.roles[role]) || '').toLowerCase().indexOf(q) !== -1; });
@@ -3612,8 +3626,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   }
   function eventBlockHtml(ev) {
     var tc = getTypeColors(ev.eventType);
-    var albumLine = (ev.albumBy || ev.albumSide)
-      ? '<div class="ros-meta-item"><dt>Potra</dt><dd>' + escapeHtml(ev.albumBy || '—') + (ev.albumSide ? ' · ' + escapeHtml(ev.albumSide) : '') + '</dd></div>'
+    var albumLine = (ev.rentalFrom || ev.rentalStatus)
+      ? '<div class="ros-meta-item"><dt>Camera rental</dt><dd>' + escapeHtml(ev.rentalFrom || '—') + (ev.rentalStatus ? ' · ' + escapeHtml(ev.rentalStatus) : '') + '</dd></div>'
       : '';
     var contactLine = (ev.contactPerson || ev.contactNumber)
       ? '<div class="ros-meta-item"><dt>Contact</dt><dd>' + escapeHtml(ev.contactPerson || '') + (ev.contactPerson && ev.contactNumber ? ' · ' : '') + escapeHtml(ev.contactNumber || '') + '</dd></div>'
@@ -3674,7 +3688,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   function rosOpenEventModal(event) {
     state.editingEvent = event ? JSON.parse(JSON.stringify(event)) : {
       id: null, refCode: null, title: '', eventType: '', status: 'Tentative',
-      venue: '', contactPerson: '', contactNumber: '', albumBy: '', albumSide: '', notes: '',
+      venue: '', contactPerson: '', contactNumber: '', rentalFrom: '', rentalStatus: '', notes: '',
       days: [blankDay()]
     };
     if (!state.editingEvent.days || !state.editingEvent.days.length) state.editingEvent.days = [blankDay()];
@@ -3694,7 +3708,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var rolesHtml = ROLE_KEYS.map(function (role) {
       var val = (day.roles && day.roles[role]) || '';
       return '<div class="ros-role-field"><label>' + role + '</label><div class="ros-role-input-row">' +
-        '<input type="text" class="ros-role-input" data-role="' + escapeHtml(role) + '" list="crewNamesList" value="' + escapeHtml(val) + '" placeholder="Names">' +
+        '<input type="text" class="ros-role-input" data-role="' + escapeHtml(role) + '" list="crewNamesList" value="' + escapeHtml(val) + '" placeholder="Name, second name">' +
         '<button type="button" class="ros-role-na-btn">N/R</button></div></div>';
     }).join('');
     return '<div class="ros-day-row"><div class="ros-day-row-header">' +
@@ -3710,7 +3724,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var typeOptions = '<option value="" disabled' + (!ev.eventType ? ' selected' : '') + '>— select —</option>' +
       EVENT_TYPES.map(function (t) { return '<option value="' + t + '"' + (ev.eventType === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
     var statusOptions = STATUSES.map(function (s) { return '<option value="' + s + '"' + (ev.status === s ? ' selected' : '') + '>' + s + '</option>'; }).join('');
-    var albumSideOptions = ALBUM_SIDE_OPTIONS.map(function (s) { return '<option value="' + s + '"' + (ev.albumSide === s ? ' selected' : '') + '>' + (s || '— not set —') + '</option>'; }).join('');
+    var rentalStatusOptions = RENTAL_STATUS_OPTIONS.map(function (s) { return '<option value="' + s + '"' + (ev.rentalStatus === s ? ' selected' : '') + '>' + (s || '— not set —') + '</option>'; }).join('');
     var crewDatalist = '<datalist id="crewNamesList">' + state.crew.map(function (c) { return '<option value="' + escapeHtml(c.name) + '"></option>'; }).join('') + '<option value="Not required"></option></datalist>';
     var functionDatalist = '<datalist id="functionSuggestions">' + FUNCTION_SUGGESTIONS.map(function (f) { return '<option value="' + f + '"></option>'; }).join('') + '</datalist>';
     var daysHtml = ev.days.map(function (day, i) { return dayRowHtml(day, i + 1); }).join('');
@@ -3729,10 +3743,11 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<div class="ros-field"><label for="rosF_contactNumber">Contact number</label><input type="text" id="rosF_contactNumber" value="' + escapeHtml(ev.contactNumber) + '"></div>' +
       '</div>' +
       '<div class="ros-field-row ros-two-col">' +
-      '<div class="ros-field"><label for="rosF_albumBy">Potra (album) by</label><input type="text" id="rosF_albumBy" value="' + escapeHtml(ev.albumBy) + '" placeholder="e.g. Meraki"></div>' +
-      '<div class="ros-field"><label for="rosF_albumSide">Potra style</label><select id="rosF_albumSide">' + albumSideOptions + '</select></div>' +
+      '<div class="ros-field"><label for="rosF_rentalFrom">Camera rental — gear &amp; vendor</label><input type="text" id="rosF_rentalFrom" value="' + escapeHtml(ev.rentalFrom) + '" placeholder="e.g. 2x A7III + 35mm — Lens Pro"></div>' +
+      '<div class="ros-field"><label for="rosF_rentalStatus">Rental status</label><select id="rosF_rentalStatus">' + rentalStatusOptions + '</select></div>' +
       '</div>' +
       '<div class="ros-field-row"><div class="ros-field"><label>Function days</label>' +
+      '<p class="ros-field-hint">Two people on one role? Separate the names with a comma — e.g. <em>Ajay, Rupendra</em>. Use <strong>N/R</strong> when a role isn\'t needed that day.</p>' +
       '<div class="ros-days-editor" id="rosDaysContainer">' + daysHtml + '</div>' +
       '<button type="button" class="ros-btn ros-btn-ghost ros-add-day-btn" id="rosAddDayBtn">+ Add another day</button>' +
       crewDatalist + functionDatalist +
@@ -3811,8 +3826,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     ev.venue = document.getElementById('rosF_venue').value.trim();
     ev.contactPerson = document.getElementById('rosF_contactPerson').value.trim();
     ev.contactNumber = document.getElementById('rosF_contactNumber').value.trim();
-    ev.albumBy = document.getElementById('rosF_albumBy').value.trim();
-    ev.albumSide = document.getElementById('rosF_albumSide').value;
+    ev.rentalFrom = document.getElementById('rosF_rentalFrom').value.trim();
+    ev.rentalStatus = document.getElementById('rosF_rentalStatus').value;
     ev.notes = document.getElementById('rosF_notes').value.trim();
     ev.days = readDaysFromDom();
 
