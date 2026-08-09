@@ -488,6 +488,240 @@
       scroll-behavior:auto !important;
     }
   }
+
+  /* ===================== Crew Schedule (Crew Roster feature) ===================== */
+
+  #viewSchedule {
+    --ros-bg: #F7F8FA;
+    --ros-surface: #FFFFFF;
+    --ros-surface-muted: #F9FAFB;
+    --ros-border: #E4E7EC;
+    --ros-border-strong: #D0D5DD;
+
+    --ros-ink: #101828;
+    --ros-ink-soft: #667085;
+    --ros-ink-faint: #98A2B3;
+
+    --ros-accent: #2F5FE0;
+    --ros-accent-hover: #274EBD;
+    --ros-accent-soft-bg: #EFF4FF;
+    --ros-accent-soft-border: #C7D7FB;
+
+    --ros-success-bg: #ECFDF3; --ros-success-text: #067647; --ros-success-border: #ABEFC6;
+    --ros-warning-bg: #FFFAEB; --ros-warning-text: #B54708; --ros-warning-border: #FEDF89;
+    --ros-danger-bg: #FEF3F2; --ros-danger-text: #B42318; --ros-danger-border: #FECDCA;
+    --ros-neutral-bg: #F2F4F7; --ros-neutral-text: #344054; --ros-neutral-border: #D0D5DD;
+
+    --ros-shadow-sm: 0 1px 2px rgba(16,24,40,0.06);
+    --ros-shadow-md: 0 1px 3px rgba(16,24,40,0.08), 0 4px 10px -4px rgba(16,24,40,0.08);
+    --ros-shadow-lg: 0 4px 8px -2px rgba(16,24,40,0.08), 0 12px 24px -6px rgba(16,24,40,0.1);
+
+    --ros-font-sans: 'IBM Plex Sans', sans-serif;
+    --ros-font-mono: 'IBM Plex Mono', monospace;
+
+    font-family: var(--ros-font-sans);
+    background: var(--ros-bg);
+    color: var(--ros-ink);
+    -webkit-font-smoothing: antialiased;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--line-strong);
+  }
+  #viewSchedule * { box-sizing: border-box; }
+  #viewSchedule button { font-family: inherit; }
+
+  .ros-hidden { display: none !important; }
+  #viewSchedule button { font-family: inherit; }
+.ros-loading-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--ros-bg); }
+  .ros-loading-mark { font-family: var(--ros-font-sans); font-size: clamp(20px, 6vw, 24px); font-weight: 700; color: var(--ros-ink); }
+  .ros-loading-sub { font-family: var(--ros-font-mono); font-size: 12px; color: var(--ros-ink-soft); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .ros-topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 14px 24px; background: var(--ros-surface); border-bottom: 1px solid var(--ros-border); }
+  .ros-brand { display: flex; align-items: center; gap: 12px; }
+  .ros-brand-mark { width: 38px; height: 38px; border-radius: 9px; background: var(--ros-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ros-brand-text { display: flex; flex-direction: column; gap: 1px; }
+  .ros-brand-title { font-family: var(--ros-font-sans); font-size: 18px; font-weight: 700; color: var(--ros-ink); line-height: 1.2; }
+  .ros-brand-sub { font-family: var(--ros-font-mono); font-size: 11px; color: var(--ros-ink-soft); text-transform: uppercase; letter-spacing: 0.08em; }
+  .ros-topbar-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .ros-whoami { display: flex; align-items: center; gap: 8px; }
+  .ros-whoami-label { font-family: var(--ros-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ros-ink-soft); white-space: nowrap; }
+  .ros-whoami select { background: var(--ros-surface); color: var(--ros-ink); border: 1px solid var(--ros-border-strong); padding: 8px 10px; border-radius: 8px; font-family: var(--ros-font-sans); font-size: 14px; max-width: 160px; }
+
+  .ros-tabs { display: flex; gap: 22px; padding: 0 24px; background: var(--ros-surface); border-bottom: 1px solid var(--ros-border); overflow-x: auto; }
+  .ros-tab-btn { background: none; border: none; color: var(--ros-ink-soft); font-family: var(--ros-font-sans); font-weight: 500; font-size: 14px; padding: 13px 2px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .ros-tab-btn.ros-active { color: var(--ros-accent); border-bottom-color: var(--ros-accent); font-weight: 600; }
+  .ros-tab-btn:hover { color: var(--ros-ink); }
+
+  .ros-content { max-width: 920px; margin: 0 auto; padding: 28px 20px 100px; }
+  .ros-section-label { font-family: var(--ros-font-mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ros-ink-faint); margin: 32px 0 12px; font-weight: 500; }
+  .ros-section-label:first-child { margin-top: 0; }
+
+  .ros-search-row { margin-bottom: 22px; }
+  .ros-search-row input { width: 100%; padding: 11px 14px; border-radius: 8px; border: 1px solid var(--ros-border-strong); background: var(--ros-surface); color: var(--ros-ink); font-family: var(--ros-font-sans); font-size: 15px; }
+  .ros-search-row input::placeholder { color: var(--ros-ink-faint); }
+  .ros-search-row input:focus { outline: none; border-color: var(--ros-accent); box-shadow: 0 0 0 3px var(--ros-accent-soft-bg); }
+  .ros-no-results { color: var(--ros-ink-soft); text-align: center; padding: 40px 0; }
+
+  .ros-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+
+  .ros-callsheet { background: var(--ros-surface); color: var(--ros-ink); border: 1px solid var(--ros-border); border-radius: 12px; padding: 18px 20px; box-shadow: var(--ros-shadow-sm); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .ros-callsheet:hover { transform: translateY(-1px); box-shadow: var(--ros-shadow-md); }
+  .ros-callsheet-muted { opacity: 0.65; }
+  .ros-callsheet-muted:hover { opacity: 0.9; }
+  .ros-callsheet-hero { max-width: 640px; margin: 0 auto 8px; padding: 22px 24px; border: 1px solid var(--ros-accent-soft-border); background: var(--ros-accent-soft-bg); box-shadow: var(--ros-shadow-md); }
+  .ros-callsheet-hero:hover { transform: translateY(-1px); }
+
+  .ros-callsheet-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .ros-eyebrow { font-family: var(--ros-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ros-ink-faint); font-weight: 500; }
+  .ros-callsheet-hero .ros-eyebrow { color: var(--ros-accent); font-weight: 600; }
+  .ros-ref-code { font-family: var(--ros-font-mono); font-size: 11px; color: var(--ros-ink-faint); }
+  .ros-callsheet-title { font-family: var(--ros-font-sans); font-size: 18px; font-weight: 700; line-height: 1.3; margin: 2px 0 4px; word-break: break-word; color: var(--ros-ink); }
+  .ros-callsheet-hero .ros-callsheet-title { font-size: clamp(20px, 4.5vw, 23px); }
+  .ros-function-tag { font-family: var(--ros-font-mono); font-size: 12px; color: var(--ros-ink-soft); margin: 0 0 8px; }
+
+  .ros-type-badge, .ros-status-badge { display: inline-block; font-family: var(--ros-font-sans); font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 9999px; border: 1px solid transparent; }
+  .ros-type-badge { margin-bottom: 12px; }
+
+  .ros-callsheet-data { display: grid; grid-template-columns: 70px 1fr; row-gap: 6px; column-gap: 10px; margin: 12px 0 14px; font-size: 13.5px; }
+  .ros-callsheet-data > div { display: contents; }
+  .ros-callsheet-data dt { color: var(--ros-ink-faint); text-transform: uppercase; font-family: var(--ros-font-mono); font-size: 10.5px; letter-spacing: 0.05em; padding-top: 2px; }
+  .ros-callsheet-data dd { color: var(--ros-ink); }
+  .ros-my-role { color: var(--ros-accent); font-weight: 700; }
+
+  .ros-callsheet-notes { font-size: 13.5px; color: var(--ros-ink-soft); margin: 4px 0 14px; border-left: 2px solid var(--ros-border-strong); padding-left: 10px; }
+
+  .ros-callsheet-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 10px; }
+  .ros-callsheet-actions { display: flex; gap: 2px; }
+
+  .ros-status-confirmed { background: var(--ros-success-bg); color: var(--ros-success-text); border-color: var(--ros-success-border); }
+  .ros-status-tentative { background: var(--ros-warning-bg); color: var(--ros-warning-text); border-color: var(--ros-warning-border); }
+  .ros-status-cancelled { background: var(--ros-danger-bg); color: var(--ros-danger-text); border-color: var(--ros-danger-border); }
+  .ros-status-completed { background: var(--ros-neutral-bg); color: var(--ros-neutral-text); border-color: var(--ros-neutral-border); }
+
+  .ros-empty-state { text-align: center; padding: 60px 20px; max-width: 420px; margin: 0 auto; }
+  .ros-empty-state h3 { font-family: var(--ros-font-sans); font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--ros-ink); }
+  .ros-empty-state p { color: var(--ros-ink-soft); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+
+  .ros-past-section { margin-top: 32px; }
+  .ros-past-section summary { cursor: pointer; font-family: var(--ros-font-mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ros-ink-faint); padding: 10px 0; list-style: none; }
+  .ros-past-section summary::-webkit-details-marker { display: none; }
+  .ros-past-section summary::before { ros-content: '▸ '; }
+  .ros-past-section[open] summary::before { ros-content: '▾ '; }
+  .ros-past-section .ros-card-grid { margin-top: 14px; }
+
+  /* Event blocks (All Events tab) */
+  .ros-event-blocks { display: flex; flex-direction: column; gap: 14px; }
+  .ros-event-block { background: var(--ros-surface); color: var(--ros-ink); border: 1px solid var(--ros-border); border-radius: 12px; padding: 20px 22px; box-shadow: var(--ros-shadow-sm); }
+  .ros-event-block-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .ros-event-block-heading .ros-callsheet-title { margin: 4px 0 8px; }
+  .ros-event-block-heading .ros-type-badge { margin-right: 6px; margin-bottom: 8px; vertical-align: middle; }
+  .ros-event-block-heading .ros-status-badge { vertical-align: middle; }
+  .ros-event-block-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .ros-event-block-meta { display: flex; flex-wrap: wrap; gap: 4px 24px; font-size: 13px; margin: 4px 0 16px; }
+  .ros-meta-item { display: inline-flex; align-items: baseline; gap: 6px; }
+  .ros-meta-item dt { color: var(--ros-ink-faint); text-transform: uppercase; font-family: var(--ros-font-mono); font-size: 10.5px; letter-spacing: 0.05em; }
+  .ros-meta-item dd { color: var(--ros-ink); }
+
+  .ros-days-table-wrap { overflow-x: auto; margin: 4px 0 14px; border: 1px solid var(--ros-border); border-radius: 8px; }
+  .ros-days-table { width: 100%; border-collapse: collapse; font-family: var(--ros-font-mono); font-size: 12.5px; min-width: 720px; }
+  .ros-days-table th { text-align: left; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; font-weight: 600; color: var(--ros-ink-soft); padding: 9px 10px; border-bottom: 1px solid var(--ros-border); background: var(--ros-surface-muted); white-space: nowrap; }
+  .ros-days-table td { padding: 8px 10px; border-bottom: 1px solid var(--ros-border); white-space: nowrap; }
+  .ros-days-table tbody tr:last-child td { border-bottom: none; }
+  .ros-days-table tbody tr:nth-child(even) { background: var(--ros-surface-muted); }
+  .ros-days-table tbody tr:hover { background: var(--ros-accent-soft-bg); }
+  .ros-cell-empty { color: var(--ros-ink-faint); }
+  .ros-cell-na { color: var(--ros-ink-soft); font-style: italic; }
+
+  /* Team badges */
+  .ros-badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  .ros-crew-badge { background: var(--ros-surface); color: var(--ros-ink); border-radius: 12px; padding: 20px 16px; text-align: center; border: 1px solid var(--ros-border); box-shadow: var(--ros-shadow-sm); }
+  .ros-badge-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--ros-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--ros-font-sans); font-size: 17px; font-weight: 700; margin: 0 auto 10px; }
+  .ros-badge-name { font-family: var(--ros-font-sans); font-size: 15.5px; font-weight: 700; word-break: break-word; }
+  .ros-badge-role { font-family: var(--ros-font-mono); font-size: 11px; color: var(--ros-ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px; }
+  .ros-badge-phone { font-family: var(--ros-font-mono); font-size: 12px; margin-top: 6px; color: var(--ros-ink-soft); }
+  .ros-badge-meta { font-size: 11px; color: var(--ros-ink-faint); margin-top: 8px; }
+  .ros-badge-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; border-top: 1px solid var(--ros-border); padding-top: 10px; }
+
+  .ros-btn { font-family: var(--ros-font-sans); font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; }
+  .ros-btn-accent { background: var(--ros-accent); color: #fff; }
+  .ros-btn-accent:hover { background: var(--ros-accent-hover); }
+  .ros-btn-ghost { background: var(--ros-surface); color: var(--ros-ink-soft); border: 1px solid var(--ros-border-strong); }
+  .ros-btn-ghost:hover { background: var(--ros-surface-muted); color: var(--ros-ink); }
+  .ros-btn:disabled { opacity: 0.6; cursor: default; }
+  .ros-link-btn { background: none; border: none; font-family: var(--ros-font-sans); font-size: 12.5px; font-weight: 500; color: var(--ros-ink-soft); cursor: pointer; padding: 4px 6px; }
+  .ros-link-btn:hover { color: var(--ros-accent); text-decoration: underline; text-underline-offset: 2px; }
+  .ros-link-danger:hover { color: var(--ros-danger-text); }
+
+  .ros-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ros-ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; z-index: 200; box-shadow: var(--ros-shadow-lg); max-width: 90vw; }
+  .ros-toast.ros-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .ros-toast.ros-toast-error { background: var(--ros-danger-text); }
+
+  .ros-modal-overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+  .ros-modal { background: var(--ros-surface); color: var(--ros-ink); width: 100%; max-width: 620px; max-height: 88vh; overflow-y: auto; border-radius: 14px; box-shadow: 0 20px 60px rgba(16,24,40,0.35); }
+  .ros-modal-sm { max-width: 420px; }
+  .ros-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--ros-border); position: sticky; top: 0; background: var(--ros-surface); z-index: 2; border-radius: 14px 14px 0 0; }
+  .ros-modal-header h2 { font-family: var(--ros-font-sans); font-size: 17px; font-weight: 700; color: var(--ros-ink); }
+  .ros-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ros-ink-faint); line-height: 1; padding: 4px 8px; border-radius: 6px; }
+  .ros-modal-close:hover { color: var(--ros-ink); background: var(--ros-surface-muted); }
+  .ros-modal-.ros-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--ros-border); position: sticky; bottom: 0; background: var(--ros-surface); border-radius: 0 0 14px 14px; }
+
+  .ros-field-row { margin-bottom: 16px; }
+  .ros-field-row.ros-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .ros-field label { display: block; font-family: var(--ros-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ros-ink-soft); margin-bottom: 6px; }
+  .ros-field input, .ros-field select, .ros-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--ros-border-strong); border-radius: 8px; font-family: var(--ros-font-sans); font-size: 15px; color: var(--ros-ink); background: var(--ros-surface); }
+  .ros-field input:focus, .ros-field select:focus, .ros-field textarea:focus { outline: none; border-color: var(--ros-accent); box-shadow: 0 0 0 3px var(--ros-accent-soft-bg); }
+  .ros-field textarea { resize: vertical; font-family: var(--ros-font-sans); }
+
+  /* Days editor */
+  .ros-days-editor { margin-top: 2px; }
+  .ros-day-row { border: 1px solid var(--ros-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--ros-surface-muted); }
+  .ros-day-row-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ros-day-row-label { font-family: var(--ros-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ros-ink-soft); flex: 0 0 auto; min-width: 44px; font-weight: 600; }
+  .ros-day-row-header input { padding: 7px 9px; font-size: 13.5px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); font-family: var(--ros-font-sans); color: var(--ros-ink); }
+  .ros-day-row-header .ros-day-date { flex: 1 1 132px; }
+  .ros-day-row-header .ros-day-time { flex: 1 1 100px; }
+  .ros-day-row-header .ros-day-function { flex: 2 1 160px; }
+  .ros-day-remove { background: none; border: none; font-size: 18px; color: var(--ros-ink-faint); cursor: pointer; padding: 2px 8px; line-height: 1; flex-shrink: 0; margin-left: auto; border-radius: 6px; }
+  .ros-day-remove:hover { color: var(--ros-danger-text); background: var(--ros-danger-bg); }
+  .ros-day-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 10px; }
+  .ros-role-field label { display: block; font-family: var(--ros-font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ros-ink-soft); margin-bottom: 3px; }
+  .ros-role-input-row { display: flex; gap: 4px; }
+  .ros-role-input-row .ros-role-input { flex: 1; min-width: 0; padding: 7px 9px; font-size: 13.5px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); font-family: var(--ros-font-sans); color: var(--ros-ink); }
+  .ros-role-input-row .ros-role-input:focus { outline: none; border-color: var(--ros-accent); }
+  .ros-role-na-btn { flex-shrink: 0; font-family: var(--ros-font-mono); font-size: 10px; padding: 0 8px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); color: var(--ros-ink-soft); cursor: pointer; }
+  .ros-role-na-btn:hover { border-color: var(--ros-accent); color: var(--ros-accent); }
+  .ros-add-day-btn { margin-top: 4px; }
+
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--ros-accent); outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .ros-callsheet, .ros-event-block { animation: cardIn 0.25s ease backwards; }
+    .ros-card-grid .ros-callsheet:nth-child(1), .ros-event-blocks .ros-event-block:nth-child(1) { animation-delay: 0.02s; }
+    .ros-card-grid .ros-callsheet:nth-child(2), .ros-event-blocks .ros-event-block:nth-child(2) { animation-delay: 0.04s; }
+    .ros-card-grid .ros-callsheet:nth-child(3), .ros-event-blocks .ros-event-block:nth-child(3) { animation-delay: 0.06s; }
+    .ros-card-grid .ros-callsheet:nth-child(4) { animation-delay: 0.08s; }
+    .ros-card-grid .ros-callsheet:nth-child(5) { animation-delay: 0.1s; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ros-callsheet, .ros-event-block { transition: none; }
+    .ros-callsheet:hover { transform: none; }
+  }
+
+  @media (max-width: 560px) {
+    .ros-topbar { padding: 12px 16px; }
+    .ros-topbar-right { width: 100%; justify-content: space-between; }
+    .ros-tabs { padding: 0 16px; }
+    .ros-content { padding: 22px 14px 90px; }
+    .ros-field-row.ros-two-col { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .ros-modal-overlay { padding: 10px; }
+    .ros-modal-header, .ros-modal-body, .ros-modal-footer { padding-left: 16px; padding-right: 16px; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -703,42 +937,45 @@
   <div id="viewSchedule" class="view-panel" style="display:none;">
     <div class="panel-title">
       <h2>Crew Schedule</h2>
-      <div class="sched-subtabs">
-        <button type="button" class="sched-subtab active" data-schedtab="shoots">Shoot Schedule</button>
-        <button type="button" class="sched-subtab" data-schedtab="crew">Crew Directory</button>
+    </div>
+    <div class="toolbar-panel">
+      <div class="toolbar" style="justify-content:space-between;">
+        <div class="ros-whoami" id="rosWhoamiWrap"></div>
+        <button type="button" class="ros-btn ros-btn-accent" id="rosPrimaryActionBtn">+ New event</button>
       </div>
     </div>
+    <nav class="ros-tabs" id="ros-tabs">
+      <button type="button" class="ros-tab-btn ros-active" data-view="my">My Schedule</button>
+      <button type="button" class="ros-tab-btn" data-view="all">All Events</button>
+      <button type="button" class="ros-tab-btn" data-view="crew">Team</button>
+    </nav>
+    <main class="ros-content" id="ros-content"></main>
+  </div>
 
-    <div id="schedTabShoots">
-      <div class="toolbar-panel">
-        <div class="toolbar">
-          <select id="scheduleEventSelect"><option value="">Select an event…</option></select>
-          <button class="btn btn-primary btn-sm" id="btnCreateSchedEvent">+ Create event</button>
-        </div>
+  <div class="ros-modal-overlay ros-hidden" id="rosEventModalOverlay">
+    <div class="ros-modal" role="dialog" aria-modal="true" aria-labelledby="rosEventModalTitle">
+      <div class="ros-modal-header">
+        <h2 id="rosEventModalTitle">New event</h2>
+        <button type="button" class="ros-modal-close" id="rosEventModalClose" aria-label="Close">&times;</button>
       </div>
-      <div id="scheduleBody"></div>
+      <div class="ros-modal-body" id="rosEventModalBody"></div>
+      <div class="ros-modal-footer">
+        <button type="button" class="ros-btn ros-btn-ghost" id="rosEventCancelBtn">Cancel</button>
+        <button type="button" class="ros-btn ros-btn-accent" id="rosEventSaveBtn">Save event</button>
+      </div>
     </div>
+  </div>
 
-    <div id="schedTabCrew" style="display:none;">
-      <div class="crew-directory">
-        <div class="crew-column">
-          <div class="crew-column-head">Team Crew Members <span class="entries-count" id="teamCrewCount"></span></div>
-          <div class="crew-add-row">
-            <input type="text" id="newTeamCrewName" placeholder="Name">
-            <input type="text" id="newTeamCrewRole" placeholder="Role (optional)">
-            <button class="btn btn-sm" id="btnAddTeamCrew">+ Add</button>
-          </div>
-          <div id="teamCrewList"></div>
-        </div>
-        <div class="crew-column">
-          <div class="crew-column-head">Freelancers <span class="entries-count" id="freelancerCount"></span></div>
-          <div class="crew-add-row">
-            <input type="text" id="newFreelancerName" placeholder="Name">
-            <input type="text" id="newFreelancerRole" placeholder="Role (optional)">
-            <button class="btn btn-sm" id="btnAddFreelancer">+ Add</button>
-          </div>
-          <div id="freelancerList"></div>
-        </div>
+  <div class="ros-modal-overlay ros-hidden" id="rosCrewModalOverlay">
+    <div class="ros-modal ros-modal-sm" role="dialog" aria-modal="true" aria-labelledby="rosCrewModalTitle">
+      <div class="ros-modal-header">
+        <h2 id="rosCrewModalTitle">Add crew member</h2>
+        <button type="button" class="ros-modal-close" id="rosCrewModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="ros-modal-body" id="rosCrewModalBody"></div>
+      <div class="ros-modal-footer">
+        <button type="button" class="ros-btn ros-btn-ghost" id="rosCrewCancelBtn">Cancel</button>
+        <button type="button" class="ros-btn ros-btn-accent" id="rosCrewSaveBtn">Save member</button>
       </div>
     </div>
   </div>
@@ -1157,7 +1394,7 @@ const POLL_INTERVAL_MS = 15000;     // how often to pull remote changes
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let data = { events: [], drives: [], scheduleEvents: [], crewMembers: [] };
+let data = { events: [], drives: [] };
 let pendingDelete = null;
 let pollTimer = null;
 let currentUser = null; // { id, email, name }
@@ -1213,37 +1450,6 @@ function rowToDrive(r){
   };
 }
 
-function scheduleEventToRow(s){
-  return {
-    id: s.id, title: s.title,
-    roles: Array.isArray(s.roles) ? s.roles : ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
-    days: Array.isArray(s.days) ? s.days : [],
-    notes: s.notes || '', created_by: s.createdBy || null,
-    updated_by: s.updatedBy || null, updated_at: s.updatedAt || new Date().toISOString()
-  };
-}
-function rowToScheduleEvent(r){
-  return {
-    id: r.id, title: r.title,
-    roles: Array.isArray(r.roles) ? r.roles : ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
-    days: Array.isArray(r.days) ? r.days : [],
-    notes: r.notes || '', createdBy: r.created_by || '',
-    updatedBy: r.updated_by || '', updatedAt: r.updated_at
-  };
-}
-
-function crewMemberToRow(c){
-  return {
-    id: c.id, name: c.name, type: c.type || 'team', role: c.role || '', phone: c.phone || '',
-    updated_by: c.updatedBy || null, updated_at: c.updatedAt || new Date().toISOString()
-  };
-}
-function rowToCrewMember(r){
-  return {
-    id: r.id, name: r.name, type: r.type || 'team', role: r.role || '', phone: r.phone || '',
-    updatedBy: r.updated_by || '', updatedAt: r.updated_at
-  };
-}
 function eventToRow(e){
   return {
     id: e.id, client: e.client, event_name: e.eventName, event_type: e.eventType || '',
@@ -1296,16 +1502,12 @@ let consecutiveSyncFailures = 0;
 async function loadData(isBackgroundRefresh){
   if(!isBackgroundRefresh){ setStatus('Loading…'); renderSkeleton(); }
   try{
-    const [drivesRes, eventsRes, schedEventsRes, crewRes] = await Promise.all([
+    const [drivesRes, eventsRes] = await Promise.all([
       sb.from('drives').select('*').order('label'),
-      sb.from('events').select('*').order('event_date', { ascending: false }),
-      sb.from('schedule_events').select('*').order('title'),
-      sb.from('crew_members').select('*').order('name')
+      sb.from('events').select('*').order('event_date', { ascending: false })
     ]);
     if(drivesRes.error) throw drivesRes.error;
     if(eventsRes.error) throw eventsRes.error;
-    if(schedEventsRes.error) throw schedEventsRes.error;
-    if(crewRes.error) throw crewRes.error;
 
     // NOTE: this used to auto-seed 12 default drives whenever the drives query came back
     // empty, assuming that meant "first-ever load." That was unsafe — a transient network
@@ -1314,8 +1516,6 @@ async function loadData(isBackgroundRefresh){
     // If someone genuinely needs a fresh registry, they add drives manually via "+ Add drive".
     data.drives = drivesRes.data.map(rowToDrive);
     data.events = eventsRes.data.map(rowToEvent);
-    data.scheduleEvents = schedEventsRes.data.map(rowToScheduleEvent);
-    data.crewMembers = crewRes.data.map(rowToCrewMember);
 
     consecutiveSyncFailures = 0;
     setStatus('Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
@@ -1347,44 +1547,6 @@ async function persistDrive(record){
   }catch(e){
     setStatus("Couldn't save — check your connection and try again", true);
     toast("Couldn't save drive", true);
-  }
-}
-
-async function persistScheduleEvent(record){
-  try{
-    const { error } = await sb.from('schedule_events').upsert(scheduleEventToRow(record));
-    if(error) throw error;
-  }catch(e){
-    toast("Couldn't save schedule", true);
-  }
-}
-async function deleteScheduleEventRemote(id){
-  try{
-    const { error } = await sb.from('schedule_events').delete().eq('id', id);
-    if(error) throw error;
-    return true;
-  }catch(e){
-    toast("Couldn't remove event", true);
-    return false;
-  }
-}
-
-async function persistCrewMember(record){
-  try{
-    const { error } = await sb.from('crew_members').upsert(crewMemberToRow(record));
-    if(error) throw error;
-  }catch(e){
-    toast("Couldn't save crew member", true);
-  }
-}
-async function deleteCrewMemberRemote(id){
-  try{
-    const { error } = await sb.from('crew_members').delete().eq('id', id);
-    if(error) throw error;
-    return true;
-  }catch(e){
-    toast("Couldn't remove crew member", true);
-    return false;
   }
 }
 
@@ -1489,7 +1651,7 @@ function switchView(view, clickedLink){
   document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
   document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.remove('active'));
   (clickedLink || document.querySelector(`.sidebar-nav a[data-view="${view}"]`)).classList.add('active');
-  if(view === 'schedule') renderScheduleView();
+  if(view === 'schedule') initRoster();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -3021,345 +3183,695 @@ document.getElementById('filterDrive').addEventListener('change', () => { rawEli
 document.getElementById('sortBy').addEventListener('change', () => renderTable());
 document.getElementById('groupBy').addEventListener('change', () => renderTable());
 
-// ---- Crew Schedule (fully independent of Event Ledger) ----
-let currentScheduleEventId = null;
-let currentScheduleData = null; // {title, roles, days}
+// App initializes once a session is confirmed (see onAuthStateChange above).
 
-// Subtab switching
-document.querySelectorAll('.sched-subtab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.sched-subtab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const which = tab.getAttribute('data-schedtab');
-    document.getElementById('schedTabShoots').style.display = which === 'shoots' ? '' : 'none';
-    document.getElementById('schedTabCrew').style.display = which === 'crew' ? '' : 'none';
-    if(which === 'crew') renderCrewDirectory();
-    if(which === 'shoots' && currentScheduleEventId && currentScheduleData){
-      // Redraw from the in-memory (possibly unsaved) edit state, not the last-saved copy —
-      // switching tabs shouldn't discard anything the person was in the middle of typing.
-      const se = data.scheduleEvents.find(x => x.id === currentScheduleEventId);
-      if(se) drawScheduleTable(se);
-    }
-  });
-});
+// ===================== Crew Schedule (Crew Roster feature) =====================
 
-function renderScheduleView(){
-  const select = document.getElementById('scheduleEventSelect');
-  const keepValue = select.value;
-  select.innerHTML = '<option value="">Select an event\u2026</option>' +
-    data.scheduleEvents.slice().sort((a,b) => (a.title||'').localeCompare(b.title||'')).map(s =>
-      `<option value="${s.id}">${escapeHtml(s.title)}</option>`
-    ).join('');
-  if(keepValue && data.scheduleEvents.some(s => s.id === keepValue)) select.value = keepValue;
-  if(currentScheduleEventId && data.scheduleEvents.some(s => s.id === currentScheduleEventId)){
-    select.value = currentScheduleEventId;
-    renderScheduleTable();
-  } else {
-    currentScheduleEventId = null;
-    document.getElementById('scheduleBody').innerHTML = `<div class="sched-empty">Click "+ Create event" above to start a new shoot schedule, or pick an existing one.</div>`;
-  }
-}
-
-document.getElementById('scheduleEventSelect').addEventListener('change', (e) => {
-  currentScheduleEventId = e.target.value || null;
-  renderScheduleTable();
-});
-
-// ---- Create new schedule event (independent of Event Ledger) ----
-const newSchedEventOverlay = document.getElementById('newSchedEventOverlay');
-document.getElementById('btnCreateSchedEvent').addEventListener('click', () => {
-  document.getElementById('newSchedEventTitle').value = '';
-  document.getElementById('newSchedEventError').style.display = 'none';
-  newSchedEventOverlay.classList.add('open');
-  document.getElementById('newSchedEventTitle').focus();
-});
-document.getElementById('btnCancelNewSchedEvent').addEventListener('click', () => newSchedEventOverlay.classList.remove('open'));
-newSchedEventOverlay.addEventListener('click', (e) => { if(e.target === newSchedEventOverlay) newSchedEventOverlay.classList.remove('open'); });
-document.getElementById('btnConfirmNewSchedEvent').addEventListener('click', async () => {
-  const btn = document.getElementById('btnConfirmNewSchedEvent');
-  if(btn.disabled) return;
-  const title = document.getElementById('newSchedEventTitle').value.trim();
-  const errEl = document.getElementById('newSchedEventError');
-  if(!title){
-    errEl.textContent = 'Enter an event or client name.';
-    errEl.style.display = 'block';
-    return;
-  }
-  btn.disabled = true;
-  const record = {
-    id: uid(), title,
-    roles: ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
-    days: [],
-    notes: '', createdBy: whoAmI(), updatedBy: whoAmI(), updatedAt: new Date().toISOString()
-  };
-  data.scheduleEvents.push(record);
-  await persistScheduleEvent(record);
-  btn.disabled = false;
-  newSchedEventOverlay.classList.remove('open');
-  currentScheduleEventId = record.id;
-  renderScheduleView();
-  toast('Event created');
-});
-
-function renderScheduleTable(){
-  const body = document.getElementById('scheduleBody');
-  if(!currentScheduleEventId){
-    body.innerHTML = `<div class="sched-empty">Click "+ Create event" above to start a new shoot schedule, or pick an existing one.</div>`;
-    return;
-  }
-  const se = data.scheduleEvents.find(s => s.id === currentScheduleEventId);
-  if(!se){ body.innerHTML = `<div class="sched-empty">Event not found.</div>`; return; }
-
-  currentScheduleData = {
-    title: se.title,
-    roles: Array.isArray(se.roles) && se.roles.length ? JSON.parse(JSON.stringify(se.roles)) : ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video'],
-    days: Array.isArray(se.days) ? JSON.parse(JSON.stringify(se.days)) : []
+  var state = {
+    events: [],
+    crew: [],
+    myName: '',
+    view: 'my',
+    searchQuery: '',
+    editingEvent: null,
+    editingCrew: null
   };
 
-  drawScheduleTable(se);
-}
+  var EVENT_TYPES = ['Wedding','Engagement','Political Event','College Event','Corporate Event','Birthday','Other'];
+  var STATUSES = ['Tentative','Confirmed','Completed','Cancelled'];
+  var ROLE_KEYS = ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video','Drone'];
+  var ROLE_SUGGESTIONS = ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video','Drone','Photo Editor','Assistant'];
+  var FUNCTION_SUGGESTIONS = ['Prewedding','Haldi','Mehendi','Sangeet','Wedding Day','Reception','Engagement','Other'];
+  var ALBUM_SIDE_OPTIONS = ['', 'Both Side', 'Single Side'];
+  var NOT_REQUIRED_PATTERNS = ['not required','not req','notreq','not r','na','n/a','nr','-'];
 
-const SCHED_ADD_NEW_SENTINEL = '__add_new_person__';
-
-function buildCrewOptionsHTML(excludeNames){
-  const exclude = new Set(excludeNames || []);
-  const team = data.crewMembers.filter(c => c.type === 'team' && !exclude.has(c.name)).sort((a,b) => a.name.localeCompare(b.name));
-  const freelancers = data.crewMembers.filter(c => c.type === 'freelancer' && !exclude.has(c.name)).sort((a,b) => a.name.localeCompare(b.name));
-
-  let html = `<option value="" selected disabled>+ Add person…</option>`;
-  if(team.length) html += `<optgroup label="Team Crew">${team.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
-  if(freelancers.length) html += `<optgroup label="Freelancers">${freelancers.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}${c.role ? ' — ' + escapeHtml(c.role) : ''}</option>`).join('')}</optgroup>`;
-  html += `<option value="${SCHED_ADD_NEW_SENTINEL}">+ Add new person…</option>`;
-  return html;
-}
-
-// An assignment can be a legacy single string (old data) or an array of names (new).
-// This always normalizes to an array so old and new data both work.
-function assignmentNames(day, role){
-  const v = day.assignments && day.assignments[role];
-  if(!v) return [];
-  return Array.isArray(v) ? v : [v];
-}
-
-function drawScheduleTable(se){
-  const body = document.getElementById('scheduleBody');
-  const s = currentScheduleData;
-
-  const roleHeaders = s.roles.map((r, ri) => `
-    <th class="sched-role-header">
-      <input type="text" data-role-idx="${ri}" value="${escapeHtml(r)}" placeholder="Role name">
-      ${isAdmin() ? `<button type="button" class="sched-role-remove" data-remove-role="${ri}" title="Remove this role column">\u2715</button>` : ''}
-    </th>`).join('');
-
-  const dayRows = s.days.map((d, di) => `
-    <tr>
-      <td class="sched-date-cell"><input type="date" data-day-idx="${di}" value="${d.date||''}"></td>
-      ${s.roles.map((r, ri) => {
-        const names = assignmentNames(d, r);
-        return `<td class="sched-cell">
-          <div class="sched-cell-chips">
-            ${names.map((n, ni) => `<span class="sched-chip">${escapeHtml(n)}<button type="button" data-day-idx="${di}" data-role-idx="${ri}" data-remove-name="${ni}" aria-label="Remove ${escapeHtml(n)}">✕</button></span>`).join('')}
-          </div>
-          <select class="sched-cell-add" data-day-idx="${di}" data-role-idx="${ri}">${buildCrewOptionsHTML(names)}</select>
-        </td>`;
-      }).join('')}
-      <td class="sched-row-remove-cell"><button type="button" class="sched-row-remove" data-remove-day="${di}" title="Remove this day" aria-label="Remove day">\u2715</button></td>
-    </tr>`).join('');
-
-  body.innerHTML = `
-    <div class="sched-wrap">
-      <table class="sched-table">
-        <thead>
-          <tr><th class="sched-event-header" colspan="${s.roles.length + 2}">${escapeHtml(s.title)}</th></tr>
-          <tr><th class="sched-date-header">Date</th>${roleHeaders}<th class="sched-date-header"></th></tr>
-        </thead>
-        <tbody id="schedDaysBody">${dayRows || `<tr><td class="sched-empty" colspan="${s.roles.length + 2}" style="padding:24px;">No shoot days added yet.</td></tr>`}</tbody>
-      </table>
-    </div>
-    <div class="sched-actions">
-      <button class="btn btn-sm" id="btnAddSchedDay">+ Add day</button>
-      ${isAdmin() ? `<button class="btn btn-sm" id="btnAddSchedRole">+ Add role</button>` : ''}
-      <button class="btn btn-primary btn-sm" id="btnSaveSchedule">Save schedule</button>
-      ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" id="btnDeleteSchedEvent" style="margin-left:auto;">Remove event</button>` : ''}
-      <span id="scheduleSaveStatus" style="font-size:12px;color:var(--ink-soft);align-self:center;"></span>
-    </div>
-  `;
-
-  // Role name edits
-  body.querySelectorAll('[data-role-idx]:not([data-day-idx])').forEach(inp => {
-    inp.addEventListener('input', () => {
-      s.roles[Number(inp.getAttribute('data-role-idx'))] = inp.value;
-    });
-  });
-  // Date edits
-  body.querySelectorAll('.sched-date-cell input').forEach(inp => {
-    inp.addEventListener('input', () => {
-      s.days[Number(inp.getAttribute('data-day-idx'))].date = inp.value;
-    });
-  });
-  // Assignment cell edits — each cell can now hold multiple people (chips + an add-picker)
-  body.querySelectorAll('.sched-cell-add').forEach(sel => {
-    sel.addEventListener('change', async () => {
-      const di = Number(sel.getAttribute('data-day-idx'));
-      const ri = Number(sel.getAttribute('data-role-idx'));
-      const roleName = s.roles[ri];
-      if(!s.days[di].assignments) s.days[di].assignments = {};
-      let names = assignmentNames(s.days[di], roleName);
-
-      if(sel.value === SCHED_ADD_NEW_SENTINEL){
-        const name = (window.prompt('Name of the new crew member or freelancer:') || '').trim();
-        if(!name) return;
-        const existing = data.crewMembers.find(c => c.name.toLowerCase() === name.toLowerCase());
-        if(!existing){
-          const record = { id: uid(), name, type: 'freelancer', role: '', phone: '', updatedBy: whoAmI(), updatedAt: new Date().toISOString() };
-          data.crewMembers.push(record);
-          await persistCrewMember(record);
-          toast(`${name} added to Freelancers`);
-        }
-        if(!names.includes(name)) names.push(name);
-      } else if(sel.value){
-        if(!names.includes(sel.value)) names.push(sel.value);
-      }
-
-      s.days[di].assignments[roleName] = names;
-      drawScheduleTable(se); // rebuild so the new chip and updated add-list show everywhere
-    });
-  });
-  // Remove one person from a cell
-  body.querySelectorAll('[data-remove-name]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const di = Number(btn.getAttribute('data-day-idx'));
-      const ri = Number(btn.getAttribute('data-role-idx'));
-      const ni = Number(btn.getAttribute('data-remove-name'));
-      const roleName = s.roles[ri];
-      const names = assignmentNames(s.days[di], roleName);
-      names.splice(ni, 1);
-      if(!s.days[di].assignments) s.days[di].assignments = {};
-      s.days[di].assignments[roleName] = names;
-      drawScheduleTable(se);
-    });
-  });
-  // Remove day
-  body.querySelectorAll('[data-remove-day]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      s.days.splice(Number(btn.getAttribute('data-remove-day')), 1);
-      drawScheduleTable(se);
-    });
-  });
-  // Remove role (admin only, button only rendered for admins anyway)
-  body.querySelectorAll('[data-remove-role]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const ri = Number(btn.getAttribute('data-remove-role'));
-      const roleName = s.roles[ri];
-      s.roles.splice(ri, 1);
-      s.days.forEach(d => { if(d.assignments) delete d.assignments[roleName]; });
-      drawScheduleTable(se);
-    });
-  });
-
-  document.getElementById('btnAddSchedDay').addEventListener('click', () => {
-    s.days.push({ date: new Date().toISOString().slice(0,10), assignments: {} });
-    drawScheduleTable(se);
-  });
-  const addRoleBtn = document.getElementById('btnAddSchedRole');
-  if(addRoleBtn) addRoleBtn.addEventListener('click', () => {
-    s.roles.push('New Role');
-    drawScheduleTable(se);
-  });
-
-  document.getElementById('btnSaveSchedule').addEventListener('click', async () => {
-    se.roles = s.roles;
-    se.days = s.days;
-    se.updatedBy = whoAmI();
-    se.updatedAt = new Date().toISOString();
-    const statusEl = document.getElementById('scheduleSaveStatus');
-    statusEl.textContent = 'Saving\u2026';
-    await persistScheduleEvent(se);
-    statusEl.textContent = 'Saved ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-    toast('Schedule saved');
-  });
-
-  const delBtn = document.getElementById('btnDeleteSchedEvent');
-  if(delBtn) delBtn.addEventListener('click', () => {
-    askConfirm(
-      'Remove this shoot event?',
-      `"${se.title}" and its entire crew schedule will be permanently deleted. This can't be undone.`,
-      async () => {
-        const ok = await deleteScheduleEventRemote(se.id);
-        if(ok){
-          data.scheduleEvents = data.scheduleEvents.filter(x => x.id !== se.id);
-          currentScheduleEventId = null;
-          renderScheduleView();
-          toast('Event removed');
-        }
-      },
-      'Remove permanently'
-    );
-  });
-}
-
-// ---- Crew Directory (Team Crew Members / Freelancers) ----
-function crewInitials(name){
-  return (name||'?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
-}
-
-function renderCrewList(type, containerId, countId){
-  const container = document.getElementById(containerId);
-  const members = data.crewMembers.filter(c => c.type === type).sort((a,b) => (a.name||'').localeCompare(b.name||''));
-  document.getElementById(countId).textContent = members.length;
-  if(members.length === 0){
-    container.innerHTML = `<div class="crew-empty">No one added yet.</div>`;
-    return;
+  /* ---------- storage helpers (Supabase-backed, single shared row) ---------- */
+  async function saveEvents() {
+    try {
+      var payload = { id: 'main', events: state.events, updated_by: whoAmI(), updated_at: new Date().toISOString() };
+      var res = await sb.from('crew_roster_data').update(payload).eq('id', 'main');
+      if (res.error) throw res.error;
+      return true;
+    } catch (err) { toast("Couldn't save — try again.", true); return false; }
   }
-  container.innerHTML = `<div class="crew-list">${members.map(c => `
-    <div class="crew-member-row">
-      <div class="crew-member-avatar">${escapeHtml(crewInitials(c.name))}</div>
-      <div class="crew-member-info">
-        <div class="crew-member-name">${escapeHtml(c.name)}</div>
-        ${c.role ? `<div class="crew-member-role">${escapeHtml(c.role)}</div>` : ''}
-      </div>
-      ${isAdmin() ? `<button class="btn-danger-ghost btn-sm" data-remove-crew="${c.id}">Remove</button>` : ''}
-    </div>`).join('')}</div>`;
+  async function saveCrew() {
+    try {
+      var payload = { id: 'main', crew: state.crew, updated_by: whoAmI(), updated_at: new Date().toISOString() };
+      var res = await sb.from('crew_roster_data').update(payload).eq('id', 'main');
+      if (res.error) throw res.error;
+      return true;
+    } catch (err) { toast("Couldn't save — try again.", true); return false; }
+  }
+  async function saveMyName(name) {
+    // In-memory only -- identity now comes from the logged-in account by default.
+    state.myName = name;
+  }
 
-  container.querySelectorAll('[data-remove-crew]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-remove-crew');
-      const member = data.crewMembers.find(c => c.id === id);
-      askConfirm('Remove this person?', `"${member.name}" will be removed from the crew directory.`, async () => {
-        const ok = await deleteCrewMemberRemote(id);
-        if(ok){
-          data.crewMembers = data.crewMembers.filter(c => c.id !== id);
-          renderCrewDirectory();
-          toast('Removed');
-        }
+  /* ---------- generic utils ---------- */
+  function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // escapeHtml() reused from the main app script -- same implementation, no need to duplicate.
+
+  function getTypeColors(type) {
+    var map = {
+      'Wedding': { fg: '#6941C6', bg: '#F4EBFF', border: '#E4D2FF' },
+      'Engagement': { fg: '#C11574', bg: '#FDF2FA', border: '#FCCEEE' },
+      'Political Event': { fg: '#175CD3', bg: '#EFF8FF', border: '#B2DDFF' },
+      'College Event': { fg: '#0E7090', bg: '#F0F9FF', border: '#B9E6FE' },
+      'Corporate Event': { fg: '#344054', bg: '#F2F4F7', border: '#D0D5DD' },
+      'Birthday': { fg: '#B93815', bg: '#FFF6ED', border: '#FDCEA1' },
+      'Other': { fg: '#344054', bg: '#F2F4F7', border: '#D0D5DD' }
+    };
+    return map[type] || map['Other'];
+  }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    var p = dateStr.split('-').map(Number);
+    var dt = new Date(p[0], p[1] - 1, p[2]);
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return days[dt.getDay()] + ', ' + p[2] + ' ' + months[p[1] - 1] + ' ' + p[0];
+  }
+  function formatDateShort(dateStr) {
+    if (!dateStr) return '—';
+    var p = dateStr.split('-').map(Number);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return p[2] + ' ' + months[p[1] - 1];
+  }
+  function formatTime(timeStr) {
+    if (!timeStr) return '';
+    var p = timeStr.split(':').map(Number);
+    var period = p[0] >= 12 ? 'PM' : 'AM';
+    var h12 = (p[0] % 12) === 0 ? 12 : (p[0] % 12);
+    return h12 + ':' + String(p[1]).padStart(2, '0') + ' ' + period;
+  }
+  function addDaysToIso(dateStr, n) {
+    var p = dateStr.split('-').map(Number);
+    var d = new Date(p[0], p[1] - 1, p[2]);
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // Toasts route through the app-wide toast() function (defined elsewhere), not a local one.
+
+  /* ---------- role / crew text helpers ---------- */
+  function isNotRequiredValue(v) {
+    return NOT_REQUIRED_PATTERNS.indexOf(String(v).trim().toLowerCase()) !== -1;
+  }
+  function namesInRoleValue(val) {
+    if (!val) return [];
+    var v = String(val).trim();
+    if (!v || isNotRequiredValue(v)) return [];
+    return v.split(/[\/,]/).map(function (s) { return s.trim(); }).filter(Boolean).filter(function (s) { return !isNotRequiredValue(s); });
+  }
+  function dayHasCrew(day, name) {
+    if (!name || !day || !day.roles) return false;
+    var target = name.trim().toLowerCase();
+    return ROLE_KEYS.some(function (role) {
+      return namesInRoleValue(day.roles[role]).some(function (n) { return n.toLowerCase() === target; });
+    });
+  }
+  function rolesForCrew(day, name) {
+    if (!name || !day || !day.roles) return [];
+    var target = name.trim().toLowerCase();
+    return ROLE_KEYS.filter(function (role) {
+      return namesInRoleValue(day.roles[role]).some(function (n) { return n.toLowerCase() === target; });
+    });
+  }
+  function roleCellValue(val) {
+    if (!val || !String(val).trim()) return '<span class="ros-cell-empty">—</span>';
+    if (isNotRequiredValue(val)) return '<span class="ros-cell-na">Not required</span>';
+    return escapeHtml(String(val).trim());
+  }
+  function renameGlobally(oldName, newName) {
+    if (!oldName || oldName === newName) return false;
+    var changed = false;
+    var oldLower = oldName.trim().toLowerCase();
+    state.events.forEach(function (ev) {
+      (ev.days || []).forEach(function (day) {
+        ROLE_KEYS.forEach(function (role) {
+          var val = day.roles[role];
+          if (!val) return;
+          var parts = val.split(/([\/,])/);
+          var replaced = false;
+          var newParts = parts.map(function (p) {
+            if (p.trim().toLowerCase() === oldLower) {
+              replaced = true;
+              var leading = p.match(/^\s*/)[0];
+              var trailing = p.match(/\s*$/)[0];
+              return leading + newName + trailing;
+            }
+            return p;
+          });
+          if (replaced) { day.roles[role] = newParts.join(''); changed = true; }
+        });
       });
     });
-  });
-}
+    return changed;
+  }
 
-function renderCrewDirectory(){
-  renderCrewList('team', 'teamCrewList', 'teamCrewCount');
-  renderCrewList('freelancer', 'freelancerList', 'freelancerCount');
-}
+  /* ---------- event / day helpers ---------- */
+  function getAllCalls() {
+    var calls = [];
+    state.events.forEach(function (ev) {
+      (ev.days || []).forEach(function (day) { calls.push({ event: ev, day: day }); });
+    });
+    return calls;
+  }
+  function eventEarliestDate(ev) {
+    var dates = (ev.days || []).map(function (d) { return d.date; }).filter(Boolean).sort();
+    return dates.length ? dates[0] : '9999-99-99';
+  }
+  function eventMatchesSearch(ev, q) {
+    if ((ev.title || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((ev.venue || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((ev.eventType || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((ev.albumBy || '').toLowerCase().indexOf(q) !== -1) return true;
+    return (ev.days || []).some(function (day) {
+      if ((day.function || '').toLowerCase().indexOf(q) !== -1) return true;
+      return ROLE_KEYS.some(function (role) { return ((day.roles && day.roles[role]) || '').toLowerCase().indexOf(q) !== -1; });
+    });
+  }
 
-async function addCrewMember(type, nameInputId, roleInputId){
-  const nameInput = document.getElementById(nameInputId);
-  const roleInput = document.getElementById(roleInputId);
-  const name = nameInput.value.trim();
-  if(!name) return;
-  const record = { id: uid(), name, type, role: roleInput.value.trim(), phone: '', updatedBy: whoAmI(), updatedAt: new Date().toISOString() };
-  data.crewMembers.push(record);
-  await persistCrewMember(record);
-  nameInput.value = '';
-  roleInput.value = '';
-  renderCrewDirectory();
-  toast(`${type === 'team' ? 'Team member' : 'Freelancer'} added`);
-}
+  /* ---------- top bar / ros-tabs ---------- */
+  function renderWhoAmI() {
+    var wrap = document.getElementById('rosWhoamiWrap');
+    var opts = state.crew.map(function (c) {
+      return '<option value="' + escapeHtml(c.name) + '"' + (c.name === state.myName ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>';
+    }).join('');
+    wrap.innerHTML = '<label class="ros-whoami-label" for="rosWhoAmISelect">I am</label><select id="rosWhoAmISelect"><option value="">— select —</option>' + opts + '</select>';
+    document.getElementById('rosWhoAmISelect').addEventListener('change', async function (e) {
+      await saveMyName(e.target.value);
+      if (state.view === 'my') renderContent();
+    });
+  }
+  function updatePrimaryActionButton() {
+    var btn = document.getElementById('rosPrimaryActionBtn');
+    if (state.view === 'crew') { btn.textContent = '+ Add crew member'; btn.onclick = function () { openCrewModal(null); }; }
+    else { btn.textContent = '+ New event'; btn.onclick = function () { rosOpenEventModal(null); }; }
+  }
 
-document.getElementById('btnAddTeamCrew').addEventListener('click', () => addCrewMember('team', 'newTeamCrewName', 'newTeamCrewRole'));
-document.getElementById('btnAddFreelancer').addEventListener('click', () => addCrewMember('freelancer', 'newFreelancerName', 'newFreelancerRole'));
+  /* ---------- ros-content router ---------- */
+  function renderContent() {
+    var el = document.getElementById('ros-content');
+    if (state.view === 'my') { el.innerHTML = myScheduleHtml(); }
+    else if (state.view === 'crew') { el.innerHTML = crewTabHtml(); }
+    else {
+      el.innerHTML = '<div class="ros-search-row"><input type="text" id="rosSearchInput" placeholder="Search events, venues, crew…" value="' + escapeHtml(state.searchQuery) + '"></div><div id="rosEventListArea"></div>';
+      updateEventListArea();
+    }
+  }
+  function emptyStateHtml(title, body, actionLabel, actionKey) {
+    return '<div class="ros-empty-state"><h3>' + escapeHtml(title) + '</h3><p>' + escapeHtml(body) + '</p>' +
+      (actionLabel ? '<button type="button" class="ros-btn ros-btn-accent" data-action="' + actionKey + '">' + escapeHtml(actionLabel) + '</button>' : '') + '</div>';
+  }
 
-// App initializes once a session is confirmed (see onAuthStateChange above).
+  /* ---------- My Schedule (flattened, per crew member) ---------- */
+  function myScheduleHtml() {
+    if (!state.crew.length) return emptyStateHtml('No crew added yet', 'Add your team first, then come back here to see assignments.', 'Add crew member', 'add-first-crew');
+    if (!state.myName) return '<div class="ros-empty-state"><h3>Who are you?</h3><p>Pick your name from "I am" at the top to see your assignments.</p></div>';
+
+    var calls = getAllCalls().filter(function (c) { return dayHasCrew(c.day, state.myName); });
+    var today = todayStr();
+    var upcoming = calls.filter(function (c) { return c.day.date >= today; }).sort(function (a, b) { return a.day.date.localeCompare(b.day.date) || (a.day.time || '').localeCompare(b.day.time || ''); });
+    var past = calls.filter(function (c) { return c.day.date < today; }).sort(function (a, b) { return b.day.date.localeCompare(a.day.date); });
+
+    var html = '';
+    if (upcoming.length) {
+      html += callCard(upcoming[0], { hero: true, viewerName: state.myName });
+      var rest = upcoming.slice(1);
+      if (rest.length) {
+        html += '<h2 class="ros-section-label">Also upcoming (' + rest.length + ')</h2><div class="ros-card-grid">' +
+          rest.map(function (c) { return callCard(c, { viewerName: state.myName }); }).join('') + '</div>';
+      }
+    } else {
+      html += '<div class="ros-empty-state"><h3>Nothing on your schedule</h3><p>You\'re all clear for now. New assignments will ros-show up here.</p></div>';
+    }
+    if (past.length) {
+      html += '<details class="ros-past-section"><summary>Past assignments (' + past.length + ')</summary><div class="ros-card-grid">' +
+        past.map(function (c) { return callCard(c, { muted: true, viewerName: state.myName }); }).join('') + '</div></details>';
+    }
+    return html;
+  }
+
+  function callCard(call, opts) {
+    opts = opts || {};
+    var ev = call.event, day = call.day;
+    var tc = getTypeColors(ev.eventType);
+    var totalDays = (ev.days || []).length;
+    var dayIdx = (ev.days || []).indexOf(day) + 1;
+
+    var crewLine = ROLE_KEYS.map(function (role) {
+      var val = (day.roles && day.roles[role]) || '';
+      if (!val.trim()) return null;
+      return role + ': ' + (isNotRequiredValue(val) ? 'Not required' : val.trim());
+    }).filter(Boolean).join(' · ');
+
+    var myLine = '';
+    if (opts.viewerName) {
+      var mine = rolesForCrew(day, opts.viewerName);
+      if (mine.length) myLine = '<div><dt>Your role</dt><dd class="ros-my-role">' + escapeHtml(mine.join(', ')) + '</dd></div>';
+    }
+    var callTime = formatTime(day.time);
+    var contactLine = (ev.contactPerson || ev.contactNumber)
+      ? '<div><dt>Contact</dt><dd>' + escapeHtml(ev.contactPerson || '') + (ev.contactPerson && ev.contactNumber ? ' · ' : '') + escapeHtml(ev.contactNumber || '') + '</dd></div>'
+      : '';
+
+    return '<article class="ros-callsheet' + (opts.hero ? ' ros-callsheet-hero' : '') + (opts.muted ? ' ros-callsheet-muted' : '') + '">' +
+      '<div class="ros-callsheet-top"><span class="ros-eyebrow">' + (opts.hero ? 'Next up' : formatDateShort(day.date)) + '</span>' +
+      '<span class="ros-ref-code">' + escapeHtml(ev.refCode || '') + (totalDays > 1 ? ' · Day ' + dayIdx + '/' + totalDays : '') + '</span></div>' +
+      '<h3 class="ros-callsheet-title">' + escapeHtml(ev.title || 'Untitled event') + '</h3>' +
+      (day.function ? '<div class="ros-function-tag">' + escapeHtml(day.function) + '</div>' : '') +
+      '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span>' +
+      '<dl class="ros-callsheet-data">' +
+      '<div><dt>Date</dt><dd>' + formatDate(day.date) + '</dd></div>' +
+      (callTime ? '<div><dt>Call</dt><dd>' + callTime + '</dd></div>' : '') +
+      '<div><dt>Venue</dt><dd>' + escapeHtml(ev.venue || '—') + '</dd></div>' +
+      myLine +
+      '<div><dt>Crew</dt><dd>' + (crewLine || '—') + '</dd></div>' +
+      contactLine +
+      '</dl>' +
+      (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
+      '<div class="ros-callsheet-footer"><span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
+      '<div class="ros-callsheet-actions">' +
+      '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
+      '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
+      '</div></div></article>';
+  }
+
+  /* ---------- All Events (grouped by event, days as a table) ---------- */
+  function updateEventListArea() {
+    var area = document.getElementById('rosEventListArea');
+    if (!area) return;
+    area.innerHTML = buildEventListHtml();
+  }
+  function buildEventListHtml() {
+    if (!state.events.length) return emptyStateHtml('No events on the board yet', 'Add your first shoot to get the roster going.', 'New event', 'add-first-event');
+    var events = state.events.slice();
+    if (state.searchQuery) {
+      var q = state.searchQuery.toLowerCase();
+      events = events.filter(function (ev) { return eventMatchesSearch(ev, q); });
+    }
+    if (!events.length) return '<p class="ros-no-results">No events match "' + escapeHtml(state.searchQuery) + '".</p>';
+
+    events.sort(function (a, b) { return eventEarliestDate(a).localeCompare(eventEarliestDate(b)); });
+    var groups = {}, order = [];
+    events.forEach(function (ev) {
+      var d = eventEarliestDate(ev);
+      var key = d === '9999-99-99' ? 'undated' : d.slice(0, 7);
+      if (!groups[key]) { groups[key] = []; order.push(key); }
+      groups[key].push(ev);
+    });
+    var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return order.map(function (key) {
+      var label = key === 'undated' ? 'No date yet' : (monthNames[parseInt(key.split('-')[1], 10) - 1] + ' ' + key.split('-')[0]);
+      return '<h2 class="ros-section-label">' + label + '</h2><div class="ros-event-blocks">' + groups[key].map(function (ev) { return eventBlockHtml(ev); }).join('') + '</div>';
+    }).join('');
+  }
+  function eventBlockHtml(ev) {
+    var tc = getTypeColors(ev.eventType);
+    var albumLine = (ev.albumBy || ev.albumSide)
+      ? '<div class="ros-meta-item"><dt>Potra</dt><dd>' + escapeHtml(ev.albumBy || '—') + (ev.albumSide ? ' · ' + escapeHtml(ev.albumSide) : '') + '</dd></div>'
+      : '';
+    var contactLine = (ev.contactPerson || ev.contactNumber)
+      ? '<div class="ros-meta-item"><dt>Contact</dt><dd>' + escapeHtml(ev.contactPerson || '') + (ev.contactPerson && ev.contactNumber ? ' · ' : '') + escapeHtml(ev.contactNumber || '') + '</dd></div>'
+      : '';
+    var days = (ev.days || []).slice().sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
+    var rows = days.map(function (day) {
+      var callTime = formatTime(day.time);
+      return '<tr><td>' + formatDate(day.date) + '</td><td>' + (callTime || '<span class="ros-cell-empty">—</span>') + '</td><td>' + escapeHtml(day.function || '—') + '</td>' +
+        ROLE_KEYS.map(function (role) { return '<td>' + roleCellValue(day.roles && day.roles[role]) + '</td>'; }).join('') +
+        '</tr>';
+    }).join('');
+
+    return '<div class="ros-event-block">' +
+      '<div class="ros-event-block-header">' +
+      '<div class="ros-event-block-heading">' +
+      '<div class="ros-ref-code">' + escapeHtml(ev.refCode || '') + '</div>' +
+      '<h3 class="ros-callsheet-title">' + escapeHtml(ev.title || 'Untitled event') + '</h3>' +
+      '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span> ' +
+      '<span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
+      '</div>' +
+      '<div class="ros-event-block-actions">' +
+      '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
+      '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
+      '</div></div>' +
+      '<dl class="ros-event-block-meta">' +
+      '<div class="ros-meta-item"><dt>Venue</dt><dd>' + escapeHtml(ev.venue || '—') + '</dd></div>' +
+      contactLine + albumLine +
+      '</dl>' +
+      '<div class="ros-days-table-wrap"><table class="ros-days-table"><thead><tr><th>Date</th><th>Call</th><th>Function</th><th>Trad. Photo</th><th>Trad. Video</th><th>Candid</th><th>Cinematic</th><th>Drone</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>' +
+      (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
+      '</div>';
+  }
+
+  /* ---------- Team tab ---------- */
+  function crewTabHtml() {
+    if (!state.crew.length) return emptyStateHtml('No crew added yet', 'Add your team members so you can assign them to shoots.', 'Add crew member', 'add-first-crew');
+    return '<div class="ros-badge-grid">' + state.crew.map(function (c) { return crewBadgeHtml(c); }).join('') + '</div>';
+  }
+  function crewBadgeHtml(c) {
+    var initials = c.name.split(' ').filter(Boolean).map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase();
+    var count = 0;
+    state.events.forEach(function (ev) { (ev.days || []).forEach(function (day) { if (dayHasCrew(day, c.name)) count++; }); });
+    return '<div class="ros-crew-badge">' +
+      '<div class="ros-badge-avatar">' + escapeHtml(initials) + '</div>' +
+      '<div class="ros-badge-name">' + escapeHtml(c.name) + '</div>' +
+      '<div class="ros-badge-role">' + escapeHtml(c.role || 'Crew') + '</div>' +
+      (c.phone ? '<div class="ros-badge-phone">' + escapeHtml(c.phone) + '</div>' : '') +
+      '<div class="ros-badge-meta">' + count + ' shoot day' + (count === 1 ? '' : 's') + '</div>' +
+      '<div class="ros-badge-actions">' +
+      '<button type="button" class="ros-link-btn" data-action="edit-crew" data-id="' + c.id + '">Edit</button>' +
+      '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-crew" data-id="' + c.id + '">Remove</button>' +
+      '</div></div>';
+  }
+
+  /* ---------- Event ros-modal ---------- */
+  function blankDay() { return { date: '', time: '', function: '', roles: {} }; }
+  function rosOpenEventModal(event) {
+    state.editingEvent = event ? JSON.parse(JSON.stringify(event)) : {
+      id: null, refCode: null, title: '', eventType: '', status: 'Tentative',
+      venue: '', contactPerson: '', contactNumber: '', albumBy: '', albumSide: '', notes: '',
+      days: [blankDay()]
+    };
+    if (!state.editingEvent.days || !state.editingEvent.days.length) state.editingEvent.days = [blankDay()];
+    document.getElementById('rosEventModalTitle').textContent = event ? 'Edit event' : 'New event';
+    renderEventModalBody();
+    document.getElementById('rosEventModalOverlay').classList.remove('ros-hidden');
+  }
+  function rosCloseEventModal() {
+    document.getElementById('rosEventModalOverlay').classList.add('ros-hidden');
+    state.editingEvent = null;
+  }
+  function renderEventModalBody() {
+    document.getElementById('rosEventModalBody').innerHTML = eventModalBodyHtml();
+    bindEventModalDynamicHandlers();
+  }
+  function dayRowHtml(day, num) {
+    var rolesHtml = ROLE_KEYS.map(function (role) {
+      var val = (day.roles && day.roles[role]) || '';
+      return '<div class="ros-role-field"><label>' + role + '</label><div class="ros-role-input-row">' +
+        '<input type="text" class="ros-role-input" data-role="' + escapeHtml(role) + '" list="crewNamesList" value="' + escapeHtml(val) + '" placeholder="Names">' +
+        '<button type="button" class="ros-role-na-btn">N/R</button></div></div>';
+    }).join('');
+    return '<div class="ros-day-row"><div class="ros-day-row-header">' +
+      '<span class="ros-day-row-label">Day ' + num + '</span>' +
+      '<input type="date" class="ros-day-date" value="' + (day.date || '') + '">' +
+      '<input type="time" class="ros-day-time" value="' + (day.time || '') + '">' +
+      '<input type="text" class="ros-day-function" list="functionSuggestions" placeholder="Function (Haldi, Sangeet…)" value="' + escapeHtml(day.function || '') + '">' +
+      '<button type="button" class="ros-day-remove" aria-label="Remove day">×</button>' +
+      '</div><div class="ros-day-roles">' + rolesHtml + '</div></div>';
+  }
+  function eventModalBodyHtml() {
+    var ev = state.editingEvent;
+    var typeOptions = '<option value="" disabled' + (!ev.eventType ? ' selected' : '') + '>— select —</option>' +
+      EVENT_TYPES.map(function (t) { return '<option value="' + t + '"' + (ev.eventType === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
+    var statusOptions = STATUSES.map(function (s) { return '<option value="' + s + '"' + (ev.status === s ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+    var albumSideOptions = ALBUM_SIDE_OPTIONS.map(function (s) { return '<option value="' + s + '"' + (ev.albumSide === s ? ' selected' : '') + '>' + (s || '— not set —') + '</option>'; }).join('');
+    var crewDatalist = '<datalist id="crewNamesList">' + state.crew.map(function (c) { return '<option value="' + escapeHtml(c.name) + '"></option>'; }).join('') + '<option value="Not required"></option></datalist>';
+    var functionDatalist = '<datalist id="functionSuggestions">' + FUNCTION_SUGGESTIONS.map(function (f) { return '<option value="' + f + '"></option>'; }).join('') + '</datalist>';
+    var daysHtml = ev.days.map(function (day, i) { return dayRowHtml(day, i + 1); }).join('');
+
+    return '' +
+      '<div class="ros-field-row"><div class="ros-field"><label for="rosF_title">Event name</label>' +
+      '<input type="text" id="rosF_title" value="' + escapeHtml(ev.title) + '" placeholder="e.g. Sourabh Weds Jaya"></div></div>' +
+      '<div class="ros-field-row ros-two-col">' +
+      '<div class="ros-field"><label for="rosF_type">Event type</label><select id="rosF_type">' + typeOptions + '</select></div>' +
+      '<div class="ros-field"><label for="rosF_status">Status</label><select id="rosF_status">' + statusOptions + '</select></div>' +
+      '</div>' +
+      '<div class="ros-field-row"><div class="ros-field"><label for="rosF_venue">Venue</label>' +
+      '<input type="text" id="rosF_venue" value="' + escapeHtml(ev.venue) + '" placeholder="e.g. Hotel Radisson, Indore"></div></div>' +
+      '<div class="ros-field-row ros-two-col">' +
+      '<div class="ros-field"><label for="rosF_contactPerson">Contact person</label><input type="text" id="rosF_contactPerson" value="' + escapeHtml(ev.contactPerson) + '"></div>' +
+      '<div class="ros-field"><label for="rosF_contactNumber">Contact number</label><input type="text" id="rosF_contactNumber" value="' + escapeHtml(ev.contactNumber) + '"></div>' +
+      '</div>' +
+      '<div class="ros-field-row ros-two-col">' +
+      '<div class="ros-field"><label for="rosF_albumBy">Potra (album) by</label><input type="text" id="rosF_albumBy" value="' + escapeHtml(ev.albumBy) + '" placeholder="e.g. Meraki"></div>' +
+      '<div class="ros-field"><label for="rosF_albumSide">Potra style</label><select id="rosF_albumSide">' + albumSideOptions + '</select></div>' +
+      '</div>' +
+      '<div class="ros-field-row"><div class="ros-field"><label>Function days</label>' +
+      '<div class="ros-days-editor" id="rosDaysContainer">' + daysHtml + '</div>' +
+      '<button type="button" class="ros-btn ros-btn-ghost ros-add-day-btn" id="rosAddDayBtn">+ Add another day</button>' +
+      crewDatalist + functionDatalist +
+      '</div></div>' +
+      '<div class="ros-field-row"><div class="ros-field"><label for="rosF_notes">Notes</label>' +
+      '<textarea id="rosF_notes" rows="2" placeholder="Data backup, delivery status, special instructions…">' + escapeHtml(ev.notes) + '</textarea></div></div>';
+  }
+  function renumberDayRows() {
+    var rows = document.querySelectorAll('#rosDaysContainer .ros-day-row');
+    rows.forEach(function (row, i) {
+      row.querySelector('.ros-day-row-label').textContent = 'Day ' + (i + 1);
+      row.querySelector('.ros-day-remove').style.visibility = rows.length > 1 ? 'visible' : 'ros-hidden';
+    });
+  }
+  function addDayRow() {
+    var container = document.getElementById('rosDaysContainer');
+    var rows = container.querySelectorAll('.ros-day-row');
+    var newDay = blankDay();
+    if (rows.length) {
+      var last = rows[rows.length - 1];
+      var lastDate = last.querySelector('.ros-day-date').value;
+      if (lastDate) newDay.date = addDaysToIso(lastDate, 1);
+      newDay.time = last.querySelector('.ros-day-time').value;
+      ROLE_KEYS.forEach(function (role) {
+        var inp = last.querySelector('.ros-role-input[data-role="' + role + '"]');
+        newDay.roles[role] = inp ? inp.value : '';
+      });
+    }
+    container.insertAdjacentHTML('beforeend', dayRowHtml(newDay, rows.length + 1));
+    renumberDayRows();
+  }
+  function bindEventModalDynamicHandlers() {
+    var container = document.getElementById('rosDaysContainer');
+    if (!container) return;
+    container.addEventListener('click', function (e) {
+      var removeBtn = e.target.closest('.ros-day-remove');
+      if (removeBtn) {
+        var rows = container.querySelectorAll('.ros-day-row');
+        if (rows.length <= 1) return;
+        removeBtn.closest('.ros-day-row').remove();
+        renumberDayRows();
+        return;
+      }
+      var naBtn = e.target.closest('.ros-role-na-btn');
+      if (naBtn) {
+        var input = naBtn.parentElement.querySelector('.ros-role-input');
+        input.value = input.value.trim().toLowerCase() === 'not required' ? '' : 'Not required';
+        return;
+      }
+    });
+    var addBtn = document.getElementById('rosAddDayBtn');
+    if (addBtn) addBtn.addEventListener('click', function () { addDayRow(); });
+    renumberDayRows();
+  }
+  function readDaysFromDom() {
+    var rows = document.querySelectorAll('#rosDaysContainer .ros-day-row');
+    var days = [];
+    rows.forEach(function (row) {
+      var date = row.querySelector('.ros-day-date').value;
+      var time = row.querySelector('.ros-day-time').value;
+      var func = row.querySelector('.ros-day-function').value.trim();
+      var roles = {};
+      ROLE_KEYS.forEach(function (role) {
+        var inp = row.querySelector('.ros-role-input[data-role="' + role + '"]');
+        roles[role] = inp ? inp.value.trim() : '';
+      });
+      days.push({ date: date, time: time, function: func, roles: roles });
+    });
+    return days;
+  }
+  async function handleEventSave() {
+    var ev = state.editingEvent;
+    ev.title = document.getElementById('rosF_title').value.trim();
+    ev.eventType = document.getElementById('rosF_type').value;
+    ev.status = document.getElementById('rosF_status').value;
+    ev.venue = document.getElementById('rosF_venue').value.trim();
+    ev.contactPerson = document.getElementById('rosF_contactPerson').value.trim();
+    ev.contactNumber = document.getElementById('rosF_contactNumber').value.trim();
+    ev.albumBy = document.getElementById('rosF_albumBy').value.trim();
+    ev.albumSide = document.getElementById('rosF_albumSide').value;
+    ev.notes = document.getElementById('rosF_notes').value.trim();
+    ev.days = readDaysFromDom();
+
+    if (!ev.title || !ev.eventType) { toast('Event name and type are required.', true); return; }
+    if (!ev.days.length || ev.days.some(function (d) { return !d.date; })) { toast('Every day needs a date.', true); return; }
+    ev.days.sort(function (a, b) { return a.date.localeCompare(b.date); });
+
+    if (ev.id) {
+      var idx = state.events.findIndex(function (x) { return x.id === ev.id; });
+      state.events[idx] = ev;
+    } else {
+      ev.id = genId();
+      ev.refCode = 'CS-' + String(state.events.length + 1).padStart(4, '0');
+      state.events.push(ev);
+    }
+
+    var btn = document.getElementById('rosEventSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    var ok = await saveEvents();
+    btn.disabled = false; btn.textContent = 'Save event';
+    if (ok) { rosCloseEventModal(); toast('Event saved.'); renderContent(); }
+  }
+  async function deleteEvent(id) {
+    var confirmed1 = await askConfirm('Remove this event?', "This event will be permanently removed from the roster. This can't be undone.", null, 'Remove permanently');
+    if (!confirmed1) return;
+    state.events = state.events.filter(function (e) { return e.id !== id; });
+    var ok = await saveEvents();
+    if (ok) { toast('Event removed.'); renderContent(); }
+  }
+
+  /* ---------- Crew ros-modal ---------- */
+  function openCrewModal(member) {
+    state.editingCrew = member ? Object.assign({}, member) : { id: null, name: '', role: '', phone: '' };
+    document.getElementById('rosCrewModalTitle').textContent = member ? 'Edit crew member' : 'Add crew member';
+    renderCrewModalBody();
+    document.getElementById('rosCrewModalOverlay').classList.remove('ros-hidden');
+  }
+  function closeCrewModal() {
+    document.getElementById('rosCrewModalOverlay').classList.add('ros-hidden');
+    state.editingCrew = null;
+  }
+  function renderCrewModalBody() { document.getElementById('rosCrewModalBody').innerHTML = crewModalBodyHtml(); }
+  function crewModalBodyHtml() {
+    var m = state.editingCrew;
+    var datalistOpts = ROLE_SUGGESTIONS.map(function (r) { return '<option value="' + r + '"></option>'; }).join('');
+    return '' +
+      '<div class="ros-field-row"><div class="ros-field"><label for="rosCf_name">Name</label>' +
+      '<input type="text" id="rosCf_name" value="' + escapeHtml(m.name) + '" placeholder="e.g. Ravi Verma"></div></div>' +
+      '<div class="ros-field-row"><div class="ros-field"><label for="rosCf_role">Usual role</label>' +
+      '<input type="text" id="rosCf_role" list="roleSuggestions" value="' + escapeHtml(m.role) + '" placeholder="e.g. Candid Cam">' +
+      '<datalist id="roleSuggestions">' + datalistOpts + '</datalist></div></div>' +
+      '<div class="ros-field-row"><div class="ros-field"><label for="rosCf_phone">Phone</label>' +
+      '<input type="text" id="rosCf_phone" value="' + escapeHtml(m.phone) + '" placeholder="e.g. 98765 43210"></div></div>';
+  }
+  async function handleCrewSave() {
+    var m = state.editingCrew;
+    var newName = document.getElementById('rosCf_name').value.trim();
+    var newRole = document.getElementById('rosCf_role').value.trim();
+    var newPhone = document.getElementById('rosCf_phone').value.trim();
+    if (!newName) { toast('Name is required.', true); return; }
+
+    var oldName = m.name;
+    m.name = newName; m.role = newRole; m.phone = newPhone;
+
+    if (m.id) { var idx = state.crew.findIndex(function (x) { return x.id === m.id; }); state.crew[idx] = m; }
+    else { m.id = genId(); state.crew.push(m); }
+
+    var eventsChanged = false;
+    if (oldName && oldName !== newName) {
+      eventsChanged = renameGlobally(oldName, newName);
+      if (state.myName === oldName) await saveMyName(newName);
+    }
+
+    var btn = document.getElementById('rosCrewSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    var ok = await saveCrew();
+    if (ok && eventsChanged) await saveEvents();
+    btn.disabled = false; btn.textContent = 'Save member';
+    if (ok) { closeCrewModal(); toast('Crew member saved.'); renderWhoAmI(); renderContent(); }
+  }
+  async function deleteCrewMember(id) {
+    var m = state.crew.find(function (c) { return c.id === id; });
+    if (!m) return;
+    var confirmed2 = await askConfirm('Remove this person?', m.name + " will be removed from the team. They'll stay listed on past events for record-keeping.", null, 'Remove permanently');
+    if (!confirmed2) return;
+    state.crew = state.crew.filter(function (c) { return c.id !== id; });
+    var ok = await saveCrew();
+    if (ok) {
+      if (state.myName === m.name) await saveMyName('');
+      toast('Crew member removed.');
+      renderWhoAmI();
+      renderContent();
+    }
+  }
+
+  /* ---------- static bindings ---------- */
+  function bindStaticHandlers() {
+    document.getElementById('ros-tabs').addEventListener('click', function (e) {
+      var btn = e.target.closest('.ros-tab-btn');
+      if (!btn) return;
+      state.view = btn.dataset.view;
+      document.querySelectorAll('.ros-tab-btn').forEach(function (b) { b.classList.toggle('ros-active', b === btn); });
+      updatePrimaryActionButton();
+      renderContent();
+    });
+
+    document.getElementById('ros-content').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      var action = btn.dataset.action;
+      var id = btn.dataset.id;
+      if (action === 'edit-event') rosOpenEventModal(state.events.find(function (x) { return x.id === id; }));
+      else if (action === 'delete-event') deleteEvent(id);
+      else if (action === 'edit-crew') openCrewModal(state.crew.find(function (x) { return x.id === id; }));
+      else if (action === 'delete-crew') deleteCrewMember(id);
+      else if (action === 'add-first-event') rosOpenEventModal(null);
+      else if (action === 'add-first-crew') openCrewModal(null);
+    });
+
+    document.getElementById('ros-content').addEventListener('input', function (e) {
+      if (e.target.id === 'rosSearchInput') { state.searchQuery = e.target.value; updateEventListArea(); }
+    });
+
+    document.getElementById('rosEventModalClose').addEventListener('click', rosCloseEventModal);
+    document.getElementById('rosEventCancelBtn').addEventListener('click', rosCloseEventModal);
+    document.getElementById('rosEventModalOverlay').addEventListener('click', function (e) { if (e.target.id === 'rosEventModalOverlay') rosCloseEventModal(); });
+    document.getElementById('rosEventSaveBtn').addEventListener('click', handleEventSave);
+
+    document.getElementById('rosCrewModalClose').addEventListener('click', closeCrewModal);
+    document.getElementById('rosCrewCancelBtn').addEventListener('click', closeCrewModal);
+    document.getElementById('rosCrewModalOverlay').addEventListener('click', function (e) { if (e.target.id === 'rosCrewModalOverlay') closeCrewModal(); });
+    document.getElementById('rosCrewSaveBtn').addEventListener('click', handleCrewSave);
+
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { rosCloseEventModal(); closeCrewModal(); } });
+  }
+
+  /* ---------- init (wired into the app's sidebar view-switcher, not DOMContentLoaded) ---------- */
+  var rosInitialized = false;
+  var rosHandlersBound = false;
+
+  function syncMyNameFromLoggedInUser() {
+    // Default "who am I" to the logged-in account's name, matched against the crew
+    // list case-insensitively. Falls back to empty (prompting manual selection) if
+    // this person's login name doesn't match any crew entry yet.
+    var loginName = (currentUser && (currentUser.name || currentUser.email || '')) || '';
+    var loginFirst = loginName.split(/[ @]/)[0].trim().toLowerCase();
+    var match = state.crew.find(function (c) {
+      return c.name.trim().toLowerCase() === loginFirst || c.name.trim().toLowerCase().indexOf(loginFirst) === 0;
+    });
+    state.myName = match ? match.name : '';
+  }
+
+  async function loadRosterData() {
+    try {
+      var res = await sb.from('crew_roster_data').select('*').eq('id', 'main').single();
+      if (res.error) throw res.error;
+      state.events = Array.isArray(res.data.events) ? res.data.events : [];
+      state.crew = Array.isArray(res.data.crew) ? res.data.crew : [];
+    } catch (err) {
+      state.events = [];
+      state.crew = [];
+      toast("Couldn't load crew schedule — check your connection", true);
+    }
+  }
+
+  async function initRoster() {
+    await loadRosterData();
+    syncMyNameFromLoggedInUser();
+    renderWhoAmI();
+    updatePrimaryActionButton();
+    renderContent();
+    if (!rosHandlersBound) { bindStaticHandlers(); rosHandlersBound = true; }
+    rosInitialized = true;
+  }
+
+
 </script>
   </div>
 </div>
