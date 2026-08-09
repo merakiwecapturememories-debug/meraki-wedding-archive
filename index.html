@@ -491,7 +491,7 @@
 
   /* ===================== Crew Schedule (Crew Roster feature) ===================== */
 
-  #viewSchedule {
+  #viewSchedule, #rosEventModalOverlay, #rosCrewModalOverlay {
     --ros-bg: #F7F8FA;
     --ros-surface: #FFFFFF;
     --ros-surface-muted: #F9FAFB;
@@ -518,7 +518,12 @@
 
     --ros-font-sans: 'IBM Plex Sans', sans-serif;
     --ros-font-mono: 'IBM Plex Mono', monospace;
-
+  }
+  /* Visual card styling belongs to #viewSchedule only -- the two modals above get the
+     --ros-* variables (so their own .ros-modal/.ros-modal-overlay rules resolve correctly)
+     but must NOT inherit this container's background/border/overflow, since they're
+     full-screen backdrop elements with their own separate styling. */
+  #viewSchedule {
     font-family: var(--ros-font-sans);
     background: var(--ros-bg);
     color: var(--ros-ink);
