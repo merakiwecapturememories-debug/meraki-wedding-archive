@@ -753,12 +753,15 @@
   .ros-modal-header h2 { font-family: var(--ros-font-sans); font-size: 17px; font-weight: 700; color: var(--ros-ink); }
   .ros-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ros-ink-faint); line-height: 1; padding: 4px 8px; border-radius: 6px; }
   .ros-modal-close:hover { color: var(--ros-ink); background: var(--ros-surface-muted); }
-  .ros-modal-.ros-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--ros-border); position: sticky; bottom: 0; background: var(--ros-surface); border-radius: 0 0 14px 14px; }
+  .ros-modal-body { padding: 20px 24px; }
+  .ros-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--ros-border); position: sticky; bottom: 0; background: var(--ros-surface); border-radius: 0 0 14px 14px; }
 
-  .ros-field-row { margin-bottom: 16px; }
+  .ros-field-row { margin-bottom: 18px; }
+  .ros-field-row:last-child { margin-bottom: 0; }
   .ros-field-row.ros-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .ros-field label { display: block; font-family: var(--ros-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ros-ink-soft); margin-bottom: 6px; }
-  .ros-field input, .ros-field select, .ros-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--ros-border-strong); border-radius: 8px; font-family: var(--ros-font-sans); font-size: 15px; color: var(--ros-ink); background: var(--ros-surface); }
+  .ros-field input, .ros-field select, .ros-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--ros-border-strong); border-radius: 8px; font-family: var(--ros-font-sans); font-size: 15px; line-height: 1.4; color: var(--ros-ink); background: var(--ros-surface); box-sizing: border-box; min-height: 42px; }
+  .ros-field select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23667085'/></svg>"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
   .ros-field input:focus, .ros-field select:focus, .ros-field textarea:focus { outline: none; border-color: var(--ros-accent); box-shadow: 0 0 0 3px var(--ros-accent-soft-bg); }
   .ros-field textarea { resize: vertical; font-family: var(--ros-font-sans); }
 
@@ -767,18 +770,18 @@
   .ros-day-row { border: 1px solid var(--ros-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--ros-surface-muted); }
   .ros-day-row-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   .ros-day-row-label { font-family: var(--ros-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ros-ink-soft); flex: 0 0 auto; min-width: 44px; font-weight: 600; }
-  .ros-day-row-header input { padding: 7px 9px; font-size: 13.5px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); font-family: var(--ros-font-sans); color: var(--ros-ink); }
+  .ros-day-row-header input { padding: 8px 10px; font-size: 13.5px; line-height: 1.3; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); font-family: var(--ros-font-sans); color: var(--ros-ink); box-sizing: border-box; min-height: 38px; }
   .ros-day-row-header .ros-day-date { flex: 1 1 132px; }
   .ros-day-row-header .ros-day-time { flex: 1 1 100px; }
   .ros-day-row-header .ros-day-function { flex: 2 1 160px; }
   .ros-day-remove { background: none; border: none; font-size: 18px; color: var(--ros-ink-faint); cursor: pointer; padding: 2px 8px; line-height: 1; flex-shrink: 0; margin-left: auto; border-radius: 6px; }
   .ros-day-remove:hover { color: var(--ros-danger-text); background: var(--ros-danger-bg); }
-  .ros-day-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 10px; }
+  .ros-day-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px 12px; }
   .ros-role-field label { display: block; font-family: var(--ros-font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ros-ink-soft); margin-bottom: 3px; }
-  .ros-role-input-row { display: flex; gap: 4px; }
-  .ros-role-input-row .ros-role-input { flex: 1; min-width: 0; padding: 7px 9px; font-size: 13.5px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); font-family: var(--ros-font-sans); color: var(--ros-ink); }
+  .ros-role-input-row { display: flex; gap: 6px; align-items: stretch; }
+  .ros-role-input-row .ros-role-input { flex: 1; min-width: 0; padding: 8px 10px; font-size: 13.5px; line-height: 1.3; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); font-family: var(--ros-font-sans); color: var(--ros-ink); box-sizing: border-box; min-height: 36px; }
   .ros-role-input-row .ros-role-input:focus { outline: none; border-color: var(--ros-accent); }
-  .ros-role-na-btn { flex-shrink: 0; font-family: var(--ros-font-mono); font-size: 10px; padding: 0 8px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); color: var(--ros-ink-soft); cursor: pointer; }
+  .ros-role-na-btn { flex-shrink: 0; font-family: var(--ros-font-mono); font-size: 10px; padding: 0 10px; min-height: 36px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); color: var(--ros-ink-soft); cursor: pointer; box-sizing: border-box; }
   .ros-role-na-btn:hover { border-color: var(--ros-accent); color: var(--ros-accent); }
   .ros-add-day-btn { margin-top: 4px; }
 
