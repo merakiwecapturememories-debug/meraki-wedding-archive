@@ -3232,6 +3232,9 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   }
   function updatePrimaryActionButton() {
     var btn = document.getElementById('rosPrimaryActionBtn');
+    // Only admins can create events or crew members — everyone else is view-only.
+    if (!isAdmin()) { btn.style.display = 'none'; return; }
+    btn.style.display = '';
     if (state.view === 'crew') { btn.textContent = '+ Add crew member'; btn.onclick = function () { openCrewModal(null); }; }
     else { btn.textContent = '+ New event'; btn.onclick = function () { rosOpenEventModal(null); }; }
   }
@@ -3247,8 +3250,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     }
   }
   function emptyStateHtml(title, body, actionLabel, actionKey) {
+    // Non-admins are view-only, so don't dangle a create button they can't use.
+    var showAction = actionLabel && isAdmin();
     return '<div class="ros-empty-state"><h3>' + escapeHtml(title) + '</h3><p>' + escapeHtml(body) + '</p>' +
-      (actionLabel ? '<button type="button" class="ros-btn ros-btn-accent" data-action="' + actionKey + '">' + escapeHtml(actionLabel) + '</button>' : '') + '</div>';
+      (showAction ? '<button type="button" class="ros-btn ros-btn-accent" data-action="' + actionKey + '">' + escapeHtml(actionLabel) + '</button>' : '') + '</div>';
   }
 
   /* ---------- My Schedule (flattened, per crew member) ---------- */
@@ -3318,10 +3323,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '</dl>' +
       (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
       '<div class="ros-callsheet-footer"><span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
-      '<div class="ros-callsheet-actions">' +
+      (isAdmin() ? '<div class="ros-callsheet-actions">' +
       '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
       '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
-      '</div></div></article>';
+      '</div>' : '') + '</div></article>';
   }
 
   /* ---------- All Events (grouped by event, days as a table) ---------- */
@@ -3377,10 +3382,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span> ' +
       '<span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
       '</div>' +
-      '<div class="ros-event-block-actions">' +
+      (isAdmin() ? '<div class="ros-event-block-actions">' +
       '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
       '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
-      '</div></div>' +
+      '</div>' : '') + '</div>' +
       '<dl class="ros-event-block-meta">' +
       '<div class="ros-meta-item"><dt>Venue</dt><dd>' + escapeHtml(ev.venue || '—') + '</dd></div>' +
       contactLine + albumLine +
@@ -3406,10 +3411,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<div class="ros-badge-role">' + escapeHtml(c.role || 'Crew') + '</div>' +
       (c.phone ? '<div class="ros-badge-phone">' + escapeHtml(c.phone) + '</div>' : '') +
       '<div class="ros-badge-meta">' + count + ' shoot day' + (count === 1 ? '' : 's') + '</div>' +
-      '<div class="ros-badge-actions">' +
+      (isAdmin() ? '<div class="ros-badge-actions">' +
       '<button type="button" class="ros-link-btn" data-action="edit-crew" data-id="' + c.id + '">Edit</button>' +
       '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-crew" data-id="' + c.id + '">Remove</button>' +
-      '</div></div>';
+      '</div>' : '') + '</div>';
   }
 
   /* ---------- Event ros-modal ---------- */
@@ -3667,6 +3672,9 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       if (!btn) return;
       var action = btn.dataset.action;
       var id = btn.dataset.id;
+      // Defence in depth: the buttons above are already hidden for non-admins, but
+      // block the actions here too so they can't be triggered any other way.
+      if (!isAdmin()) { toast('Only an admin can change the roster.', true); return; }
       if (action === 'edit-event') rosOpenEventModal(state.events.find(function (x) { return x.id === id; }));
       else if (action === 'delete-event') deleteEvent(id);
       else if (action === 'edit-crew') openCrewModal(state.crew.find(function (x) { return x.id === id; }));
