@@ -784,6 +784,28 @@
   .ros-role-na-btn { flex-shrink: 0; font-family: var(--ros-font-mono); font-size: 10px; padding: 0 10px; min-height: 36px; border: 1px solid var(--ros-border-strong); border-radius: 7px; background: var(--ros-surface); color: var(--ros-ink-soft); cursor: pointer; box-sizing: border-box; }
   .ros-role-na-btn:hover { border-color: var(--ros-accent); color: var(--ros-accent); }
   .ros-add-day-btn { margin-top: 4px; }
+  .ros-crew-section { margin-bottom: 30px; }
+  .ros-crew-section:last-child { margin-bottom: 0; }
+  .ros-crew-section-head {
+    display: flex; align-items: center; gap: 9px; margin: 0 0 14px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ros-ink-soft);
+  }
+  .ros-crew-section-head span {
+    font-family: var(--ros-font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0;
+    color: var(--ros-ink-soft); background: var(--ros-neutral-bg);
+    border: 1px solid var(--ros-neutral-border); border-radius: 20px; padding: 1px 8px;
+  }
+  .ros-crew-section-empty {
+    font-size: 13px; color: var(--ros-ink-faint); margin: 0;
+    padding: 16px; border: 1px dashed var(--ros-border-strong); border-radius: 10px;
+  }
+  .ros-freelance-tag {
+    display: inline-block; margin-top: 5px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ros-warning-text); background: var(--ros-warning-bg);
+    border: 1px solid var(--ros-warning-border); border-radius: 20px; padding: 2px 8px;
+  }
   .ros-field-hint { font-size: 12px; line-height: 1.5; color: var(--ros-ink-soft); margin: -2px 0 10px; }
   .ros-field-hint em { font-style: normal; font-family: var(--ros-font-mono); color: var(--ros-ink); }
   .ros-field-hint strong { color: var(--ros-ink); font-weight: 600; }
@@ -3665,7 +3687,20 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   /* ---------- Team tab ---------- */
   function crewTabHtml() {
     if (!state.crew.length) return emptyStateHtml('No crew added yet', 'Add your team members so you can assign them to shoots.', 'Add crew member', 'add-first-crew');
-    return '<div class="ros-badge-grid">' + state.crew.map(function (c) { return crewBadgeHtml(c); }).join('') + '</div>';
+    // Anyone saved before the type field existed is treated as a team member.
+    var team = state.crew.filter(function (c) { return c.type !== 'freelancer'; });
+    var freelancers = state.crew.filter(function (c) { return c.type === 'freelancer'; });
+
+    function section(title, list, emptyMsg) {
+      return '<div class="ros-crew-section">' +
+        '<h3 class="ros-crew-section-head">' + title + ' <span>' + list.length + '</span></h3>' +
+        (list.length
+          ? '<div class="ros-badge-grid">' + list.map(function (c) { return crewBadgeHtml(c); }).join('') + '</div>'
+          : '<p class="ros-crew-section-empty">' + emptyMsg + '</p>') +
+        '</div>';
+    }
+    return section('Team crew', team, 'No permanent team members yet.') +
+           section('Freelancers', freelancers, 'No freelancers added yet.');
   }
   function crewBadgeHtml(c) {
     var initials = c.name.split(' ').filter(Boolean).map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase();
@@ -3675,6 +3710,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<div class="ros-badge-avatar">' + escapeHtml(initials) + '</div>' +
       '<div class="ros-badge-name">' + escapeHtml(c.name) + '</div>' +
       '<div class="ros-badge-role">' + escapeHtml(c.role || 'Crew') + '</div>' +
+      (c.type === 'freelancer' ? '<div class="ros-freelance-tag">Freelancer</div>' : '') +
       (c.phone ? '<div class="ros-badge-phone">' + escapeHtml(c.phone) + '</div>' : '') +
       '<div class="ros-badge-meta">' + count + ' shoot day' + (count === 1 ? '' : 's') + '</div>' +
       (isAdmin() ? '<div class="ros-badge-actions">' +
@@ -3860,7 +3896,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
 
   /* ---------- Crew ros-modal ---------- */
   function openCrewModal(member) {
-    state.editingCrew = member ? Object.assign({}, member) : { id: null, name: '', role: '', phone: '' };
+    state.editingCrew = member ? Object.assign({ type: 'team' }, member) : { id: null, name: '', role: '', phone: '', type: 'team' };
     document.getElementById('rosCrewModalTitle').textContent = member ? 'Edit crew member' : 'Add crew member';
     renderCrewModalBody();
     document.getElementById('rosCrewModalOverlay').classList.remove('ros-hidden');
@@ -3876,7 +3912,12 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     return '' +
       '<div class="ros-field-row"><div class="ros-field"><label for="rosCf_name">Name</label>' +
       '<input type="text" id="rosCf_name" value="' + escapeHtml(m.name) + '" placeholder="e.g. Ravi Verma"></div></div>' +
-      '<div class="ros-field-row"><div class="ros-field"><label for="rosCf_role">Usual role</label>' +
+      '<div class="ros-field-row ros-two-col">' +
+      '<div class="ros-field"><label for="rosCf_type">Member type</label><select id="rosCf_type">' +
+        '<option value="team"' + (m.type !== 'freelancer' ? ' selected' : '') + '>Team member</option>' +
+        '<option value="freelancer"' + (m.type === 'freelancer' ? ' selected' : '') + '>Freelancer</option>' +
+      '</select></div>' +
+      '<div class="ros-field"><label for="rosCf_role">Usual role</label>' +
       '<input type="text" id="rosCf_role" list="roleSuggestions" value="' + escapeHtml(m.role) + '" placeholder="e.g. Candid Cam">' +
       '<datalist id="roleSuggestions">' + datalistOpts + '</datalist></div></div>' +
       '<div class="ros-field-row"><div class="ros-field"><label for="rosCf_phone">Phone</label>' +
@@ -3887,10 +3928,11 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var newName = document.getElementById('rosCf_name').value.trim();
     var newRole = document.getElementById('rosCf_role').value.trim();
     var newPhone = document.getElementById('rosCf_phone').value.trim();
+    var newType = document.getElementById('rosCf_type').value;
     if (!newName) { toast('Name is required.', true); return; }
 
     var oldName = m.name;
-    m.name = newName; m.role = newRole; m.phone = newPhone;
+    m.name = newName; m.role = newRole; m.phone = newPhone; m.type = newType;
 
     if (m.id) { var idx = state.crew.findIndex(function (x) { return x.id === m.id; }); state.crew[idx] = m; }
     else { m.id = genId(); state.crew.push(m); }
