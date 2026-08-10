@@ -105,7 +105,10 @@
     .content-area{padding-bottom:84px;}
 
     /* Header: stack cleanly instead of cramming into one row */
-    header.top{padding:1rem 1rem;gap:0.75rem;margin-bottom:1.25rem;}
+    header.top{padding:1rem 1rem;gap:0.75rem;margin-bottom:1.25rem;flex-direction:column;align-items:stretch;}
+    .top-right{justify-content:space-between;width:100%;}
+    .greet-sub{margin-left:0;}
+    .sync-pill{max-width:none;flex:1;}
     .welcome-heading{font-size:18px;}
     .content-inner{padding:0 1rem;}
     .wrap{padding:0 1rem 3rem;}
@@ -158,16 +161,58 @@
   /* ===================== /MOBILE RESPONSIVE ===================== */
 
   header.top{
-    display:flex;justify-content:space-between;align-items:center;gap:1.5rem;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:1.5rem;
     padding:1.35rem 1.75rem;flex-wrap:wrap;
     background:transparent;border-bottom:1px solid var(--line);margin-bottom:1.75rem;
   }
-  .welcome-heading{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;}
+  /* ---------- Header: greeting block ---------- */
+  .greet{min-width:0;}
+  .greet-row{display:flex;align-items:center;gap:10px;}
+  .greet-icon{
+    width:30px;height:30px;border-radius:9px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(140deg, var(--amber-tint), var(--wine-tint));
+    color:var(--wine);border:1px solid var(--line);
+  }
+  .greet-icon svg{width:17px;height:17px;}
+  .welcome-heading{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.015em;margin:0;line-height:1.2;}
+  .greet-sub{
+    margin:3px 0 0 40px;font-size:12.5px;color:var(--ink-soft);letter-spacing:0.01em;
+  }
+
+  /* ---------- Header: right side ---------- */
+  .top-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;}
+
+  .sync-pill{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:11.5px;font-weight:500;padding:6px 11px;border-radius:999px;
+    background:var(--card-sunken);border:1px solid var(--line);color:var(--ink-soft);
+    white-space:nowrap;max-width:230px;
+  }
+  .sync-pill .sync-text{overflow:hidden;text-overflow:ellipsis;}
+  .sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--ink-muted);}
+  .sync-ok .sync-dot{background:var(--ok);box-shadow:0 0 0 0 rgba(15,122,76,0.45);animation:sync-pulse 2.4s ease-out infinite;}
+  .sync-ok{color:var(--ok);background:var(--ok-tint);border-color:rgba(15,122,76,0.22);}
+  .sync-busy .sync-dot{background:var(--amber);animation:sync-blink 1s ease-in-out infinite;}
+  .sync-busy{color:var(--amber);background:var(--amber-tint);border-color:rgba(154,98,0,0.22);}
+  .sync-error .sync-dot{background:var(--danger);}
+  .sync-error{color:var(--danger);background:var(--danger-tint);border-color:rgba(194,42,42,0.22);}
+  @keyframes sync-pulse{
+    0%{box-shadow:0 0 0 0 rgba(15,122,76,0.45);}
+    70%{box-shadow:0 0 0 6px rgba(15,122,76,0);}
+    100%{box-shadow:0 0 0 0 rgba(15,122,76,0);}
+  }
+  @keyframes sync-blink{0%,100%{opacity:1;}50%{opacity:0.35;}}
+  @media (prefers-reduced-motion: reduce){
+    .sync-ok .sync-dot, .sync-busy .sync-dot{animation:none;}
+  }
 
   #userBadge{display:flex;align-items:center;gap:10px;}
   .user-badge-avatar{
-    width:32px;height:32px;border-radius:9px;background:var(--wine-tint);color:var(--wine-dark);
+    width:34px;height:34px;border-radius:10px;color:#fff;
+    background:linear-gradient(140deg, var(--wine) 0%, #B0576F 100%);
     display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex-shrink:0;
+    box-shadow:0 2px 6px -1px rgba(139,58,80,0.45);
   }
   .user-badge-text{display:flex;flex-direction:column;gap:2px;line-height:1.2;}
   .user-badge-name{font-size:12.5px;font-weight:600;color:var(--ink);}
@@ -1130,10 +1175,16 @@
 <div class="wrap">
 
   <header class="top">
-    <div class="welcome-heading" id="welcomeHeading">Welcome back</div>
-    <div style="display:flex;align-items:center;gap:14px;">
-      <div id="loadStatus" style="font-size:12px;color:var(--ink-soft);"></div>
-      <div id="userBadge" style="font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:10px;"></div>
+    <div class="greet">
+      <div class="greet-row">
+        <span class="greet-icon" id="greetIcon" aria-hidden="true"></span>
+        <h1 class="welcome-heading" id="welcomeHeading">Welcome back</h1>
+      </div>
+      <p class="greet-sub" id="greetSub"></p>
+    </div>
+    <div class="top-right">
+      <div class="sync-pill" id="loadStatus"></div>
+      <div id="userBadge"></div>
     </div>
   </header>
 
@@ -1489,8 +1540,15 @@ function seedDrives(){
 
 function setStatus(text, isError){
   const statusEl = document.getElementById('loadStatus');
-  statusEl.textContent = text;
-  statusEl.style.color = isError ? 'var(--danger)' : 'var(--ink-soft)';
+  if(!statusEl) return;
+  // Rendered as a pill with a status dot — green pulse when synced, red when offline,
+  // amber while a load is still in flight.
+  const loading = /loading|saving|importing|scanning/i.test(text);
+  const state = isError ? 'error' : (loading ? 'busy' : 'ok');
+  statusEl.className = 'sync-pill sync-' + state;
+  statusEl.innerHTML = '<span class="sync-dot"></span><span class="sync-text"></span>';
+  statusEl.querySelector('.sync-text').textContent = text;
+  statusEl.title = text;
 }
 
 function toast(text, isError){
@@ -1682,6 +1740,36 @@ function capitalizeName(raw){
   return raw.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
+// Time-aware greeting + today's date, so the header feels alive rather than static.
+function renderGreeting(firstName){
+  const heading = document.getElementById('welcomeHeading');
+  const sub = document.getElementById('greetSub');
+  const icon = document.getElementById('greetIcon');
+  if(!heading) return;
+
+  const now = new Date();
+  const h = now.getHours();
+  let word, glyph;
+  if(h < 12){
+    word = 'Good morning';
+    glyph = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>`;
+  } else if(h < 17){
+    word = 'Good afternoon';
+    glyph = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.6"/><path d="M12 3v1.8M12 19.2V21M5.6 5.6l1.3 1.3M17.1 17.1l1.3 1.3M3 12h1.8M19.2 12H21M5.6 18.4l1.3-1.3M17.1 6.9l1.3-1.3"/></svg>`;
+  } else {
+    word = 'Good evening';
+    glyph = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8.2 8.2 0 1 1 9.8 4a6.4 6.4 0 0 0 10.2 10.2z"/></svg>`;
+  }
+
+  heading.textContent = firstName ? `${word}, ${firstName}` : word;
+  if(icon) icon.innerHTML = glyph;
+  if(sub){
+    sub.textContent = now.toLocaleDateString('en-IN', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+  }
+}
+
 function renderUserBadge(){
   const el = document.getElementById('userBadge');
   if(!currentUser){ el.innerHTML = ''; return; }
@@ -1712,8 +1800,7 @@ function renderUserBadge(){
   if(addDriveBtn) addDriveBtn.style.display = isAdmin() ? '' : 'none';
 
   const firstName = displayName.split(' ')[0];
-  const heading = document.getElementById('welcomeHeading');
-  if(heading) heading.textContent = firstName ? `Welcome back, ${firstName}` : 'Welcome back';
+  renderGreeting(firstName);
   const foot = document.getElementById('sidebarFoot');
   if(foot) foot.innerHTML = `${escapeHtml(displayName)}${currentUser.title ? ' · ' + escapeHtml(currentUser.title) : (isAdmin() ? ' · Admin' : '')}`;
 }
