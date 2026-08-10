@@ -833,8 +833,22 @@
 
   .ros-days-table-wrap { overflow-x: auto; margin: 4px 0 14px; border: 1px solid var(--ros-border); border-radius: 8px; }
   .ros-days-table { width: 100%; border-collapse: collapse; font-family: var(--ros-font-mono); font-size: 12.5px; min-width: 720px; }
-  .ros-days-table th { text-align: left; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; font-weight: 600; color: var(--ros-ink-soft); padding: 9px 10px; border-bottom: 1px solid var(--ros-border); background: var(--ros-surface-muted); white-space: nowrap; }
-  .ros-days-table td { padding: 8px 10px; border-bottom: 1px solid var(--ros-border); white-space: nowrap; }
+  .ros-days-table th { text-align: left; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; font-weight: 700; color: var(--ros-ink-soft); padding: 11px 12px; border-bottom: 2px solid var(--ros-border-strong); background: var(--ros-surface-muted); white-space: nowrap; }
+  .ros-days-table td { padding: 11px 12px; border-bottom: 1px solid var(--ros-border); white-space: nowrap; vertical-align: middle; }
+  .ros-days-table tbody tr:last-child td { border-bottom: none; }
+  .ros-days-table tbody tr { transition: background 0.12s; }
+  .ros-days-table tbody tr:hover { background: var(--ros-accent-soft-bg); }
+  /* Date column stays put when the table scrolls sideways on narrow screens */
+  .ros-days-table th:first-child, .ros-days-table td:first-child { position: sticky; left: 0; z-index: 1; }
+  .ros-days-table th:first-child { background: var(--ros-surface-muted); }
+  .ros-days-table td:first-child { background: var(--ros-surface); }
+  .ros-days-table tbody tr:hover td:first-child { background: var(--ros-accent-soft-bg); }
+  .ros-td-date { font-family: var(--ros-font-mono); font-size: 12.5px; color: var(--ros-ink); }
+  .ros-day-pill {
+    display: inline-block; margin-right: 9px; padding: 2px 7px; border-radius: 5px;
+    font-family: var(--ros-font-sans); font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+    color: var(--ros-ink-soft); background: var(--ros-neutral-bg); border: 1px solid var(--ros-neutral-border);
+  }
   .ros-days-table tbody tr:last-child td { border-bottom: none; }
   .ros-days-table tbody tr:nth-child(even) { background: var(--ros-surface-muted); }
   .ros-days-table tbody tr:hover { background: var(--ros-accent-soft-bg); }
@@ -929,9 +943,17 @@
   .ros-field-hint em { font-style: normal; font-family: var(--ros-font-mono); color: var(--ros-ink); }
   .ros-field-hint strong { color: var(--ros-ink); font-weight: 600; }
   .ros-name-chip {
-    display: inline-block; background: var(--ros-accent-soft-bg); color: var(--ros-accent);
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--ros-accent-soft-bg); color: var(--ros-accent);
     border: 1px solid var(--ros-accent-soft-border); border-radius: 20px;
-    padding: 1px 9px; font-size: 12px; font-weight: 600; margin: 0 4px 3px 0;
+    padding: 2px 10px 2px 3px; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0;
+    white-space: nowrap;
+  }
+  .ros-name-dot {
+    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-style: normal; font-size: 9px; font-weight: 700; letter-spacing: 0;
+    background: var(--ros-accent); color: #fff;
   }
 
   button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
@@ -3748,9 +3770,9 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     // Two or more people can share a role — show each as its own chip so it's
     // obvious at a glance that more than one person is covering it.
     var names = namesInRoleValue(val);
-    if (names.length <= 1) return escapeHtml(String(val).trim());
     return names.map(function (n) {
-      return '<span class="ros-name-chip">' + escapeHtml(n) + '</span>';
+      var initials = n.trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
+      return '<span class="ros-name-chip"><i class="ros-name-dot">' + escapeHtml(initials) + '</i>' + escapeHtml(n) + '</span>';
     }).join('');
   }
   function renameGlobally(oldName, newName) {
@@ -3953,7 +3975,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var days = (ev.days || []).slice().sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
     var rows = days.map(function (day) {
       var callTime = formatTime(day.time);
-      return '<tr><td>' + formatDate(day.date) + '</td><td>' + (callTime || '<span class="ros-cell-empty">—</span>') + '</td><td>' + escapeHtml(day.function || '—') + '</td>' +
+      var dayNo = days.indexOf(day) + 1;
+      return '<tr><td class="ros-td-date"><span class="ros-day-pill">Day ' + dayNo + '</span>' + formatDate(day.date) + '</td>' +
+        '<td>' + (callTime || '<span class="ros-cell-empty">—</span>') + '</td>' +
+        '<td>' + (day.function ? escapeHtml(day.function) : '<span class="ros-cell-empty">—</span>') + '</td>' +
         ROLE_KEYS.map(function (role) { return '<td>' + roleCellValue(day.roles && day.roles[role]) + '</td>'; }).join('') +
         '</tr>';
     }).join('');
@@ -3970,10 +3995,13 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
       '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
       '</div>' : '') + '</div>' +
-      '<dl class="ros-event-block-meta">' +
-      '<div class="ros-meta-item"><dt>Venue</dt><dd>' + escapeHtml(ev.venue || '—') + '</dd></div>' +
-      contactLine + albumLine +
-      '</dl>' +
+      (function () {
+        var venueLine = ev.venue
+          ? '<div class="ros-meta-item"><dt>Venue</dt><dd>' + escapeHtml(ev.venue) + '</dd></div>'
+          : '';
+        var meta = venueLine + contactLine + albumLine;
+        return meta ? '<dl class="ros-event-block-meta">' + meta + '</dl>' : '';
+      })() +
       '<div class="ros-days-table-wrap"><table class="ros-days-table"><thead><tr><th>Date</th><th>Call</th><th>Function</th><th>Trad. Photo</th><th>Trad. Video</th><th>Candid</th><th>Cinematic</th><th>Drone</th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table></div>' +
       (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
