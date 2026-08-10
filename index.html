@@ -737,8 +737,13 @@
   .ros-brand-sub { font-family: var(--ros-font-mono); font-size: 11px; color: var(--ros-ink-soft); text-transform: uppercase; letter-spacing: 0.08em; }
   .ros-topbar-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .ros-whoami { display: flex; align-items: center; gap: 8px; }
-  .ros-whoami-label { font-family: var(--ros-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ros-ink-soft); white-space: nowrap; }
-  .ros-whoami select { background: var(--ros-surface); color: var(--ros-ink); border: 1px solid var(--ros-border-strong); padding: 8px 10px; border-radius: 8px; font-family: var(--ros-font-sans); font-size: 14px; max-width: 160px; }
+  .ros-whoami-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--ink-soft);
+    background: var(--card-sunken); border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 12px; white-space: nowrap;
+  }
+  .ros-whoami-chip strong { color: var(--ink); font-weight: 600; }
 
   .ros-tabs { display: flex; gap: 22px; padding: 0 24px; background: var(--ros-surface); border-bottom: 1px solid var(--ros-border); overflow-x: auto; }
   .ros-tab-btn { background: none; border: none; color: var(--ros-ink-soft); font-family: var(--ros-font-sans); font-weight: 500; font-size: 14px; padding: 13px 2px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
@@ -3763,15 +3768,14 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
 
   /* ---------- top bar / ros-tabs ---------- */
   function renderWhoAmI() {
+    // The old "I am" picker is gone — identity is derived from the logged-in account
+    // (see syncMyNameFromLoggedInUser). This just shows who we matched you to, so a
+    // mismatch is visible rather than silently producing an empty My Schedule.
     var wrap = document.getElementById('rosWhoamiWrap');
-    var opts = state.crew.map(function (c) {
-      return '<option value="' + escapeHtml(c.name) + '"' + (c.name === state.myName ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>';
-    }).join('');
-    wrap.innerHTML = '<label class="ros-whoami-label" for="rosWhoAmISelect">I am</label><select id="rosWhoAmISelect"><option value="">— select —</option>' + opts + '</select>';
-    document.getElementById('rosWhoAmISelect').addEventListener('change', async function (e) {
-      await saveMyName(e.target.value);
-      if (state.view === 'my') renderContent();
-    });
+    if (!wrap) return;
+    wrap.innerHTML = state.myName
+      ? '<span class="ros-whoami-chip">Viewing as <strong>' + escapeHtml(state.myName) + '</strong></span>'
+      : '';
   }
   function updatePrimaryActionButton() {
     var btn = document.getElementById('rosPrimaryActionBtn');
@@ -3802,7 +3806,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   /* ---------- My Schedule (flattened, per crew member) ---------- */
   function myScheduleHtml() {
     if (!state.crew.length) return emptyStateHtml('No crew added yet', 'Add your team first, then come back here to see assignments.', 'Add crew member', 'add-first-crew');
-    if (!state.myName) return '<div class="ros-empty-state"><h3>Who are you?</h3><p>Pick your name from "I am" at the top to see your assignments.</p></div>';
+    if (!state.myName) return '<div class="ros-empty-state"><h3>We couldn\'t match your account</h3><p>Your login name doesn\'t match anyone in the Team list, so there are no assignments to show. Ask an admin to add you to the team (or adjust the spelling to match your account).</p></div>';
 
     var calls = getAllCalls().filter(function (c) { return dayHasCrew(c.day, state.myName); });
     var today = todayStr();
