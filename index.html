@@ -248,6 +248,64 @@
 
   .panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .view-panel{width:100%;}
+
+  /* ---------- Dashboard widgets ---------- */
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;}
+  .dash-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px 20px;box-shadow:var(--shadow-card);
+    transition:box-shadow 0.15s, border-color 0.15s;
+  }
+  .dash-card:hover{border-color:var(--line-strong);box-shadow:0 8px 20px rgba(16,24,40,0.10);}
+  .dash-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:16px;}
+  .dash-card-head h3{margin:0;font-size:14px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;}
+  .dash-card-sub{font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;}
+  .dash-empty{font-size:12.5px;color:var(--ink-muted);margin:0;padding:12px 0;}
+
+  /* Storage bars */
+  .dash-bar-row{margin-bottom:14px;}
+  .dash-bar-row:last-child{margin-bottom:0;}
+  .dash-bar-label{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:5px;}
+  .dash-bar-track{height:7px;background:var(--card-sunken);border-radius:20px;overflow:hidden;}
+  .dash-bar-fill{height:100%;border-radius:20px;transition:width 0.5s cubic-bezier(0.16,1,0.3,1);}
+  .dash-ok{background:linear-gradient(90deg,#12885A,var(--ok));}
+  .dash-warn{background:linear-gradient(90deg,#B87A12,var(--amber));}
+  .dash-danger{background:linear-gradient(90deg,#D63A3A,var(--danger));}
+  .dash-bar-meta{font-size:11px;color:var(--ink-muted);margin-top:4px;}
+
+  /* Pipeline */
+  .dash-pipe-row{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+  .dash-pipe-row:last-child{margin-bottom:0;}
+  .dash-pipe-row .status-badge{flex-shrink:0;min-width:88px;text-align:center;}
+  .dash-pipe-track{flex:1;height:6px;background:var(--card-sunken);border-radius:20px;overflow:hidden;}
+  .dash-pipe-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--wine),#B0576F);transition:width 0.5s cubic-bezier(0.16,1,0.3,1);}
+  .dash-pipe-count{font-size:12.5px;font-weight:700;color:var(--ink);min-width:22px;text-align:right;}
+
+  /* Alerts */
+  .dash-alert{display:flex;gap:10px;padding:10px 12px;border-radius:9px;margin-bottom:8px;background:var(--card-sunken);}
+  .dash-alert:last-child{margin-bottom:0;}
+  .dash-alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+  .dash-alert-danger .dash-alert-dot{background:var(--danger);}
+  .dash-alert-warn .dash-alert-dot{background:var(--amber);}
+  .dash-alert-info .dash-alert-dot{background:var(--blue);}
+  .dash-alert-title{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.35;}
+  .dash-alert-note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .dash-allclear{font-size:12.5px;color:var(--ok);background:var(--ok-tint);border-radius:9px;padding:14px 12px;text-align:center;font-weight:600;}
+
+  /* Recent activity */
+  .dash-recent-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line);}
+  .dash-recent-row:last-child{border-bottom:none;padding-bottom:0;}
+  .dash-recent-avatar{
+    width:32px;height:32px;border-radius:9px;flex-shrink:0;color:#fff;font-size:11px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(140deg,var(--wine),#B0576F);
+  }
+  .dash-recent-main{flex:1;min-width:0;}
+  .dash-recent-name{font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dash-recent-meta{font-size:11.5px;color:var(--ink-soft);margin-top:1px;}
+  @media (prefers-reduced-motion: reduce){
+    .dash-bar-fill, .dash-pipe-fill{transition:none;}
+  }
   .dashboard-hint{
     background:var(--card);border:1px dashed var(--line-strong);border-radius:var(--radius);
     padding:32px 20px;text-align:center;color:var(--ink-soft);font-size:13.5px;line-height:1.6;
@@ -1147,7 +1205,7 @@
     <div class="sidebar-section-label">Workspace</div>
     <div class="sidebar-nav">
       <a href="#" data-view="dashboard" class="active">Dashboard <span class="count" id="navDashboardCount">–</span></a>
-      <a href="#" data-view="dashboard">Drive registry <span class="count" id="navDriveCount">–</span></a>
+      <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
       <a href="#" data-view="schedule">Crew Schedule</a>
     </div>
@@ -1196,6 +1254,10 @@
   </div>
 
   <div id="viewDashboard" class="view-panel">
+    <div id="dashboardBody"></div>
+  </div>
+
+  <div id="viewDrives" class="view-panel" style="display:none;">
     <div id="driveRegistrySection">
       <div class="panel-title">
         <h2>Drive registry</h2>
@@ -1807,6 +1869,7 @@ function renderUserBadge(){
 
 function switchView(view, clickedLink){
   document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
+  document.getElementById('viewDrives').style.display = view === 'drives' ? '' : 'none';
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
   document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
 
@@ -1820,6 +1883,7 @@ function switchView(view, clickedLink){
   }
 
   if(view === 'schedule') initRoster();
+  if(view === 'dashboard') renderDashboard();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -2462,6 +2526,108 @@ function renderAll(){
   renderDrives();
   renderRawAlert();
   renderTable();
+  renderDashboard();
+}
+
+// ---- Dashboard: an at-a-glance overview, distinct from the raw Drive registry list ----
+function renderDashboard(){
+  const body = document.getElementById('dashboardBody');
+  if(!body) return;
+
+  const drives = data.drives;
+  const events = data.events;
+
+  if(!drives.length && !events.length){
+    body.innerHTML = `<div class="empty-state"><h3>Nothing tracked yet</h3><p>Add a drive and log your first event to see your overview here.</p></div>`;
+    return;
+  }
+
+  /* --- Storage by drive (busiest first) --- */
+  const driveRows = drives.map(d => {
+    const usedGB = driveUsedGB(d.id);
+    const capGB = (Number(d.capacityTB)||0) * 1000;
+    const pct = capGB > 0 ? Math.min((usedGB/capGB)*100, 100) : 0;
+    return { label: d.label, usedGB, capGB, pct };
+  }).sort((a,b) => b.pct - a.pct);
+
+  const topDrives = driveRows.slice(0, 6);
+  const storageHtml = topDrives.length ? topDrives.map(d => {
+    const level = d.pct >= 90 ? 'danger' : d.pct >= 60 ? 'warn' : 'ok';
+    return `<div class="dash-bar-row">
+      <div class="dash-bar-label"><span>${escapeHtml(d.label)}</span><span class="mono">${d.pct.toFixed(0)}%</span></div>
+      <div class="dash-bar-track"><div class="dash-bar-fill dash-${level}" style="width:${d.pct.toFixed(0)}%"></div></div>
+      <div class="dash-bar-meta">${fmtTB(d.usedGB)} of ${(d.capGB/1000).toFixed(1)} TB</div>
+    </div>`;
+  }).join('') : `<p class="dash-empty">No drives registered yet.</p>`;
+
+  /* --- Delivery pipeline --- */
+  const statuses = ['In Editing','Edited','Delivered','Raw Deleted'];
+  const counts = statuses.map(s => ({ s, n: events.filter(e => (e.status||'In Editing') === s).length }));
+  const maxCount = Math.max(1, ...counts.map(c => c.n));
+  const pipelineHtml = events.length ? counts.map(c => `
+    <div class="dash-pipe-row">
+      <span class="status-badge ${statusClass(c.s)}">${escapeHtml(c.s)}</span>
+      <div class="dash-pipe-track"><div class="dash-pipe-fill" style="width:${(c.n/maxCount*100).toFixed(0)}%"></div></div>
+      <span class="dash-pipe-count mono">${c.n}</span>
+    </div>`).join('') : `<p class="dash-empty">No events logged yet.</p>`;
+
+  /* --- Needs attention --- */
+  const alerts = [];
+  driveRows.filter(d => d.pct >= 90).forEach(d => {
+    alerts.push({ tone:'danger', title:`${d.label} is ${d.pct.toFixed(0)}% full`, note:`Only ${fmtTB(Math.max(d.capGB-d.usedGB,0))} left` });
+  });
+  const cleanup = events.filter(e => !e.rawDeleted && e.deliveredDate && daysSince(e.deliveredDate) >= DELETE_BUFFER_DAYS);
+  if(cleanup.length){
+    alerts.push({ tone:'warn', title:`${cleanup.length} event${cleanup.length===1?'':'s'} ready for raw cleanup`, note:`Delivered over ${DELETE_BUFFER_DAYS} days ago` });
+  }
+  const unassigned = events.filter(e => !e.driveId).length;
+  if(unassigned) alerts.push({ tone:'warn', title:`${unassigned} event${unassigned===1?'':'s'} not assigned to a drive`, note:'Assign them so storage totals stay accurate' });
+  const noFolders = events.filter(e => !Array.isArray(e.folders) || e.folders.length === 0).length;
+  if(noFolders) alerts.push({ tone:'info', title:`${noFolders} event${noFolders===1?'':'s'} missing a folder breakdown`, note:'Add Photos/Video folders to track sizes properly' });
+
+  const alertsHtml = alerts.length ? alerts.map(a => `
+    <div class="dash-alert dash-alert-${a.tone}">
+      <div class="dash-alert-dot"></div>
+      <div><div class="dash-alert-title">${escapeHtml(a.title)}</div><div class="dash-alert-note">${escapeHtml(a.note)}</div></div>
+    </div>`).join('') : `<div class="dash-allclear">✓ Everything looks healthy — nothing needs attention.</div>`;
+
+  /* --- Recent activity --- */
+  const recent = events.slice()
+    .filter(e => e.updatedAt)
+    .sort((a,b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+    .slice(0, 6);
+  const driveMap = Object.fromEntries(drives.map(d => [d.id, d.label]));
+  const recentHtml = recent.length ? recent.map(e => {
+    const initials = (e.client||'?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
+    return `<div class="dash-recent-row">
+      <div class="dash-recent-avatar">${escapeHtml(initials)}</div>
+      <div class="dash-recent-main">
+        <div class="dash-recent-name">${escapeHtml(e.client)}</div>
+        <div class="dash-recent-meta">${e.driveId && driveMap[e.driveId] ? escapeHtml(driveMap[e.driveId]) : 'Unassigned'} · ${e.sizeGB ? fmtTB(e.sizeGB) : '—'}</div>
+      </div>
+      <span class="status-badge ${statusClass(e.status)}">${escapeHtml(e.status||'In Editing')}</span>
+    </div>`;
+  }).join('') : `<p class="dash-empty">No activity yet.</p>`;
+
+  body.innerHTML = `
+    <div class="dash-grid">
+      <section class="dash-card">
+        <div class="dash-card-head"><h3>Storage by drive</h3><span class="dash-card-sub">Busiest first</span></div>
+        ${storageHtml}
+      </section>
+      <section class="dash-card">
+        <div class="dash-card-head"><h3>Delivery pipeline</h3><span class="dash-card-sub">${events.length} event${events.length===1?'':'s'}</span></div>
+        ${pipelineHtml}
+      </section>
+      <section class="dash-card">
+        <div class="dash-card-head"><h3>Needs attention</h3><span class="dash-card-sub">${alerts.length || 'none'}</span></div>
+        ${alertsHtml}
+      </section>
+      <section class="dash-card">
+        <div class="dash-card-head"><h3>Recent activity</h3><span class="dash-card-sub">Last updated</span></div>
+        ${recentHtml}
+      </section>
+    </div>`;
 }
 
 // ---- Folder breakdown (Photos / Video / etc, each with its own size + copy log) ----
