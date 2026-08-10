@@ -1382,21 +1382,6 @@
   </div>
 </div>
 
-<div class="overlay" id="newSchedEventOverlay">
-  <div class="modal" style="max-width:380px;">
-    <h3>New shoot event</h3>
-    <div class="field">
-      <label>Event / client name <span class="required-mark">*</span></label>
-      <input type="text" id="newSchedEventTitle" placeholder="e.g. Nitesh Weds Ishu">
-    </div>
-    <div id="newSchedEventError" style="font-size:12.5px;color:var(--danger);margin-bottom:10px;display:none;"></div>
-    <div class="modal-actions">
-      <button class="btn" id="btnCancelNewSchedEvent">Cancel</button>
-      <button class="btn btn-primary" id="btnConfirmNewSchedEvent">Create</button>
-    </div>
-  </div>
-</div>
-
 <div class="overlay" id="scanOverlay">
   <div class="modal" style="max-width:640px;">
     <h3>Scan connected drive</h3>
@@ -1765,6 +1750,23 @@ document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
     switchView(a.getAttribute('data-view'), a);
   });
 });
+
+// Enter-to-submit. There's no <form> element wrapping these fields, so the browser
+// won't submit on Enter by itself — wire it up explicitly for each auth screen.
+function submitOnEnter(inputIds, buttonId){
+  inputIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('keydown', (e) => {
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      const btn = document.getElementById(buttonId);
+      if(btn && !btn.disabled) btn.click();
+    });
+  });
+}
+submitOnEnter(['loginEmail', 'loginPassword'], 'btnLogin');
+submitOnEnter(['resetPassword1', 'resetPassword2'], 'btnSetNewPassword');
 
 document.querySelectorAll('.auth-eye').forEach(btn => {
   btn.addEventListener('click', () => {
