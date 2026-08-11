@@ -2809,8 +2809,9 @@ let albumsData = [];
 function albumToRow(a){
   return {
     id: a.id, client: a.client, event_ref: a.eventRef || '', designer: a.designer || '',
-    stage: a.stage || 'Awaiting selection', album_size: a.albumSize || '',
+    stage: a.stage || 'Awaiting selection',
     page_count: a.pageCount || null, cover_type: a.coverType || '',
+    start_date: a.startDate || null,
     revision_round: Number(a.revisionRound) || 0, revisions_included: Number(a.revisionsIncluded) || 2,
     due_date: a.dueDate || null, delivered_date: a.deliveredDate || null,
     notes: a.notes || '', updated_by: whoAmI(), updated_at: new Date().toISOString()
@@ -2819,7 +2820,7 @@ function albumToRow(a){
 function rowToAlbum(r){
   return {
     id: r.id, client: r.client, eventRef: r.event_ref || '', designer: r.designer || '',
-    stage: r.stage || 'Awaiting selection', albumSize: r.album_size || '',
+    stage: r.stage || 'Awaiting selection', startDate: r.start_date || '',
     pageCount: r.page_count, coverType: r.cover_type || '',
     revisionRound: r.revision_round || 0, revisionsIncluded: r.revisions_included || 2,
     dueDate: r.due_date || '', deliveredDate: r.delivered_date || '',
@@ -2905,7 +2906,7 @@ function drawAlbums(){
 function albumCardHtml(a, todayKey){
   const late = a.dueDate && a.stage !== 'Delivered' && a.dueDate < todayKey;
   const overRevisions = a.revisionRound > a.revisionsIncluded;
-  const spec = [a.albumSize, a.pageCount ? a.pageCount + ' pages' : '', a.coverType].filter(Boolean).join(' · ');
+  const spec = [a.pageCount ? a.pageCount + ' pages' : '', a.coverType].filter(Boolean).join(' · ');
   return `<article class="alb-card${late ? ' alb-card-late' : ''}">
     <div class="alb-card-top">
       <div>
@@ -2919,6 +2920,7 @@ function albumCardHtml(a, todayKey){
     <div class="alb-card-meta">
       ${a.designer ? `<span class="alb-chip">${escapeHtml(a.designer)}</span>` : `<span class="alb-chip alb-chip-empty">Unassigned</span>`}
       ${a.revisionRound ? `<span class="alb-chip${overRevisions ? ' alb-chip-warn' : ''}">Revision ${a.revisionRound} of ${a.revisionsIncluded}${overRevisions ? ' — chargeable' : ''}</span>` : ''}
+      ${a.startDate ? `<span class="alb-chip">Started ${fmtDate(a.startDate)}</span>` : ''}
       ${a.dueDate ? `<span class="alb-chip${late ? ' alb-chip-late' : ''}">Due ${fmtDate(a.dueDate)}</span>` : ''}
       ${a.deliveredDate ? `<span class="alb-chip alb-chip-ok">Delivered ${fmtDate(a.deliveredDate)}</span>` : ''}
     </div>
@@ -2985,8 +2987,9 @@ function wireAlbumCards(){
 let editingAlbum = null;
 function openAlbumModal(album){
   editingAlbum = album ? Object.assign({}, album)
-    : { id: uid(), client:'', eventRef:'', designer:'', stage:'Awaiting selection', albumSize:'',
-        pageCount:null, coverType:'', revisionRound:0, revisionsIncluded:2, dueDate:'', deliveredDate:'', notes:'' };
+    : { id: uid(), client:'', eventRef:'', designer:'', stage:'Awaiting selection',
+        pageCount:null, coverType:'', revisionRound:0, revisionsIncluded:2,
+        startDate:'', dueDate:'', deliveredDate:'', notes:'' };
   const a = editingAlbum;
   document.getElementById('albumModalTitle').textContent = album ? 'Edit album' : 'New album';
   document.getElementById('albumModalBody').innerHTML = `
@@ -2999,19 +3002,18 @@ function openAlbumModal(album){
         <select id="alb_stage">${ALBUM_STAGES.map(s => `<option value="${s.key}" ${a.stage===s.key?'selected':''}>${s.key}</option>`).join('')}</select></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Album size</label>
-        <input type="text" id="alb_size" value="${escapeHtml(a.albumSize)}" placeholder="e.g. 12x36" maxlength="40"></div>
       <div class="field"><label>Pages</label>
         <input type="number" id="alb_pages" value="${a.pageCount || ''}" min="0" placeholder="e.g. 40"></div>
-    </div>
-    <div class="field-row">
       <div class="field"><label>Cover type</label>
         <input type="text" id="alb_cover" value="${escapeHtml(a.coverType)}" placeholder="e.g. Leather, Acrylic" maxlength="60"></div>
-      <div class="field"><label>Revisions included</label>
-        <input type="number" id="alb_revinc" value="${a.revisionsIncluded}" min="0"></div>
     </div>
     <div class="field-row">
+      <div class="field"><label>Design started</label><input type="date" id="alb_start" value="${a.startDate || ''}"></div>
       <div class="field"><label>Due date</label><input type="date" id="alb_due" value="${a.dueDate || ''}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Revisions included</label>
+        <input type="number" id="alb_revinc" value="${a.revisionsIncluded}" min="0"></div>
       <div class="field"><label>Revision rounds used</label>
         <input type="number" id="alb_revround" value="${a.revisionRound || 0}" min="0"></div>
     </div>
@@ -3034,11 +3036,11 @@ document.getElementById('btnSaveAlbum').addEventListener('click', async () => {
   a.client = client;
   a.designer = document.getElementById('alb_designer').value.trim();
   a.stage = document.getElementById('alb_stage').value;
-  a.albumSize = document.getElementById('alb_size').value.trim();
   a.pageCount = Number(document.getElementById('alb_pages').value) || null;
   a.coverType = document.getElementById('alb_cover').value.trim();
   a.revisionsIncluded = Number(document.getElementById('alb_revinc').value) || 0;
   a.revisionRound = Number(document.getElementById('alb_revround').value) || 0;
+  a.startDate = document.getElementById('alb_start').value || '';
   a.dueDate = document.getElementById('alb_due').value || '';
   a.notes = document.getElementById('alb_notes').value.trim();
   if(a.stage === 'Delivered' && !a.deliveredDate) a.deliveredDate = new Date().toISOString().slice(0,10);
