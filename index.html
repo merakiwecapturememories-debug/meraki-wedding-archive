@@ -249,6 +249,65 @@
   .panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .view-panel{width:100%;}
 
+  /* ---------- Album Studio ---------- */
+  .alb-summary{
+    display:grid;grid-template-columns:repeat(4,auto) 1fr;gap:18px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 22px;box-shadow:var(--shadow-card);margin-bottom:20px;
+  }
+  .alb-stat{text-align:center;min-width:70px;}
+  .alb-stat-num{font-size:24px;font-weight:700;color:var(--ink);line-height:1.1;}
+  .alb-stat-lbl{font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-top:3px;}
+  .alb-stat-alert .alb-stat-num{color:var(--danger);}
+  .alb-progress-wrap{min-width:160px;}
+  .alb-progress-top{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;font-weight:600;}
+  .alb-progress-track{height:8px;background:var(--card-sunken);border-radius:20px;overflow:hidden;}
+  .alb-progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#12885A,var(--ok));transition:width 0.5s cubic-bezier(0.16,1,0.3,1);}
+
+  .alb-stage{margin-bottom:26px;}
+  .alb-stage-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
+  .alb-stage-head h3{margin:0;font-size:13.5px;font-weight:700;color:var(--ink);}
+  .alb-stage-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .alb-tone-slate{background:var(--slate);} .alb-tone-blue{background:var(--blue);}
+  .alb-tone-amber{background:var(--amber);} .alb-tone-ok{background:var(--ok);}
+  .alb-tone-wine{background:var(--wine);}
+  .alb-stage-count{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--ink-soft);
+    background:var(--card-sunken);border:1px solid var(--line);border-radius:20px;padding:1px 8px;
+  }
+  .alb-stage-hint{font-size:11.5px;color:var(--ink-muted);font-style:italic;}
+
+  .alb-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
+  .alb-card{
+    background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px;
+    box-shadow:var(--shadow-card);transition:border-color 0.14s, box-shadow 0.14s;
+  }
+  .alb-card:hover{border-color:var(--line-strong);box-shadow:0 8px 20px rgba(16,24,40,0.10);}
+  .alb-card-late{border-left:3px solid var(--danger);}
+  .alb-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:9px;}
+  .alb-card-client{font-size:14px;font-weight:700;color:var(--ink);line-height:1.25;}
+  .alb-card-spec{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
+  .alb-stage-select{
+    font-size:11px;font-weight:600;padding:4px 7px;border-radius:6px;flex-shrink:0;
+    border:1px solid var(--line-strong);background:var(--card-sunken);color:var(--ink);cursor:pointer;max-width:130px;
+  }
+  .alb-card-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+  .alb-chip{
+    font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;
+    background:var(--card-sunken);border:1px solid var(--line);color:var(--ink-soft);
+  }
+  .alb-chip-empty{font-style:italic;color:var(--ink-muted);}
+  .alb-chip-warn{background:var(--amber-tint);color:var(--amber);border-color:rgba(154,98,0,0.25);}
+  .alb-chip-late{background:var(--danger-tint);color:var(--danger);border-color:rgba(194,42,42,0.25);}
+  .alb-chip-ok{background:var(--ok-tint);color:var(--ok);border-color:rgba(15,122,76,0.25);}
+  .alb-card-notes{font-size:12px;color:var(--ink-soft);line-height:1.5;margin:0 0 9px;}
+  .alb-card-actions{display:flex;gap:2px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px;}
+
+  @media (max-width:820px){
+    .alb-summary{grid-template-columns:repeat(2,1fr);gap:14px;}
+    .alb-progress-wrap{grid-column:1 / -1;}
+  }
+
   /* ---------- Calendar ---------- */
   .cal-nav{display:flex;align-items:center;gap:8px;}
   .cal-title{font-size:14px;font-weight:700;color:var(--ink);min-width:150px;text-align:center;}
@@ -1333,6 +1392,7 @@
       <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
       <a href="#" data-view="schedule">Crew Schedule</a>
+      <a href="#" data-view="albums">Album Studio</a>
       <a href="#" data-view="calendar">Calendar</a>
     </div>
     <div class="sidebar-spacer"></div>
@@ -1351,6 +1411,10 @@
     <a href="#" data-view="schedule">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       Schedule
+    </a>
+    <a href="#" data-view="albums">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
+      Albums
     </a>
     <a href="#" data-view="calendar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><circle cx="8" cy="15" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
@@ -1442,6 +1506,14 @@
         <div id="tableWrap"></div>
       </div>
     </div>
+  </div>
+
+  <div id="viewAlbums" class="view-panel" style="display:none;">
+    <div class="panel-title">
+      <h2>Album Studio</h2>
+      <button class="btn btn-primary btn-sm" id="btnAddAlbum" style="display:none;">+ New album</button>
+    </div>
+    <div id="albumsBody"></div>
   </div>
 
   <div id="viewCalendar" class="view-panel" style="display:none;">
@@ -1634,6 +1706,17 @@
     <div class="modal-actions">
       <button class="btn" id="btnConfirmCancel">Cancel</button>
       <button class="btn btn-primary" style="background:var(--danger);border-color:var(--danger);" id="btnConfirmOk">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="albumOverlay">
+  <div class="modal">
+    <h3 id="albumModalTitle">New album</h3>
+    <div id="albumModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelAlbum">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveAlbum">Save album</button>
     </div>
   </div>
 </div>
@@ -2016,6 +2099,7 @@ function switchView(view, clickedLink){
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
   document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
   document.getElementById('viewCalendar').style.display = view === 'calendar' ? '' : 'none';
+  document.getElementById('viewAlbums').style.display = view === 'albums' ? '' : 'none';
 
   // Keep both navs (desktop sidebar + mobile bottom bar) visually in sync
   document.querySelectorAll('.sidebar-nav a, .mobile-nav a').forEach(x => x.classList.remove('active'));
@@ -2029,6 +2113,7 @@ function switchView(view, clickedLink){
   if(view === 'schedule') initRoster();
   if(view === 'dashboard') renderDashboard();
   if(view === 'calendar') renderCalendar();
+  if(view === 'albums') renderAlbums();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -2703,6 +2788,268 @@ function renderAll(){
   renderTable();
   renderDashboard();
 }
+
+// ---- Album Studio: track album design from selection through to delivery ----
+// Stages follow the standard professional album workflow: photo selection → design →
+// client proofing → revision rounds → approval → retouching → print → delivered.
+const ALBUM_STAGES = [
+  { key: 'Awaiting selection', tone: 'slate',  hint: 'Waiting on the client to choose photos' },
+  { key: 'Designing',          tone: 'blue',   hint: 'Laying out spreads' },
+  { key: 'Sent for proofing',  tone: 'amber',  hint: 'With the client for review' },
+  { key: 'Revisions',          tone: 'amber',  hint: 'Client asked for changes' },
+  { key: 'Approved',           tone: 'ok',     hint: 'Layout signed off' },
+  { key: 'Retouching',         tone: 'blue',   hint: 'Beauty retouch & colour work' },
+  { key: 'Sent to print',      tone: 'wine',   hint: 'With the print lab' },
+  { key: 'Delivered',          tone: 'ok',     hint: 'Handed to the client' }
+];
+const ALBUM_ACTIVE = ['Awaiting selection','Designing','Sent for proofing','Revisions','Approved','Retouching','Sent to print'];
+
+let albumsData = [];
+
+function albumToRow(a){
+  return {
+    id: a.id, client: a.client, event_ref: a.eventRef || '', designer: a.designer || '',
+    stage: a.stage || 'Awaiting selection', album_size: a.albumSize || '',
+    page_count: a.pageCount || null, cover_type: a.coverType || '',
+    revision_round: Number(a.revisionRound) || 0, revisions_included: Number(a.revisionsIncluded) || 2,
+    due_date: a.dueDate || null, delivered_date: a.deliveredDate || null,
+    notes: a.notes || '', updated_by: whoAmI(), updated_at: new Date().toISOString()
+  };
+}
+function rowToAlbum(r){
+  return {
+    id: r.id, client: r.client, eventRef: r.event_ref || '', designer: r.designer || '',
+    stage: r.stage || 'Awaiting selection', albumSize: r.album_size || '',
+    pageCount: r.page_count, coverType: r.cover_type || '',
+    revisionRound: r.revision_round || 0, revisionsIncluded: r.revisions_included || 2,
+    dueDate: r.due_date || '', deliveredDate: r.delivered_date || '',
+    notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at
+  };
+}
+
+async function loadAlbums(){
+  try{
+    const { data: rows, error } = await sb.from('albums').select('*').order('updated_at', { ascending: false });
+    if(error) throw error;
+    albumsData = (rows || []).map(rowToAlbum);
+  }catch(e){ albumsData = []; toast("Couldn't load albums", true); }
+}
+async function persistAlbum(a){
+  try{
+    const { error } = await sb.from('albums').upsert(albumToRow(a));
+    if(error) throw error;
+  }catch(e){ toast("Couldn't save album", true); }
+}
+async function deleteAlbumRemote(id){
+  try{
+    const { error } = await sb.from('albums').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){ toast("Couldn't remove album", true); return false; }
+}
+
+async function renderAlbums(){
+  const addBtn = document.getElementById('btnAddAlbum');
+  if(addBtn) addBtn.style.display = isAdmin() ? '' : 'none';
+  if(!albumsData.length) await loadAlbums();
+  drawAlbums();
+}
+
+function drawAlbums(){
+  const body = document.getElementById('albumsBody');
+  if(!body) return;
+
+  const total = albumsData.length;
+  const delivered = albumsData.filter(a => a.stage === 'Delivered').length;
+  const running = albumsData.filter(a => ALBUM_ACTIVE.includes(a.stage)).length;
+  const withClient = albumsData.filter(a => a.stage === 'Sent for proofing' || a.stage === 'Revisions').length;
+  const todayKey = new Date().toISOString().slice(0,10);
+  const overdue = albumsData.filter(a => a.dueDate && a.stage !== 'Delivered' && a.dueDate < todayKey).length;
+  const pct = total ? Math.round((delivered/total)*100) : 0;
+
+  if(!total){
+    body.innerHTML = `<div class="empty-state"><h3>No albums yet</h3><p>${isAdmin() ? 'Add your first album to start tracking design progress.' : 'Nothing has been added yet.'}</p></div>`;
+    return;
+  }
+
+  const summary = `
+    <div class="alb-summary">
+      <div class="alb-stat"><div class="alb-stat-num">${running}</div><div class="alb-stat-lbl">In progress</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${withClient}</div><div class="alb-stat-lbl">With client</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${delivered}</div><div class="alb-stat-lbl">Delivered</div></div>
+      <div class="alb-stat${overdue ? ' alb-stat-alert' : ''}"><div class="alb-stat-num">${overdue}</div><div class="alb-stat-lbl">Overdue</div></div>
+      <div class="alb-progress-wrap">
+        <div class="alb-progress-top"><span>Completed</span><span class="mono">${delivered} of ${total} · ${pct}%</span></div>
+        <div class="alb-progress-track"><div class="alb-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+
+  const groups = ALBUM_STAGES.map(st => {
+    const items = albumsData.filter(a => a.stage === st.key);
+    if(!items.length) return '';
+    return `<section class="alb-stage">
+      <div class="alb-stage-head">
+        <span class="alb-stage-dot alb-tone-${st.tone}"></span>
+        <h3>${st.key}</h3>
+        <span class="alb-stage-count">${items.length}</span>
+        <span class="alb-stage-hint">${st.hint}</span>
+      </div>
+      <div class="alb-cards">${items.map(a => albumCardHtml(a, todayKey)).join('')}</div>
+    </section>`;
+  }).join('');
+
+  body.innerHTML = summary + groups;
+  wireAlbumCards();
+}
+
+function albumCardHtml(a, todayKey){
+  const late = a.dueDate && a.stage !== 'Delivered' && a.dueDate < todayKey;
+  const overRevisions = a.revisionRound > a.revisionsIncluded;
+  const spec = [a.albumSize, a.pageCount ? a.pageCount + ' pages' : '', a.coverType].filter(Boolean).join(' · ');
+  return `<article class="alb-card${late ? ' alb-card-late' : ''}">
+    <div class="alb-card-top">
+      <div>
+        <div class="alb-card-client">${escapeHtml(a.client)}</div>
+        ${spec ? `<div class="alb-card-spec">${escapeHtml(spec)}</div>` : ''}
+      </div>
+      ${isAdmin() ? `<select class="alb-stage-select" data-alb-stage="${a.id}">
+        ${ALBUM_STAGES.map(s => `<option value="${s.key}" ${a.stage === s.key ? 'selected' : ''}>${s.key}</option>`).join('')}
+      </select>` : ''}
+    </div>
+    <div class="alb-card-meta">
+      ${a.designer ? `<span class="alb-chip">${escapeHtml(a.designer)}</span>` : `<span class="alb-chip alb-chip-empty">Unassigned</span>`}
+      ${a.revisionRound ? `<span class="alb-chip${overRevisions ? ' alb-chip-warn' : ''}">Revision ${a.revisionRound} of ${a.revisionsIncluded}${overRevisions ? ' — chargeable' : ''}</span>` : ''}
+      ${a.dueDate ? `<span class="alb-chip${late ? ' alb-chip-late' : ''}">Due ${fmtDate(a.dueDate)}</span>` : ''}
+      ${a.deliveredDate ? `<span class="alb-chip alb-chip-ok">Delivered ${fmtDate(a.deliveredDate)}</span>` : ''}
+    </div>
+    ${a.notes ? `<p class="alb-card-notes">${escapeHtml(a.notes)}</p>` : ''}
+    ${isAdmin() ? `<div class="alb-card-actions">
+      <button class="btn-ghost btn-sm" data-alb-edit="${a.id}">Edit</button>
+      <button class="btn-ghost btn-sm" data-alb-revision="${a.id}">+ Revision round</button>
+      <button class="btn-danger-ghost btn-sm" data-alb-del="${a.id}">Remove</button>
+    </div>` : ''}
+  </article>`;
+}
+
+function wireAlbumCards(){
+  const body = document.getElementById('albumsBody');
+
+  body.querySelectorAll('[data-alb-stage]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const a = albumsData.find(x => x.id === sel.getAttribute('data-alb-stage'));
+      if(!a) return;
+      a.stage = sel.value;
+      // Stamp the delivery date automatically the first time it reaches Delivered
+      if(a.stage === 'Delivered' && !a.deliveredDate) a.deliveredDate = new Date().toISOString().slice(0,10);
+      if(a.stage !== 'Delivered') a.deliveredDate = '';
+      sel.disabled = true;
+      await persistAlbum(a);
+      sel.disabled = false;
+      toast(`${a.client} → ${a.stage}`);
+      drawAlbums();
+    });
+  });
+
+  body.querySelectorAll('[data-alb-revision]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const a = albumsData.find(x => x.id === btn.getAttribute('data-alb-revision'));
+      if(!a) return;
+      a.revisionRound = (Number(a.revisionRound) || 0) + 1;
+      a.stage = 'Revisions';
+      await persistAlbum(a);
+      const over = a.revisionRound > a.revisionsIncluded;
+      toast(over ? `Revision ${a.revisionRound} — beyond the included ${a.revisionsIncluded}, chargeable` : `Revision round ${a.revisionRound} logged`);
+      drawAlbums();
+    });
+  });
+
+  body.querySelectorAll('[data-alb-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openAlbumModal(albumsData.find(x => x.id === btn.getAttribute('data-alb-edit'))));
+  });
+
+  body.querySelectorAll('[data-alb-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const a = albumsData.find(x => x.id === btn.getAttribute('data-alb-del'));
+      if(!a) return;
+      askConfirm('Remove this album?', `"${a.client}" will be removed from Album Studio. This can't be undone.`, async () => {
+        if(await deleteAlbumRemote(a.id)){
+          albumsData = albumsData.filter(x => x.id !== a.id);
+          drawAlbums();
+          toast('Album removed');
+        }
+      }, 'Remove permanently');
+    });
+  });
+}
+
+let editingAlbum = null;
+function openAlbumModal(album){
+  editingAlbum = album ? Object.assign({}, album)
+    : { id: uid(), client:'', eventRef:'', designer:'', stage:'Awaiting selection', albumSize:'',
+        pageCount:null, coverType:'', revisionRound:0, revisionsIncluded:2, dueDate:'', deliveredDate:'', notes:'' };
+  const a = editingAlbum;
+  document.getElementById('albumModalTitle').textContent = album ? 'Edit album' : 'New album';
+  document.getElementById('albumModalBody').innerHTML = `
+    <div class="field"><label>Client / couple <span class="required-mark">*</span></label>
+      <input type="text" id="alb_client" value="${escapeHtml(a.client)}" placeholder="e.g. Adiba Weds Rameez" maxlength="120"></div>
+    <div class="field-row">
+      <div class="field"><label>Designer</label>
+        <input type="text" id="alb_designer" value="${escapeHtml(a.designer)}" placeholder="e.g. Vishnu" maxlength="80"></div>
+      <div class="field"><label>Stage</label>
+        <select id="alb_stage">${ALBUM_STAGES.map(s => `<option value="${s.key}" ${a.stage===s.key?'selected':''}>${s.key}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Album size</label>
+        <input type="text" id="alb_size" value="${escapeHtml(a.albumSize)}" placeholder="e.g. 12x36" maxlength="40"></div>
+      <div class="field"><label>Pages</label>
+        <input type="number" id="alb_pages" value="${a.pageCount || ''}" min="0" placeholder="e.g. 40"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Cover type</label>
+        <input type="text" id="alb_cover" value="${escapeHtml(a.coverType)}" placeholder="e.g. Leather, Acrylic" maxlength="60"></div>
+      <div class="field"><label>Revisions included</label>
+        <input type="number" id="alb_revinc" value="${a.revisionsIncluded}" min="0"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Due date</label><input type="date" id="alb_due" value="${a.dueDate || ''}"></div>
+      <div class="field"><label>Revision rounds used</label>
+        <input type="number" id="alb_revround" value="${a.revisionRound || 0}" min="0"></div>
+    </div>
+    <div class="field"><label>Notes</label>
+      <textarea id="alb_notes" maxlength="500" placeholder="Paper type, special instructions, print lab…">${escapeHtml(a.notes)}</textarea></div>`;
+  document.getElementById('albumOverlay').classList.add('open');
+}
+function closeAlbumModal(){ document.getElementById('albumOverlay').classList.remove('open'); editingAlbum = null; }
+
+document.getElementById('btnAddAlbum').addEventListener('click', () => openAlbumModal(null));
+document.getElementById('btnCancelAlbum').addEventListener('click', closeAlbumModal);
+document.getElementById('albumOverlay').addEventListener('click', e => { if(e.target.id === 'albumOverlay') closeAlbumModal(); });
+document.getElementById('btnSaveAlbum').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveAlbum');
+  if(btn.disabled || !editingAlbum) return;
+  const client = document.getElementById('alb_client').value.trim();
+  if(!client){ document.getElementById('alb_client').style.borderColor = 'var(--danger)'; return; }
+  btn.disabled = true;
+  const a = editingAlbum;
+  a.client = client;
+  a.designer = document.getElementById('alb_designer').value.trim();
+  a.stage = document.getElementById('alb_stage').value;
+  a.albumSize = document.getElementById('alb_size').value.trim();
+  a.pageCount = Number(document.getElementById('alb_pages').value) || null;
+  a.coverType = document.getElementById('alb_cover').value.trim();
+  a.revisionsIncluded = Number(document.getElementById('alb_revinc').value) || 0;
+  a.revisionRound = Number(document.getElementById('alb_revround').value) || 0;
+  a.dueDate = document.getElementById('alb_due').value || '';
+  a.notes = document.getElementById('alb_notes').value.trim();
+  if(a.stage === 'Delivered' && !a.deliveredDate) a.deliveredDate = new Date().toISOString().slice(0,10);
+  await persistAlbum(a);
+  const idx = albumsData.findIndex(x => x.id === a.id);
+  if(idx >= 0) albumsData[idx] = a; else albumsData.unshift(a);
+  btn.disabled = false;
+  closeAlbumModal();
+  drawAlbums();
+  toast('Album saved');
+});
 
 // ---- Calendar: festivals (incl. Chhattisgarhi) alongside your shoot days ----
 let calFestivals = [];
