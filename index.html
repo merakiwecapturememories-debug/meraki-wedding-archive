@@ -1512,7 +1512,10 @@
   <div id="viewAlbums" class="view-panel" style="display:none;">
     <div class="panel-title">
       <h2>Album Studio</h2>
-      <button class="btn btn-primary btn-sm" id="btnAddAlbum" style="display:none;">+ New album</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" id="btnExportAlbums" style="display:none;">Export pendency report</button>
+        <button class="btn btn-primary btn-sm" id="btnAddAlbum" style="display:none;">+ New album</button>
+      </div>
     </div>
     <div id="albumsBody"></div>
   </div>
@@ -2853,6 +2856,8 @@ async function deleteAlbumRemote(id){
 async function renderAlbums(){
   const addBtn = document.getElementById('btnAddAlbum');
   if(addBtn) addBtn.style.display = isAdmin() ? '' : 'none';
+  const expBtn = document.getElementById('btnExportAlbums');
+  if(expBtn) expBtn.style.display = isAdmin() ? '' : 'none';
   if(!albumsData.length) await loadAlbums();
   drawAlbums();
 }
@@ -2984,6 +2989,100 @@ function wireAlbumCards(){
     });
   });
 }
+
+// ---- Album pendency report ----
+// "Pendency" = everything not yet Delivered. Exported as CSV so it opens straight
+// into Excel/Sheets for sharing with the design team or the client.
+function daysBetween(fromISO, toISO){
+  if(!fromISO) return null;
+  const a = new Date(fromISO + 'T00:00:00'), b = new Date(toISO + 'T00:00:00');
+  return Math.round((b - a) / 86400000);
+}
+
+function buildAlbumPendencyRows(){
+  const today = new Date().toISOString().slice(0,10);
+  return albumsData
+    .filter(a => a.stage !== 'Delivered')
+    .sort((a,b) => {
+      // Overdue first, then soonest due, then longest running
+      const aLate = a.dueDate && a.dueDate < today, bLate = b.dueDate && b.dueDate < today;
+      if(aLate !== bLate) return aLate ? -1 : 1;
+      if(a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+      if(a.dueDate) return -1;
+      if(b.dueDate) return 1;
+      return (a.startDate || '').localeCompare(b.startDate || '');
+    })
+    .map(a => {
+      const ageDays = a.startDate ? daysBetween(a.startDate, today) : null;
+      const overdueDays = (a.dueDate && a.dueDate < today) ? daysBetween(a.dueDate, today) : 0;
+      const chargeable = (Number(a.revisionRound)||0) > (Number(a.revisionsIncluded)||0);
+      return {
+        client: a.client,
+        designer: a.designer || 'Unassigned',
+        stage: a.stage,
+        started: a.startDate || '',
+        due: a.dueDate || '',
+        daysInProgress: ageDays === null ? '' : ageDays,
+        daysOverdue: overdueDays,
+        revisionsUsed: a.revisionRound || 0,
+        revisionsIncluded: a.revisionsIncluded || 0,
+        chargeable: chargeable ? 'YES' : '',
+        pages: a.pageCount || '',
+        cover: a.coverType || '',
+        notes: (a.notes || '').replace(/\s+/g, ' ')
+      };
+    });
+}
+
+function csvCell(v){
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function exportAlbumPendency(){
+  const rows = buildAlbumPendencyRows();
+  if(!rows.length){ toast('Nothing pending — every album is delivered.'); return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  const overdue = rows.filter(r => r.daysOverdue > 0).length;
+  const unassigned = rows.filter(r => r.designer === 'Unassigned').length;
+  const chargeable = rows.filter(r => r.chargeable === 'YES').length;
+
+  const headers = ['Client','Designer','Stage','Started','Due','Days in progress','Days overdue',
+                   'Revisions used','Revisions included','Chargeable','Pages','Cover','Notes'];
+
+  const lines = [
+    ['Meraki Production — Album Pendency Report'],
+    ['Generated', today],
+    ['Pending albums', rows.length],
+    ['Overdue', overdue],
+    ['Unassigned', unassigned],
+    ['Past included revisions', chargeable],
+    [],
+    headers
+  ].map(r => r.map(csvCell).join(','));
+
+  rows.forEach(r => {
+    lines.push([r.client, r.designer, r.stage, r.started, r.due, r.daysInProgress, r.daysOverdue,
+                r.revisionsUsed, r.revisionsIncluded, r.chargeable, r.pages, r.cover, r.notes]
+                .map(csvCell).join(','));
+  });
+
+  // BOM so Excel reads UTF-8 names correctly
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `meraki-album-pendency-${today}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  toast(`Exported ${rows.length} pending album${rows.length===1?'':'s'}`);
+}
+
+document.getElementById('btnExportAlbums').addEventListener('click', exportAlbumPendency);
 
 let editingAlbum = null;
 function openAlbumModal(album){
