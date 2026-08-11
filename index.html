@@ -249,6 +249,58 @@
   .panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .view-panel{width:100%;}
 
+  /* ---------- Calendar ---------- */
+  .cal-nav{display:flex;align-items:center;gap:8px;}
+  .cal-title{font-size:14px;font-weight:700;color:var(--ink);min-width:150px;text-align:center;}
+  .cal-legend{display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:var(--ink-soft);}
+  .cal-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .cal-dot{width:9px;height:9px;border-radius:3px;display:inline-block;}
+  .cal-dot-fest{background:var(--amber);}
+  .cal-dot-shoot{background:var(--wine);}
+
+  .cal-grid{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line-strong);
+    border-radius:var(--radius);overflow:hidden;
+  }
+  .cal-head{
+    background:var(--card-sunken);padding:9px 6px;text-align:center;
+    font-size:10.5px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-muted);
+  }
+  .cal-cell{background:var(--card);min-height:96px;padding:6px 7px 8px;}
+  .cal-pad{background:var(--card-sunken);}
+  .cal-daynum{font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  .cal-today{background:var(--wine-tint);}
+  .cal-today .cal-daynum{
+    color:#fff;background:var(--wine);border-radius:50%;
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11.5px;
+  }
+  .cal-tag{
+    display:block;font-size:10.5px;font-weight:600;line-height:1.3;
+    padding:3px 6px;border-radius:5px;margin-bottom:3px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;
+  }
+  .cal-tag-fest{background:var(--amber-tint);color:var(--amber);border:1px solid rgba(154,98,0,0.25);}
+  .cal-tag-shoot{background:var(--wine-tint);color:var(--wine-fg);border:1px solid rgba(139,58,80,0.25);}
+
+  .cal-approx{
+    margin-top:16px;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-card);
+  }
+  .cal-approx-head{
+    font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+    color:var(--ink-muted);margin-bottom:10px;
+  }
+  .cal-approx-item{font-size:12.5px;color:var(--ink-soft);line-height:1.7;}
+  .cal-approx-item strong{color:var(--ink);font-weight:600;}
+
+  @media (max-width:640px){
+    .cal-cell{min-height:66px;padding:4px;}
+    .cal-tag{font-size:9px;padding:2px 4px;}
+    .cal-title{min-width:110px;font-size:13px;}
+    .cal-head{font-size:9px;padding:7px 2px;}
+  }
+
   /* ---------- Dashboard widgets ---------- */
   .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;}
   .dash-card{
@@ -1277,6 +1329,7 @@
       <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
       <a href="#" data-view="schedule">Crew Schedule</a>
+      <a href="#" data-view="calendar">Calendar</a>
     </div>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-foot" id="sidebarFoot"></div>
@@ -1294,6 +1347,10 @@
     <a href="#" data-view="schedule">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       Schedule
+    </a>
+    <a href="#" data-view="calendar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><circle cx="8" cy="15" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
+      Calendar
     </a>
   </nav>
 
@@ -1381,6 +1438,19 @@
         <div id="tableWrap"></div>
       </div>
     </div>
+  </div>
+
+  <div id="viewCalendar" class="view-panel" style="display:none;">
+    <div class="panel-title">
+      <h2>Calendar</h2>
+      <div class="cal-nav">
+        <button class="btn btn-sm" id="calPrev" aria-label="Previous month">‹</button>
+        <span class="cal-title" id="calTitle"></span>
+        <button class="btn btn-sm" id="calNext" aria-label="Next month">›</button>
+        <button class="btn btn-sm" id="calToday">Today</button>
+      </div>
+    </div>
+    <div id="calendarBody"></div>
   </div>
 
   <div id="viewSchedule" class="view-panel" style="display:none;">
@@ -1941,6 +2011,7 @@ function switchView(view, clickedLink){
   document.getElementById('viewDrives').style.display = view === 'drives' ? '' : 'none';
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
   document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
+  document.getElementById('viewCalendar').style.display = view === 'calendar' ? '' : 'none';
 
   // Keep both navs (desktop sidebar + mobile bottom bar) visually in sync
   document.querySelectorAll('.sidebar-nav a, .mobile-nav a').forEach(x => x.classList.remove('active'));
@@ -1953,6 +2024,7 @@ function switchView(view, clickedLink){
 
   if(view === 'schedule') initRoster();
   if(view === 'dashboard') renderDashboard();
+  if(view === 'calendar') renderCalendar();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -2627,6 +2699,96 @@ function renderAll(){
   renderTable();
   renderDashboard();
 }
+
+// ---- Calendar: festivals (incl. Chhattisgarhi) alongside your shoot days ----
+let calFestivals = [];
+let calCursor = new Date();
+
+async function loadFestivals(){
+  try{
+    const { data: rows, error } = await sb.from('festivals').select('*').order('festival_date');
+    if(error) throw error;
+    calFestivals = rows || [];
+  }catch(e){ calFestivals = []; }
+}
+
+// Shoot days come from the Crew Schedule roster (state.events), keyed by YYYY-MM-DD
+function shootDaysByDate(){
+  const map = {};
+  const evs = (typeof state !== 'undefined' && Array.isArray(state.events)) ? state.events : [];
+  evs.forEach(ev => {
+    (ev.days || []).forEach(d => {
+      if(!d.date) return;
+      (map[d.date] = map[d.date] || []).push({ title: ev.title || 'Untitled', fn: d.function || '' });
+    });
+  });
+  return map;
+}
+
+async function renderCalendar(){
+  if(!calFestivals.length) await loadFestivals();
+  if(typeof state !== 'undefined' && !state.events.length && typeof loadRosterData === 'function'){
+    try{ await loadRosterData(); }catch(e){}
+  }
+  drawCalendar();
+}
+
+function drawCalendar(){
+  const body = document.getElementById('calendarBody');
+  const titleEl = document.getElementById('calTitle');
+  if(!body) return;
+
+  const year = calCursor.getFullYear(), month = calCursor.getMonth();
+  titleEl.textContent = calCursor.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+  const first = new Date(year, month, 1);
+  const startPad = (first.getDay() + 6) % 7;           // Monday-first grid
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayKey = new Date().toISOString().slice(0,10);
+
+  const shoots = shootDaysByDate();
+  const datedFest = {};
+  calFestivals.filter(f => f.festival_date).forEach(f => {
+    (datedFest[f.festival_date] = datedFest[f.festival_date] || []).push(f);
+  });
+
+  let cells = '';
+  for(let i = 0; i < startPad; i++) cells += '<div class="cal-cell cal-pad"></div>';
+  for(let d = 1; d <= daysInMonth; d++){
+    const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const fests = datedFest[key] || [];
+    const sh = shoots[key] || [];
+    const isToday = key === todayKey;
+    cells += `<div class="cal-cell${isToday ? ' cal-today' : ''}${(fests.length||sh.length) ? ' cal-has' : ''}">
+      <div class="cal-daynum">${d}</div>
+      ${fests.map(f => `<div class="cal-tag cal-tag-fest" title="${escapeHtml(f.note||'')}">${escapeHtml(f.name)}</div>`).join('')}
+      ${sh.map(s => `<div class="cal-tag cal-tag-shoot" title="${escapeHtml(s.fn||'')}">${escapeHtml(s.title)}</div>`).join('')}
+    </div>`;
+  }
+
+  // Festivals whose exact date shifts each year with the lunar calendar
+  const monthly = calFestivals.filter(f => !f.festival_date && Number(f.approx_month) === month + 1);
+  const monthlyHtml = monthly.length ? `
+    <div class="cal-approx">
+      <div class="cal-approx-head">Also this month — exact date follows the Hindu lunar calendar</div>
+      ${monthly.map(f => `<div class="cal-approx-item"><strong>${escapeHtml(f.name)}</strong>${f.note ? ' — ' + escapeHtml(f.note) : ''}</div>`).join('')}
+    </div>` : '';
+
+  body.innerHTML = `
+    <div class="cal-legend">
+      <span><i class="cal-dot cal-dot-fest"></i>Festival</span>
+      <span><i class="cal-dot cal-dot-shoot"></i>Shoot day</span>
+    </div>
+    <div class="cal-grid">
+      ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-head">${d}</div>`).join('')}
+      ${cells}
+    </div>
+    ${monthlyHtml}`;
+}
+
+document.getElementById('calPrev').addEventListener('click', () => { calCursor.setMonth(calCursor.getMonth()-1); drawCalendar(); });
+document.getElementById('calNext').addEventListener('click', () => { calCursor.setMonth(calCursor.getMonth()+1); drawCalendar(); });
+document.getElementById('calToday').addEventListener('click', () => { calCursor = new Date(); drawCalendar(); });
 
 // ---- Dashboard: an at-a-glance overview, distinct from the raw Drive registry list ----
 function renderDashboard(){
