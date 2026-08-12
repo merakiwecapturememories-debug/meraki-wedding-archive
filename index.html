@@ -249,6 +249,25 @@
   .panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .view-panel{width:100%;}
 
+  .capacity-hint{
+    font-size:12.5px;line-height:1.6;color:var(--ink-soft);
+    background:var(--card-sunken);border:1px solid var(--line);
+    border-radius:9px;padding:10px 13px;margin-bottom:12px;
+  }
+  .capacity-hint code{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px;
+  }
+  .capacity-hint-warn{
+    background:var(--amber-tint);border-color:rgba(154,98,0,0.3);color:var(--amber);
+  }
+  .capacity-hint-warn strong{color:var(--amber);}
+  .capacity-fix{
+    background:var(--amber);color:#fff;border:none;border-radius:5px;
+    padding:2px 9px;font-size:12px;font-weight:700;cursor:pointer;
+  }
+  .capacity-fix:hover{filter:brightness(0.92);}
+
   /* ---------- Album Studio ---------- */
   .alb-summary{
     display:grid;grid-template-columns:repeat(4,auto) 1fr;gap:18px;align-items:center;
@@ -1756,6 +1775,7 @@
         <button class="btn btn-sm" id="btnParsePastedScan" style="margin-top:8px;">Parse pasted results</button>
       </div>
     </details>
+    <div id="capacityHint" class="capacity-hint" style="display:none;"></div>
     <div id="scanResults" style="max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;display:none;"></div>
     <div class="modal-actions">
       <button class="btn" id="btnCancelScan">Close</button>
@@ -4266,8 +4286,59 @@ async function runScan(topLevelFolders, total, progressEl){
     progressEl.style.color = 'var(--ok)';
     progressEl.textContent = `Done — 100% (${scanResultsData.length}/${scanResultsData.length} folders scanned).${foundDotNote}${junkNote}`;
   }
+  suggestDriveCapacity();
   renderScanResults();
 };
+
+// Browsers deliberately can't read an external drive's true capacity — navigator.storage
+// .estimate() only reports this site's own quota on the SYSTEM disk, so it would report a
+// confidently wrong number for an external HDD. Instead: compare what we scanned against
+// the capacity on record and flag it if the registered figure looks wrong.
+function suggestDriveCapacity(){
+  const el = document.getElementById('capacityHint');
+  if(!el) return;
+  const driveId = document.getElementById('scanDriveSelect').value;
+  const drive = data.drives.find(d => d.id === driveId);
+  if(!drive){ el.style.display = 'none'; return; }
+
+  const scannedGB = scanResultsData.reduce((s, x) => s + (Number(x.sizeGB) || 0), 0);
+  const capGB = (Number(drive.capacityTB) || 0) * 1000;
+  const scannedTB = scannedGB / 1000;
+
+  // Common retail sizes, so we can suggest the nearest sensible capacity
+  const COMMON_TB = [0.5, 1, 2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+  const suggestion = COMMON_TB.find(t => t >= scannedTB * 1.02);
+
+  if(capGB > 0 && scannedGB > capGB){
+    el.style.display = 'block';
+    el.className = 'capacity-hint capacity-hint-warn';
+    el.innerHTML = `<strong>Capacity looks wrong.</strong> This scan found ${fmtTB(scannedGB)}, which is more than the
+      ${(capGB/1000).toFixed(1)} TB recorded for ${escapeHtml(drive.label)}.
+      ${suggestion ? `Set it to <button type="button" class="capacity-fix" data-cap="${suggestion}">${suggestion} TB</button>?` : ''}
+      Run <code>scan_drive.py</code> to read the exact capacity automatically.`;
+  } else if(capGB > 0){
+    const usedPct = Math.round((scannedGB / capGB) * 100);
+    el.style.display = 'block';
+    el.className = 'capacity-hint';
+    el.innerHTML = `Scanned ${fmtTB(scannedGB)} of the ${(capGB/1000).toFixed(1)} TB recorded for
+      ${escapeHtml(drive.label)} — about ${usedPct}% full.
+      Browsers can't read a drive's true capacity, so this uses the figure on record;
+      <code>scan_drive.py</code> detects the real one.`;
+  } else {
+    el.style.display = 'none';
+  }
+
+  const fixBtn = el.querySelector('.capacity-fix');
+  if(fixBtn) fixBtn.addEventListener('click', async () => {
+    drive.capacityTB = Number(fixBtn.getAttribute('data-cap'));
+    drive.updatedBy = whoAmI();
+    drive.updatedAt = new Date().toISOString();
+    await persistDrive(drive);
+    renderAll();
+    toast(`${drive.label} capacity set to ${drive.capacityTB} TB`);
+    suggestDriveCapacity();
+  });
+}
 
 function renderScanResults(){
   const resultsEl = document.getElementById('scanResults');
