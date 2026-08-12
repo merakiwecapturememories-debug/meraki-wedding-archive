@@ -4347,12 +4347,19 @@ function renderScanResults(){
     document.getElementById('btnImportScan').style.display = 'none';
     return;
   }
+  // Flag folders already recorded on this drive, so it's obvious before importing
+  // which rows will be updated versus newly added.
+  const scanDriveId = document.getElementById('scanDriveSelect').value;
+  const knownOnDrive = new Set(
+    data.events.filter(e => e.driveId === scanDriveId).map(e => (e.client||'').trim().toLowerCase())
+  );
+
   resultsEl.innerHTML = scanResultsData.map((item, i) => `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);">
       <input type="checkbox" data-scan-idx="${i}" class="scan-include" ${item.include ? 'checked' : ''}>
       <div style="flex:1;">
         <input type="text" data-scan-field="client" data-scan-idx="${i}" value="${escapeHtml(item.client)}" style="width:100%;font-size:13px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;margin-bottom:4px;">
-        <div style="font-size:11px;color:var(--ink-muted);">Folder: ${escapeHtml(item.name)} · ${item.sizeGB} GB${item.eventDate ? ' · ' + item.eventDate : ''}${item.subfolders && item.subfolders.length ? ' · ' + item.subfolders.map(sf => `${escapeHtml(sf.name)} (${sf.fileCount.toLocaleString()} files)`).join(', ') : ''}${item.failedFiles ? ` <span style="color:var(--danger);font-weight:600;">⚠ ${item.failedFiles} file${item.failedFiles===1?'':'s'} couldn't be read — size may be undercounted</span>` : ''}</div>
+        <div style="font-size:11px;color:var(--ink-muted);">${knownOnDrive.has((item.client||item.name||'').trim().toLowerCase()) ? '<span style="color:var(--blue);font-weight:700;">↻ Already recorded — will update</span> · ' : '<span style="color:var(--ok);font-weight:700;">+ New</span> · '}Folder: ${escapeHtml(item.name)} · ${item.sizeGB} GB${item.eventDate ? ' · ' + item.eventDate : ''}${item.subfolders && item.subfolders.length ? ' · ' + item.subfolders.map(sf => `${escapeHtml(sf.name)} (${sf.fileCount.toLocaleString()} files)`).join(', ') : ''}${item.failedFiles ? ` <span style="color:var(--danger);font-weight:600;">⚠ ${item.failedFiles} file${item.failedFiles===1?'':'s'} couldn't be read — size may be undercounted</span>` : ''}</div>
       </div>
       <input type="date" data-scan-field="eventDate" data-scan-idx="${i}" value="${item.eventDate}" style="font-size:12px;padding:6px;border:1px solid var(--line-strong);border-radius:6px;">
     </div>
@@ -4378,12 +4385,48 @@ document.getElementById('btnImportScan').onclick = async () => {
   const toImport = scanResultsData.filter(x => x.include);
   if(!toImport.length) return;
 
+  // Re-scanning a drive used to create a second copy of every folder, because each
+  // import minted brand new IDs with no check against what was already recorded.
+  // Match on drive + client name so a re-scan UPDATES the existing event instead.
+  const existingOnDrive = data.events.filter(e => e.driveId === driveId);
+  const existingByName = {};
+  existingOnDrive.forEach(e => { existingByName[(e.client||'').trim().toLowerCase()] = e; });
+
+  const willUpdate = toImport.filter(x => existingByName[(x.client || x.name || '').trim().toLowerCase()]).length;
+  const willAdd = toImport.length - willUpdate;
+
+  if(willUpdate > 0){
+    const ok = await askConfirm(
+      'Re-scan will update existing events',
+      `${willUpdate} folder${willUpdate===1?' is':'s are'} already recorded on this drive and will be updated with the new sizes and folder details.` +
+      (willAdd ? ` ${willAdd} new folder${willAdd===1?'':'s'} will be added.` : '') +
+      ' Nothing will be duplicated.',
+      null,
+      'Update and import'
+    );
+    if(!ok) return;
+  }
+
   btn.disabled = true;
   const progressEl = document.getElementById('scanProgress');
-  let done = 0;
+  let done = 0, updated = 0, added = 0;
   try{
     for(const item of toImport){
-      const record = {
+      const key = (item.client || item.name || '').trim().toLowerCase();
+      const existing = existingByName[key];
+      // Re-use the existing record when this folder is already on the drive, so a
+      // re-scan refreshes sizes/folders while KEEPING anything typed in by hand
+      // (status, delivery dates, notes, copied-to). Only ever adds new rows for
+      // folders that genuinely weren't recorded before.
+      const record = existing ? Object.assign({}, existing, {
+        eventName: item.name,
+        sizeGB: Math.round((item.sizeGB || 0) * 100) / 100,
+        driveId: driveId,
+        eventDate: existing.eventDate || item.eventDate || '',
+        folders: Array.isArray(item.subfolders) && item.subfolders.length ? item.subfolders : existing.folders,
+        updatedBy: whoAmI(),
+        updatedAt: new Date().toISOString()
+      }) : {
         id: uid(),
         client: item.client || item.name,
         eventName: item.name,
@@ -4403,6 +4446,7 @@ document.getElementById('btnImportScan').onclick = async () => {
         updatedAt: new Date().toISOString(),
         folders: Array.isArray(item.subfolders) ? item.subfolders : []
       };
+      if(existing) updated++; else added++;
       saveEventRecord(record);
       await persistEvent(record);
       done++;
@@ -4410,7 +4454,7 @@ document.getElementById('btnImportScan').onclick = async () => {
       progressEl.textContent = `Importing… ${done}/${toImport.length}`;
     }
     progressEl.style.color = 'var(--ok)';
-    progressEl.textContent = `Imported ${done} event${done===1?'':'s'}.`;
+    progressEl.textContent = `Done — ${added} added, ${updated} updated.`;
     renderAll();
     setTimeout(closeScanModal, 900);
   } finally {
