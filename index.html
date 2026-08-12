@@ -2489,7 +2489,11 @@ let loginCooldownUntil = 0;
 // ===================== /LOGIN THROTTLING =====================
 
 function fmtTB(gb){
-  return (gb/1000).toFixed(2).replace(/\.00$/,'') + ' TB';
+  const n = Number(gb) || 0;
+  // Show GB below a terabyte — "0.21 TB" is far harder to read than "210 GB",
+  // and free space is usually the number people actually act on.
+  if(n < 1000) return (n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString()) + ' GB';
+  return (n/1000).toFixed(2).replace(/\.00$/,'') + ' TB';
 }
 function fmtDate(d){
   if(!d) return '—';
@@ -2627,8 +2631,8 @@ function renderDrives(){
         <div class="drive-bar-track"><div class="drive-bar-fill${isFull?' full':''}" style="width:${pct.toFixed(0)}%;"></div></div>
         <span class="capacity-label ${capClass}">${capWord}</span>
       </div>
-      <div class="drive-meta"><span>${fmtTB(usedGB)} used${d.actualUsedGB != null ? ' <span class="verified-tag" title="Read from the disk itself — includes recycle bin, caches and system files">verified</span>' : ''}</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
-      ${d.actualFreeGB != null ? `<div class="drive-freeline">${fmtTB(d.actualFreeGB)} actually free${(() => { const tracked = driveEventsGB(d.id); const untracked = d.actualUsedGB != null ? d.actualUsedGB - tracked : 0; return untracked > 1 ? ` · ${fmtTB(untracked)} not in the ledger` : ''; })()}</div>` : ''}
+      <div class="drive-meta"><span>${fmtTB(usedGB)} used${(d.actualUsedGB != null && isAdmin()) ? ' <span class="verified-tag" title="Read from the disk itself — includes recycle bin, caches and system files">verified</span>' : ''}</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
+      ${d.actualFreeGB != null ? `<div class="drive-freeline">${fmtTB(d.actualFreeGB)} free${isAdmin() ? (() => { const tracked = driveEventsGB(d.id); const untracked = d.actualUsedGB != null ? d.actualUsedGB - tracked : 0; return untracked > 1 ? ` · ${fmtTB(untracked)} not in the ledger` : ''; })() : ''}</div>` : ''}
       <div class="drive-actions">
         <button class="btn-ghost btn-sm" data-view-drive="${d.id}">View contents</button>
         ${isAdmin() ? `<button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>` : ''}
