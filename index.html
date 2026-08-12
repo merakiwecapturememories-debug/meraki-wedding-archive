@@ -479,6 +479,12 @@
   .drive-bar-track{height:6px;border-radius:4px;background:var(--slate-tint);margin:10px 0 7px;overflow:hidden;}
   .drive-bar-fill{height:100%;background:var(--wine);border-radius:4px;}
   .drive-bar-fill.full{background:var(--danger);}
+  .verified-tag{
+    font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+    color:var(--ok);background:var(--ok-tint);border:1px solid rgba(15,122,76,0.25);
+    border-radius:20px;padding:1px 6px;margin-left:5px;vertical-align:middle;
+  }
+  .drive-freeline{font-size:11px;color:var(--ink-muted);margin-top:3px;}
   .drive-meta{display:flex;justify-content:space-between;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);}
   .drive-actions{display:flex;gap:2px;margin-top:8px;justify-content:flex-end;border-top:1px solid var(--line);padding-top:8px;}
   .drive-empty{font-size:13px;color:var(--ink-soft);padding:20px 14px;border:1px solid var(--line);background:var(--card-sunken);border-radius:10px;text-align:center;}
@@ -1709,8 +1715,24 @@
     </div>
     <div class="field">
       <label>Capacity (TB)</label>
-      <input type="number" id="dCapacity" min="0.1" step="0.1" value="4.5">
+      <input type="number" id="dCapacity" min="0.1" step="0.0001" value="5">
     </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Actual used (GB)</label>
+        <input type="number" id="dActualUsed" min="0" step="0.01" placeholder="from Windows Properties">
+      </div>
+      <div class="field">
+        <label>Actual free (GB)</label>
+        <input type="number" id="dActualFree" min="0" step="0.01" placeholder="from Windows Properties">
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--ink-muted);line-height:1.55;margin:-4px 0 13px;">
+      Optional. The ledger only counts folders you've imported, so it understates real usage —
+      it can't see the recycle bin, editing caches or system files. Fill these in from the drive's
+      Windows Properties (divide the <em>bytes</em> figure by 1,000,000,000) and the app will use
+      the true numbers instead. <code>scan_drive.py</code> fills them in automatically.
+    </p>
     <div class="field">
       <label>Notes</label>
       <textarea id="dNotes" placeholder="Shelf location, purchase date, backup pair…"></textarea>
@@ -1883,12 +1905,21 @@ function whoAmI(){
 function driveToRow(d){
   return {
     id: d.id, label: d.label, capacity_tb: Number(d.capacityTB) || 4.5,
+    actual_used_gb: d.actualUsedGB ?? null,
+    actual_free_gb: d.actualFreeGB ?? null,
+    actual_checked_at: d.actualCheckedAt || null,
     notes: d.notes || '', updated_by: d.updatedBy || null, updated_at: d.updatedAt || new Date().toISOString()
   };
 }
 function rowToDrive(r){
   return {
     id: r.id, label: r.label, capacityTB: Number(r.capacity_tb) || 4.5,
+    // Real figures read off the disk itself (via scan_drive.py or entered from Windows
+    // Properties). When present these are authoritative — they include recycle bin,
+    // caches and system files that the event ledger deliberately doesn't track.
+    actualUsedGB: r.actual_used_gb === null || r.actual_used_gb === undefined ? null : Number(r.actual_used_gb),
+    actualFreeGB: r.actual_free_gb === null || r.actual_free_gb === undefined ? null : Number(r.actual_free_gb),
+    actualCheckedAt: r.actual_checked_at || '',
     notes: r.notes || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at
   };
 }
@@ -2492,6 +2523,14 @@ function rawChip(e){
 }
 
 function driveUsedGB(driveId){
+  // If we've read the disk directly, trust that over the sum of tracked events —
+  // the ledger only counts imported folders, so it always understates real usage.
+  const drive = data.drives.find(d => d.id === driveId);
+  if(drive && drive.actualUsedGB != null) return drive.actualUsedGB;
+  return driveEventsGB(driveId);
+}
+// Sum of events logged against a drive (what the archive actually tracks)
+function driveEventsGB(driveId){
   return data.events.filter(e => e.driveId === driveId && !e.rawDeleted).reduce((sum,e) => sum + (Number(e.sizeGB)||0), 0);
 }
 
@@ -2588,7 +2627,8 @@ function renderDrives(){
         <div class="drive-bar-track"><div class="drive-bar-fill${isFull?' full':''}" style="width:${pct.toFixed(0)}%;"></div></div>
         <span class="capacity-label ${capClass}">${capWord}</span>
       </div>
-      <div class="drive-meta"><span>${fmtTB(usedGB)} used</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
+      <div class="drive-meta"><span>${fmtTB(usedGB)} used${d.actualUsedGB != null ? ' <span class="verified-tag" title="Read from the disk itself — includes recycle bin, caches and system files">verified</span>' : ''}</span><span>${(Number(d.capacityTB)||0).toFixed(1)} TB total</span></div>
+      ${d.actualFreeGB != null ? `<div class="drive-freeline">${fmtTB(d.actualFreeGB)} actually free${(() => { const tracked = driveEventsGB(d.id); const untracked = d.actualUsedGB != null ? d.actualUsedGB - tracked : 0; return untracked > 1 ? ` · ${fmtTB(untracked)} not in the ledger` : ''; })()}</div>` : ''}
       <div class="drive-actions">
         <button class="btn-ghost btn-sm" data-view-drive="${d.id}">View contents</button>
         ${isAdmin() ? `<button class="btn-ghost btn-sm" data-edit-drive="${d.id}">Edit</button>` : ''}
@@ -3880,7 +3920,9 @@ function openDriveModal(id){
   const dr = isEdit ? data.drives.find(d => d.id === id) : null;
   document.getElementById('driveId').value = dr ? dr.id : '';
   document.getElementById('dLabel').value = dr ? dr.label : '';
-  document.getElementById('dCapacity').value = dr ? dr.capacityTB : 4.5;
+  document.getElementById('dCapacity').value = dr ? dr.capacityTB : 5;
+  document.getElementById('dActualUsed').value = (dr && dr.actualUsedGB != null) ? dr.actualUsedGB : '';
+  document.getElementById('dActualFree').value = (dr && dr.actualFreeGB != null) ? dr.actualFreeGB : '';
   document.getElementById('dNotes').value = dr ? (dr.notes||'') : '';
   driveOverlay.classList.add('open');
   document.getElementById('dLabel').focus();
@@ -3903,7 +3945,10 @@ document.getElementById('btnSaveDrive').onclick = async () => {
   const id = document.getElementById('driveId').value || uid();
   const record = {
     id, label,
-    capacityTB: Number(document.getElementById('dCapacity').value) || 4.5,
+    capacityTB: Number(document.getElementById('dCapacity').value) || 5,
+    actualUsedGB: document.getElementById('dActualUsed').value === '' ? null : Number(document.getElementById('dActualUsed').value),
+    actualFreeGB: document.getElementById('dActualFree').value === '' ? null : Number(document.getElementById('dActualFree').value),
+    actualCheckedAt: (document.getElementById('dActualUsed').value !== '' || document.getElementById('dActualFree').value !== '') ? new Date().toISOString() : null,
     notes: document.getElementById('dNotes').value.trim(),
     updatedBy: whoAmI(),
     updatedAt: new Date().toISOString()
