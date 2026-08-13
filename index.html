@@ -299,8 +299,6 @@
     background:var(--amber-tint);border:1px solid rgba(154,98,0,0.28);
     border-radius:9px;padding:10px 14px;margin-bottom:18px;
   }
-  .enq-chip-link{text-decoration:none;color:var(--blue);border-color:rgba(29,95,184,0.25);background:var(--blue-tint);}
-  .enq-chip-link:hover{filter:brightness(0.95);}
   .enq-log{
     max-height:170px;overflow-y:auto;border:1px solid var(--line);
     border-radius:8px;background:var(--card-sunken);padding:4px;
@@ -2966,7 +2964,7 @@ let enquiriesData = [];
 
 function enquiryToRow(x){
   return {
-    id:x.id, client:x.client, phone:x.phone||'', email:x.email||'', source:x.source||'',
+    id:x.id, client:x.client, source:x.source||'',
     event_type:x.eventType||'', event_date:x.eventDate||null, venue:x.venue||'',
     stage:x.stage||'New', budget:x.budget??null, quoted:x.quoted??null,
     next_followup:x.nextFollowup||null, lost_reason:x.lostReason||'',
@@ -2977,7 +2975,7 @@ function enquiryToRow(x){
 }
 function rowToEnquiry(r){
   return {
-    id:r.id, client:r.client, phone:r.phone||'', email:r.email||'', source:r.source||'',
+    id:r.id, client:r.client, source:r.source||'',
     eventType:r.event_type||'', eventDate:r.event_date||'', venue:r.venue||'',
     stage:r.stage||'New', budget:r.budget, quoted:r.quoted,
     nextFollowup:r.next_followup||'', lostReason:r.lost_reason||'',
@@ -3092,7 +3090,6 @@ function enquiryCardHtml(x, today){
     <div class="alb-card-meta">
       ${x.source ? `<span class="alb-chip">${escapeHtml(x.source)}</span>` : ''}
       ${fns.length ? `<span class="alb-chip" title="${escapeHtml(fns.map(f => [f.name, f.date ? fmtDate(f.date) : ''].filter(Boolean).join(' — ')).join('\n'))}">${fns.length} function${fns.length===1?'':'s'}</span>` : ''}
-      ${x.phone ? `<a class="alb-chip enq-chip-link" href="tel:${escapeHtml(x.phone)}">${escapeHtml(x.phone)}</a>` : ''}
       ${x.quoted != null ? `<span class="alb-chip">Quoted ₹${Number(x.quoted).toLocaleString('en-IN')}</span>` : ''}
       ${x.nextFollowup ? `<span class="alb-chip${overdue ? ' alb-chip-late' : ''}">Follow up ${fmtDate(x.nextFollowup)}</span>` : (ENQ_OPEN.includes(x.stage) ? `<span class="alb-chip alb-chip-warn">No follow-up set</span>` : '')}
       ${x.stage === 'Lost' && x.lostReason ? `<span class="alb-chip">${escapeHtml(x.lostReason)}</span>` : ''}
@@ -3160,7 +3157,7 @@ function wireEnquiryCards(){
 let editingEnquiry = null;
 function openEnquiryModal(x){
   editingEnquiry = x ? Object.assign({}, x)
-    : { id:uid(), client:'', phone:'', email:'', source:'', eventType:'', eventDate:'', venue:'',
+    : { id:uid(), client:'', source:'', eventType:'', eventDate:'', venue:'',
         stage:'New', budget:null, quoted:null, nextFollowup:'', lostReason:'', notes:'', log:[], functions:[] };
   const e = editingEnquiry;
   document.getElementById('enquiryModalTitle').textContent = x ? 'Edit enquiry' : 'New enquiry';
@@ -3171,10 +3168,6 @@ function openEnquiryModal(x){
   document.getElementById('enquiryModalBody').innerHTML = `
     <div class="field"><label>Client / couple <span class="required-mark">*</span></label>
       <input type="text" id="enq_client" value="${escapeHtml(e.client)}" placeholder="e.g. Priya & Arjun" maxlength="120"></div>
-    <div class="field-row">
-      <div class="field"><label>Phone</label><input type="text" id="enq_phone" value="${escapeHtml(e.phone)}" placeholder="98765 43210" maxlength="30"></div>
-      <div class="field"><label>Email</label><input type="email" id="enq_email" value="${escapeHtml(e.email)}" maxlength="120"></div>
-    </div>
     <div class="field-row">
       <div class="field"><label>Where did they find us?</label>
         <select id="enq_source">${ENQ_SOURCES.map(s => `<option value="${s}" ${e.source===s?'selected':''}>${s||'— not set —'}</option>`).join('')}</select></div>
@@ -3256,8 +3249,6 @@ document.getElementById('btnSaveEnquiry').addEventListener('click', async () => 
   const e = editingEnquiry;
   const numOrNull = id => document.getElementById(id).value === '' ? null : Number(document.getElementById(id).value);
   e.client = client;
-  e.phone = document.getElementById('enq_phone').value.trim();
-  e.email = document.getElementById('enq_email').value.trim();
   e.source = document.getElementById('enq_source').value;
   e.stage = document.getElementById('enq_stage').value;
   e.eventType = document.getElementById('enq_type').value.trim();
@@ -3284,7 +3275,7 @@ document.getElementById('btnSaveEnquiry').addEventListener('click', async () => 
 function exportEnquiries(){
   if(!enquiriesData.length){ toast('Nothing to export yet.'); return; }
   const today = new Date().toISOString().slice(0,10);
-  const headers = ['Client','Phone','Email','Source','Event type','Functions','First date','Venue','Stage',
+  const headers = ['Client','Source','Event type','Functions','First date','Venue','Stage',
                    'Budget','Quoted','Next follow-up','Lost reason','Notes'];
   const lines = [
     ['Meraki Production — Enquiry Report'],
@@ -3297,7 +3288,7 @@ function exportEnquiries(){
   ].map(r => r.map(csvCell).join(','));
   enquiriesData.forEach(x => {
     const fnText = (x.functions||[]).map(f => [f.name, f.date, f.venue].filter(Boolean).join(' ')).join(' | ');
-    lines.push([x.client,x.phone,x.email,x.source,x.eventType,fnText,x.eventDate,
+    lines.push([x.client,x.source,x.eventType,fnText,x.eventDate,
       x.venue,x.stage,x.budget ?? '',x.quoted ?? '',x.nextFollowup,x.lostReason,(x.notes||'').replace(/\s+/g,' ')]
       .map(csvCell).join(','));
   });
