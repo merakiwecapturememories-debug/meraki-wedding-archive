@@ -1537,7 +1537,7 @@
       <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
       <a href="#" data-view="schedule">Crew Schedule</a>
-      <a href="#" data-view="enquiries">Enquiries</a>
+      <a href="#" data-view="enquiries" data-admin-only>Enquiries</a>
       <a href="#" data-view="albums">Album Studio</a>
       <a href="#" data-view="calendar">Calendar</a>
     </div>
@@ -1558,7 +1558,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       Schedule
     </a>
-    <a href="#" data-view="enquiries">
+    <a href="#" data-view="enquiries" data-admin-only>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-9A8.4 8.4 0 1 1 21 11.5z"/></svg>
       Enquiries
     </a>
@@ -2285,6 +2285,12 @@ function renderUserBadge(){
   const scanBtn = document.getElementById('btnScanDrive');
   scanBtn.style.display = (isAdmin() && 'showDirectoryPicker' in window) ? 'inline-flex' : 'none';
 
+  // Enquiries hold commercial data (budgets, quotes, why deals were lost), so the
+  // whole section is admin-only — not just its edit buttons.
+  document.querySelectorAll('[data-admin-only]').forEach(el => {
+    el.style.display = isAdmin() ? '' : 'none';
+  });
+
   const addDriveBtn = document.getElementById('btnAddDrive');
   if(addDriveBtn) addDriveBtn.style.display = isAdmin() ? '' : 'none';
 
@@ -2295,6 +2301,12 @@ function renderUserBadge(){
 }
 
 function switchView(view, clickedLink){
+  // Block admin-only views up front, before any panel is displayed — checking later
+  // would briefly flash the content before redirecting.
+  if(view === 'enquiries' && !isAdmin()){
+    toast('Enquiries are admin only.', true);
+    return switchView('dashboard');
+  }
   document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
   document.getElementById('viewDrives').style.display = view === 'drives' ? '' : 'none';
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
