@@ -1179,22 +1179,27 @@
     letter-spacing: 0.06em; text-transform: uppercase; color: var(--ros-ink-faint);
   }
 
-  .ros-day-roles-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-    gap: 1px; background: var(--ros-border);
+  .ros-day-roles { background: var(--ros-surface); }
+  .ros-role-line {
+    display: grid; grid-template-columns: 132px 1fr; gap: 12px; align-items: baseline;
+    padding: 9px 15px; border-bottom: 1px solid var(--ros-border);
   }
-  .ros-role-slot { background: var(--ros-surface); padding: 11px 14px 12px; }
-  .ros-role-slot-label {
+  .ros-role-line:last-child { border-bottom: none; }
+  .ros-role-line-label {
     font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--ros-ink-faint); margin-bottom: 7px;
+    color: var(--ros-ink-faint);
   }
-  .ros-role-slot-names { display: flex; flex-wrap: wrap; gap: 2px; }
-  .ros-role-slot-empty { background: var(--ros-surface-muted); }
-  .ros-role-unset { font-size: 12px; color: var(--ros-ink-faint); font-style: italic; }
+  .ros-role-line-names { display: flex; flex-wrap: wrap; gap: 3px; }
+  .ros-role-line-quiet {
+    grid-template-columns: 1fr; background: var(--ros-surface-muted);
+    padding-top: 8px; padding-bottom: 8px;
+  }
+  .ros-role-sep { color: var(--ros-ink-faint); margin: 0 8px; }
+  .ros-role-unset { font-size: 11.5px; color: var(--ros-ink-faint); font-style: italic; }
   .ros-role-nr { font-size: 11.5px; font-weight: 600; color: var(--ros-neutral-text); }
 
   @media (max-width: 560px) {
-    .ros-day-roles-grid { grid-template-columns: 1fr 1fr; }
+    .ros-role-line { grid-template-columns: 1fr; gap: 5px; padding: 9px 13px; }
     .ros-day-call { margin-left: 0; }
   }
 
@@ -5346,17 +5351,34 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     // is the classic "cluttered layout" problem — hard to scan, worse on mobile.
     var rows = days.map(function (day, idx) {
       var callTime = formatTime(day.time);
-      var roleCells = ROLE_KEYS.map(function (role) {
+      // One compact row per role. The previous 4-column grid left a large empty block
+      // beside Drone on every single day (5 roles never fill a 4-wide grid), which made
+      // the card look broken and pushed real information further apart.
+      var filled = [], unfilled = [];
+      ROLE_KEYS.forEach(function (role) {
         var raw = day.roles && day.roles[role];
-        var body, cls = '';
-        if (!raw || !String(raw).trim()) { body = '<span class="ros-role-unset">Not assigned</span>'; cls = ' ros-role-slot-empty'; }
-        else if (isNotRequiredValue(raw)) { body = '<span class="ros-role-nr">Not required</span>'; cls = ' ros-role-slot-nr'; }
-        else { body = roleCellValue(raw); }
-        return '<div class="ros-role-slot' + cls + '">' +
-          '<div class="ros-role-slot-label">' + escapeHtml(role) + '</div>' +
-          '<div class="ros-role-slot-names">' + body + '</div>' +
+        if (!raw || !String(raw).trim()) { unfilled.push({ role: role, nr: false }); }
+        else if (isNotRequiredValue(raw)) { unfilled.push({ role: role, nr: true }); }
+        else { filled.push({ role: role, body: roleCellValue(raw) }); }
+      });
+
+      var roleCells = filled.map(function (f) {
+        return '<div class="ros-role-line">' +
+          '<span class="ros-role-line-label">' + escapeHtml(f.role) + '</span>' +
+          '<span class="ros-role-line-names">' + f.body + '</span>' +
         '</div>';
       }).join('');
+
+      // Roll everything unassigned into one quiet summary line instead of giving each
+      // a full-height cell — an empty role isn't worth as much space as a staffed one.
+      if (unfilled.length) {
+        var nrList = unfilled.filter(function (u) { return u.nr; }).map(function (u) { return u.role; });
+        var naList = unfilled.filter(function (u) { return !u.nr; }).map(function (u) { return u.role; });
+        var parts = [];
+        if (naList.length) parts.push('<span class="ros-role-unset">Not assigned: ' + escapeHtml(naList.join(', ')) + '</span>');
+        if (nrList.length) parts.push('<span class="ros-role-nr">Not required: ' + escapeHtml(nrList.join(', ')) + '</span>');
+        roleCells += '<div class="ros-role-line ros-role-line-quiet">' + parts.join('<span class="ros-role-sep">·</span>') + '</div>';
+      }
 
       return '<article class="ros-day-card">' +
         '<header class="ros-day-card-head">' +
@@ -5365,7 +5387,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
           (day.function ? '<span class="ros-day-function">' + escapeHtml(day.function) + '</span>' : '') +
           (callTime ? '<span class="ros-day-call"><i>Call</i>' + callTime + '</span>' : '') +
         '</header>' +
-        '<div class="ros-day-roles-grid">' + roleCells + '</div>' +
+        '<div class="ros-day-roles">' + roleCells + '</div>' +
       '</article>';
     }).join('');
 
