@@ -268,6 +268,25 @@
   }
   .capacity-fix:hover{filter:brightness(0.92);}
 
+  /* ---------- Enquiries ---------- */
+  .enq-nudge{
+    font-size:12.5px;line-height:1.6;color:var(--amber);
+    background:var(--amber-tint);border:1px solid rgba(154,98,0,0.28);
+    border-radius:9px;padding:10px 14px;margin-bottom:18px;
+  }
+  .enq-chip-link{text-decoration:none;color:var(--blue);border-color:rgba(29,95,184,0.25);background:var(--blue-tint);}
+  .enq-chip-link:hover{filter:brightness(0.95);}
+  .enq-log{
+    max-height:170px;overflow-y:auto;border:1px solid var(--line);
+    border-radius:8px;background:var(--card-sunken);padding:4px;
+  }
+  .enq-log-row{
+    display:flex;gap:9px;font-size:12px;color:var(--ink-soft);
+    padding:6px 8px;border-bottom:1px solid var(--line);line-height:1.45;
+  }
+  .enq-log-row:last-child{border-bottom:none;}
+  .enq-log-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-muted);flex-shrink:0;}
+
   /* ---------- Album Studio ---------- */
   .alb-summary{
     display:grid;grid-template-columns:repeat(4,auto) 1fr;gap:18px;align-items:center;
@@ -1436,6 +1455,7 @@
       <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
       <a href="#" data-view="schedule">Crew Schedule</a>
+      <a href="#" data-view="enquiries">Enquiries</a>
       <a href="#" data-view="albums">Album Studio</a>
       <a href="#" data-view="calendar">Calendar</a>
     </div>
@@ -1455,6 +1475,10 @@
     <a href="#" data-view="schedule">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       Schedule
+    </a>
+    <a href="#" data-view="enquiries">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-9A8.4 8.4 0 1 1 21 11.5z"/></svg>
+      Enquiries
     </a>
     <a href="#" data-view="albums">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
@@ -1550,6 +1574,17 @@
         <div id="tableWrap"></div>
       </div>
     </div>
+  </div>
+
+  <div id="viewEnquiries" class="view-panel" style="display:none;">
+    <div class="panel-title">
+      <h2>Enquiries</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" id="btnExportEnquiries" style="display:none;">Export</button>
+        <button class="btn btn-primary btn-sm" id="btnAddEnquiry" style="display:none;">+ New enquiry</button>
+      </div>
+    </div>
+    <div id="enquiriesBody"></div>
   </div>
 
   <div id="viewAlbums" class="view-panel" style="display:none;">
@@ -1769,6 +1804,17 @@
     <div class="modal-actions">
       <button class="btn" id="btnConfirmCancel">Cancel</button>
       <button class="btn btn-primary" style="background:var(--danger);border-color:var(--danger);" id="btnConfirmOk">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="enquiryOverlay">
+  <div class="modal">
+    <h3 id="enquiryModalTitle">New enquiry</h3>
+    <div id="enquiryModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelEnquiry">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveEnquiry">Save enquiry</button>
     </div>
   </div>
 </div>
@@ -2173,6 +2219,7 @@ function switchView(view, clickedLink){
   document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
   document.getElementById('viewCalendar').style.display = view === 'calendar' ? '' : 'none';
   document.getElementById('viewAlbums').style.display = view === 'albums' ? '' : 'none';
+  document.getElementById('viewEnquiries').style.display = view === 'enquiries' ? '' : 'none';
 
   // Keep both navs (desktop sidebar + mobile bottom bar) visually in sync
   document.querySelectorAll('.sidebar-nav a, .mobile-nav a').forEach(x => x.classList.remove('active'));
@@ -2187,6 +2234,7 @@ function switchView(view, clickedLink){
   if(view === 'dashboard') renderDashboard();
   if(view === 'calendar') renderCalendar();
   if(view === 'albums') renderAlbums();
+  if(view === 'enquiries') renderEnquiries();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -2874,6 +2922,310 @@ function renderAll(){
   renderTable();
   renderDashboard();
 }
+
+// ---- Enquiries: lead pipeline from first contact to booked ----
+// Stages follow the standard photography-CRM pipeline: new enquiry → contacted →
+// meeting → quote sent → booked, with Lost as a terminal state so conversion is measurable.
+const ENQ_STAGES = [
+  { key:'New',        tone:'blue',  hint:'Just came in — respond fast' },
+  { key:'Contacted',  tone:'blue',  hint:'First reply sent' },
+  { key:'Meeting',    tone:'amber', hint:'Consultation arranged' },
+  { key:'Quote sent', tone:'amber', hint:'Waiting on their decision' },
+  { key:'Booked',     tone:'ok',    hint:'Won — advance received' },
+  { key:'Lost',       tone:'slate', hint:'Did not convert' }
+];
+const ENQ_OPEN = ['New','Contacted','Meeting','Quote sent'];
+const ENQ_SOURCES = ['', 'Referral', 'Instagram', 'Facebook', 'WhatsApp', 'Website', 'Walk-in', 'Wedding fair', 'Repeat client', 'Other'];
+
+let enquiriesData = [];
+
+function enquiryToRow(x){
+  return {
+    id:x.id, client:x.client, phone:x.phone||'', email:x.email||'', source:x.source||'',
+    event_type:x.eventType||'', event_date:x.eventDate||null, venue:x.venue||'',
+    stage:x.stage||'New', budget:x.budget??null, quoted:x.quoted??null,
+    next_followup:x.nextFollowup||null, lost_reason:x.lostReason||'',
+    notes:x.notes||'', log:Array.isArray(x.log)?x.log:[],
+    updated_by:whoAmI(), updated_at:new Date().toISOString()
+  };
+}
+function rowToEnquiry(r){
+  return {
+    id:r.id, client:r.client, phone:r.phone||'', email:r.email||'', source:r.source||'',
+    eventType:r.event_type||'', eventDate:r.event_date||'', venue:r.venue||'',
+    stage:r.stage||'New', budget:r.budget, quoted:r.quoted,
+    nextFollowup:r.next_followup||'', lostReason:r.lost_reason||'',
+    notes:r.notes||'', log:Array.isArray(r.log)?r.log:[],
+    createdAt:r.created_at, updatedBy:r.updated_by||'', updatedAt:r.updated_at
+  };
+}
+
+async function loadEnquiries(){
+  try{
+    const { data:rows, error } = await sb.from('enquiries').select('*').order('updated_at',{ascending:false});
+    if(error) throw error;
+    enquiriesData = (rows||[]).map(rowToEnquiry);
+  }catch(e){ enquiriesData = []; toast("Couldn't load enquiries", true); }
+}
+async function persistEnquiry(x){
+  try{
+    const { error } = await sb.from('enquiries').upsert(enquiryToRow(x));
+    if(error) throw error;
+  }catch(e){ toast("Couldn't save enquiry", true); }
+}
+async function deleteEnquiryRemote(id){
+  try{
+    const { error } = await sb.from('enquiries').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){ toast("Couldn't remove enquiry", true); return false; }
+}
+
+async function renderEnquiries(){
+  ['btnAddEnquiry','btnExportEnquiries'].forEach(id => {
+    const b = document.getElementById(id);
+    if(b) b.style.display = isAdmin() ? '' : 'none';
+  });
+  if(!enquiriesData.length) await loadEnquiries();
+  drawEnquiries();
+}
+
+function drawEnquiries(){
+  const body = document.getElementById('enquiriesBody');
+  if(!body) return;
+  const today = new Date().toISOString().slice(0,10);
+
+  if(!enquiriesData.length){
+    body.innerHTML = `<div class="empty-state"><h3>No enquiries yet</h3><p>${isAdmin() ? 'Log your first enquiry to start tracking leads through to booking.' : 'Nothing logged yet.'}</p></div>`;
+    return;
+  }
+
+  const open = enquiriesData.filter(x => ENQ_OPEN.includes(x.stage));
+  const booked = enquiriesData.filter(x => x.stage === 'Booked');
+  const lost = enquiriesData.filter(x => x.stage === 'Lost');
+  const decided = booked.length + lost.length;
+  const convRate = decided ? Math.round((booked.length/decided)*100) : 0;
+  const dueNow = open.filter(x => x.nextFollowup && x.nextFollowup <= today);
+  const noFollowup = open.filter(x => !x.nextFollowup);
+
+  const summary = `
+    <div class="alb-summary">
+      <div class="alb-stat"><div class="alb-stat-num">${open.length}</div><div class="alb-stat-lbl">Open leads</div></div>
+      <div class="alb-stat${dueNow.length ? ' alb-stat-alert' : ''}"><div class="alb-stat-num">${dueNow.length}</div><div class="alb-stat-lbl">Follow up now</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${booked.length}</div><div class="alb-stat-lbl">Booked</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${lost.length}</div><div class="alb-stat-lbl">Lost</div></div>
+      <div class="alb-progress-wrap">
+        <div class="alb-progress-top"><span>Conversion</span><span class="mono">${booked.length} of ${decided} decided · ${convRate}%</span></div>
+        <div class="alb-progress-track"><div class="alb-progress-fill" style="width:${convRate}%"></div></div>
+      </div>
+    </div>`;
+
+  const nudge = noFollowup.length && isAdmin()
+    ? `<div class="enq-nudge">${noFollowup.length} open enquir${noFollowup.length===1?'y has':'ies have'} no follow-up date set — those are the ones that go quiet.</div>` : '';
+
+  const groups = ENQ_STAGES.map(st => {
+    const items = enquiriesData.filter(x => x.stage === st.key);
+    if(!items.length) return '';
+    items.sort((a,b) => (a.nextFollowup||'9999').localeCompare(b.nextFollowup||'9999'));
+    return `<section class="alb-stage">
+      <div class="alb-stage-head">
+        <span class="alb-stage-dot alb-tone-${st.tone}"></span>
+        <h3>${st.key}</h3>
+        <span class="alb-stage-count">${items.length}</span>
+        <span class="alb-stage-hint">${st.hint}</span>
+      </div>
+      <div class="alb-cards">${items.map(x => enquiryCardHtml(x, today)).join('')}</div>
+    </section>`;
+  }).join('');
+
+  body.innerHTML = summary + nudge + groups;
+  wireEnquiryCards();
+}
+
+function enquiryCardHtml(x, today){
+  const overdue = x.nextFollowup && ENQ_OPEN.includes(x.stage) && x.nextFollowup <= today;
+  const meta = [x.eventType, x.eventDate ? fmtDate(x.eventDate) : '', x.venue].filter(Boolean).join(' · ');
+  const lastNote = (x.log && x.log.length) ? x.log[x.log.length-1] : null;
+  return `<article class="alb-card${overdue ? ' alb-card-late' : ''}">
+    <div class="alb-card-top">
+      <div>
+        <div class="alb-card-client">${escapeHtml(x.client)}</div>
+        ${meta ? `<div class="alb-card-spec">${escapeHtml(meta)}</div>` : ''}
+      </div>
+      ${isAdmin() ? `<select class="alb-stage-select" data-enq-stage="${x.id}">
+        ${ENQ_STAGES.map(s => `<option value="${s.key}" ${x.stage===s.key?'selected':''}>${s.key}</option>`).join('')}
+      </select>` : ''}
+    </div>
+    <div class="alb-card-meta">
+      ${x.source ? `<span class="alb-chip">${escapeHtml(x.source)}</span>` : ''}
+      ${x.phone ? `<a class="alb-chip enq-chip-link" href="tel:${escapeHtml(x.phone)}">${escapeHtml(x.phone)}</a>` : ''}
+      ${x.quoted != null ? `<span class="alb-chip">Quoted ₹${Number(x.quoted).toLocaleString('en-IN')}</span>` : ''}
+      ${x.nextFollowup ? `<span class="alb-chip${overdue ? ' alb-chip-late' : ''}">Follow up ${fmtDate(x.nextFollowup)}</span>` : (ENQ_OPEN.includes(x.stage) ? `<span class="alb-chip alb-chip-warn">No follow-up set</span>` : '')}
+      ${x.stage === 'Lost' && x.lostReason ? `<span class="alb-chip">${escapeHtml(x.lostReason)}</span>` : ''}
+    </div>
+    ${lastNote ? `<p class="alb-card-notes"><strong>${escapeHtml(lastNote.date)}:</strong> ${escapeHtml(lastNote.text)}</p>` : (x.notes ? `<p class="alb-card-notes">${escapeHtml(x.notes)}</p>` : '')}
+    ${isAdmin() ? `<div class="alb-card-actions">
+      <button class="btn-ghost btn-sm" data-enq-edit="${x.id}">Edit</button>
+      <button class="btn-ghost btn-sm" data-enq-log="${x.id}">+ Log contact</button>
+      <button class="btn-danger-ghost btn-sm" data-enq-del="${x.id}">Remove</button>
+    </div>` : ''}
+  </article>`;
+}
+
+function wireEnquiryCards(){
+  const body = document.getElementById('enquiriesBody');
+
+  body.querySelectorAll('[data-enq-stage]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const x = enquiriesData.find(e => e.id === sel.getAttribute('data-enq-stage'));
+      if(!x) return;
+      const from = x.stage;
+      x.stage = sel.value;
+      x.log = (x.log||[]).concat([{ date:new Date().toISOString().slice(0,10), text:`Stage: ${from} → ${x.stage}`, by:whoAmI() }]);
+      if(!ENQ_OPEN.includes(x.stage)) x.nextFollowup = '';
+      sel.disabled = true;
+      await persistEnquiry(x);
+      sel.disabled = false;
+      toast(`${x.client} → ${x.stage}`);
+      drawEnquiries();
+    });
+  });
+
+  body.querySelectorAll('[data-enq-log]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const x = enquiriesData.find(e => e.id === btn.getAttribute('data-enq-log'));
+      if(!x) return;
+      const text = (window.prompt(`Log a contact with ${x.client}:`) || '').trim();
+      if(!text) return;
+      x.log = (x.log||[]).concat([{ date:new Date().toISOString().slice(0,10), text, by:whoAmI() }]);
+      await persistEnquiry(x);
+      drawEnquiries();
+      toast('Contact logged');
+    });
+  });
+
+  body.querySelectorAll('[data-enq-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openEnquiryModal(enquiriesData.find(e => e.id === btn.getAttribute('data-enq-edit'))));
+  });
+
+  body.querySelectorAll('[data-enq-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const x = enquiriesData.find(e => e.id === btn.getAttribute('data-enq-del'));
+      if(!x) return;
+      askConfirm('Remove this enquiry?', `"${x.client}" and its contact history will be permanently removed.`, async () => {
+        if(await deleteEnquiryRemote(x.id)){
+          enquiriesData = enquiriesData.filter(e => e.id !== x.id);
+          drawEnquiries();
+          toast('Enquiry removed');
+        }
+      }, 'Remove permanently');
+    });
+  });
+}
+
+let editingEnquiry = null;
+function openEnquiryModal(x){
+  editingEnquiry = x ? Object.assign({}, x)
+    : { id:uid(), client:'', phone:'', email:'', source:'', eventType:'', eventDate:'', venue:'',
+        stage:'New', budget:null, quoted:null, nextFollowup:'', lostReason:'', notes:'', log:[] };
+  const e = editingEnquiry;
+  document.getElementById('enquiryModalTitle').textContent = x ? 'Edit enquiry' : 'New enquiry';
+  const historyHtml = (e.log && e.log.length)
+    ? `<div class="field"><label>Contact history</label><div class="enq-log">${e.log.slice().reverse().map(l =>
+        `<div class="enq-log-row"><span class="enq-log-date">${escapeHtml(l.date)}</span><span>${escapeHtml(l.text)}</span></div>`).join('')}</div></div>`
+    : '';
+  document.getElementById('enquiryModalBody').innerHTML = `
+    <div class="field"><label>Client / couple <span class="required-mark">*</span></label>
+      <input type="text" id="enq_client" value="${escapeHtml(e.client)}" placeholder="e.g. Priya & Arjun" maxlength="120"></div>
+    <div class="field-row">
+      <div class="field"><label>Phone</label><input type="text" id="enq_phone" value="${escapeHtml(e.phone)}" placeholder="98765 43210" maxlength="30"></div>
+      <div class="field"><label>Email</label><input type="email" id="enq_email" value="${escapeHtml(e.email)}" maxlength="120"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Where did they find us?</label>
+        <select id="enq_source">${ENQ_SOURCES.map(s => `<option value="${s}" ${e.source===s?'selected':''}>${s||'— not set —'}</option>`).join('')}</select></div>
+      <div class="field"><label>Stage</label>
+        <select id="enq_stage">${ENQ_STAGES.map(s => `<option value="${s.key}" ${e.stage===s.key?'selected':''}>${s.key}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Event type</label><input type="text" id="enq_type" value="${escapeHtml(e.eventType)}" placeholder="Wedding, Engagement…" maxlength="60"></div>
+      <div class="field"><label>Event date</label><input type="date" id="enq_date" value="${e.eventDate||''}"></div>
+    </div>
+    <div class="field"><label>Venue</label><input type="text" id="enq_venue" value="${escapeHtml(e.venue)}" placeholder="e.g. Hotel Radisson, Raipur" maxlength="120"></div>
+    <div class="field-row">
+      <div class="field"><label>Their budget (₹)</label><input type="number" id="enq_budget" value="${e.budget ?? ''}" min="0" step="1000"></div>
+      <div class="field"><label>We quoted (₹)</label><input type="number" id="enq_quoted" value="${e.quoted ?? ''}" min="0" step="1000"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Next follow-up</label><input type="date" id="enq_followup" value="${e.nextFollowup||''}"></div>
+      <div class="field"><label>If lost, why?</label><input type="text" id="enq_lost" value="${escapeHtml(e.lostReason)}" placeholder="Price, date unavailable…" maxlength="80"></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="enq_notes" maxlength="500" placeholder="Requirements, package discussed, family details…">${escapeHtml(e.notes)}</textarea></div>
+    ${historyHtml}`;
+  document.getElementById('enquiryOverlay').classList.add('open');
+}
+function closeEnquiryModal(){ document.getElementById('enquiryOverlay').classList.remove('open'); editingEnquiry = null; }
+
+document.getElementById('btnAddEnquiry').addEventListener('click', () => openEnquiryModal(null));
+document.getElementById('btnCancelEnquiry').addEventListener('click', closeEnquiryModal);
+document.getElementById('enquiryOverlay').addEventListener('click', ev => { if(ev.target.id === 'enquiryOverlay') closeEnquiryModal(); });
+document.getElementById('btnSaveEnquiry').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveEnquiry');
+  if(btn.disabled || !editingEnquiry) return;
+  const client = document.getElementById('enq_client').value.trim();
+  if(!client){ document.getElementById('enq_client').style.borderColor = 'var(--danger)'; return; }
+  btn.disabled = true;
+  const e = editingEnquiry;
+  const numOrNull = id => document.getElementById(id).value === '' ? null : Number(document.getElementById(id).value);
+  e.client = client;
+  e.phone = document.getElementById('enq_phone').value.trim();
+  e.email = document.getElementById('enq_email').value.trim();
+  e.source = document.getElementById('enq_source').value;
+  e.stage = document.getElementById('enq_stage').value;
+  e.eventType = document.getElementById('enq_type').value.trim();
+  e.eventDate = document.getElementById('enq_date').value || '';
+  e.venue = document.getElementById('enq_venue').value.trim();
+  e.budget = numOrNull('enq_budget');
+  e.quoted = numOrNull('enq_quoted');
+  e.nextFollowup = document.getElementById('enq_followup').value || '';
+  e.lostReason = document.getElementById('enq_lost').value.trim();
+  e.notes = document.getElementById('enq_notes').value.trim();
+  await persistEnquiry(e);
+  const i = enquiriesData.findIndex(z => z.id === e.id);
+  if(i >= 0) enquiriesData[i] = e; else enquiriesData.unshift(e);
+  btn.disabled = false;
+  closeEnquiryModal();
+  drawEnquiries();
+  toast('Enquiry saved');
+});
+
+function exportEnquiries(){
+  if(!enquiriesData.length){ toast('Nothing to export yet.'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const headers = ['Client','Phone','Email','Source','Event type','Event date','Venue','Stage',
+                   'Budget','Quoted','Next follow-up','Lost reason','Notes'];
+  const lines = [
+    ['Meraki Production — Enquiry Report'],
+    ['Generated', today],
+    ['Total', enquiriesData.length],
+    ['Open', enquiriesData.filter(x => ENQ_OPEN.includes(x.stage)).length],
+    ['Booked', enquiriesData.filter(x => x.stage==='Booked').length],
+    [],
+    headers
+  ].map(r => r.map(csvCell).join(','));
+  enquiriesData.forEach(x => lines.push([x.client,x.phone,x.email,x.source,x.eventType,x.eventDate,
+    x.venue,x.stage,x.budget ?? '',x.quoted ?? '',x.nextFollowup,x.lostReason,(x.notes||'').replace(/\s+/g,' ')]
+    .map(csvCell).join(',')));
+
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = `meraki-enquiries-${today}.csv`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast(`Exported ${enquiriesData.length} enquir${enquiriesData.length===1?'y':'ies'}`);
+}
+document.getElementById('btnExportEnquiries').addEventListener('click', exportEnquiries);
 
 // ---- Album Studio: track album design from selection through to delivery ----
 // Stages follow the standard professional album workflow: photo selection → design →
