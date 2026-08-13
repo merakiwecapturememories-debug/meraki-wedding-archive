@@ -1179,9 +1179,9 @@
     letter-spacing: 0.06em; text-transform: uppercase; color: var(--ros-ink-faint);
   }
 
-  .ros-day-roles { background: var(--ros-surface); }
+  .ros-callsheet-roles { background: var(--ros-surface); }
   .ros-role-line {
-    display: grid; grid-template-columns: 132px 1fr; gap: 12px; align-items: baseline;
+    display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 12px; align-items: baseline;
     padding: 9px 15px; border-bottom: 1px solid var(--ros-border);
   }
   .ros-role-line:last-child { border-bottom: none; }
@@ -1189,7 +1189,7 @@
     font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--ros-ink-faint);
   }
-  .ros-role-line-names { display: flex; flex-wrap: wrap; gap: 3px; }
+  .ros-role-line-names { display: flex; flex-wrap: wrap; gap: 3px; min-width: 0; }
   .ros-role-line-quiet {
     grid-template-columns: 1fr; background: var(--ros-surface-muted);
     padding-top: 8px; padding-bottom: 8px;
@@ -1208,7 +1208,7 @@
     background: var(--ros-accent-soft-bg); color: var(--ros-accent);
     border: 1px solid var(--ros-accent-soft-border); border-radius: 20px;
     padding: 2px 10px 2px 3px; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0;
-    white-space: nowrap;
+    white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   }
   .ros-name-dot {
     width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
@@ -5387,7 +5387,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
           (day.function ? '<span class="ros-day-function">' + escapeHtml(day.function) + '</span>' : '') +
           (callTime ? '<span class="ros-day-call"><i>Call</i>' + callTime + '</span>' : '') +
         '</header>' +
-        '<div class="ros-day-roles">' + roleCells + '</div>' +
+        '<div class="ros-callsheet-roles">' + roleCells + '</div>' +
       '</article>';
     }).join('');
 
