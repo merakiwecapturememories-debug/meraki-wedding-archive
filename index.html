@@ -334,6 +334,11 @@
   .enq-log-row:last-child{border-bottom:none;}
   .enq-log-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-muted);flex-shrink:0;}
 
+  .vid-long{
+    font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+    color:var(--amber);background:var(--amber-tint);border:1px solid rgba(154,98,0,0.25);
+    border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;
+  }
   .vid-fast{
     font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
     color:var(--blue);background:var(--blue-tint);border:1px solid rgba(29,95,184,0.25);
@@ -1685,6 +1690,7 @@
       <h2>Video Studio</h2>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-sm" id="btnExportVideos" style="display:none;">Export pendency</button>
+        <button class="btn btn-sm" id="btnAddVideoPackage" style="display:none;">+ Standard package</button>
         <button class="btn btn-primary btn-sm" id="btnAddVideo" style="display:none;">+ New deliverable</button>
       </div>
     </div>
@@ -3440,13 +3446,17 @@ document.getElementById('btnExportEnquiries').addEventListener('click', exportEn
 // ---- Video Studio: every video deliverable for a wedding in one place ----
 // Types reflect what studios actually deliver: a fast social teaser/reel, the headline
 // highlight film, and long-form ceremony/reception edits that take much longer.
+// Ordered roughly by turnaround: quick social pieces first, long-form edits last.
 const VIDEO_KINDS = [
-  'Teaser / Reel', 'Highlight film', 'Cinematic film',
-  'Full ceremony', 'Full reception', 'Sangeet / Haldi edit',
-  'Pre-wedding film', 'Documentary edit', 'Other'
+  'Wedding Invitation', 'Reel', 'Teaser',
+  'Highlight film', 'Cinematic film',
+  'Traditional Video', 'Full ceremony', 'Full reception',
+  'Sangeet / Haldi edit', 'Pre-wedding film', 'Documentary edit', 'Other'
 ];
-// Short-form is expected within days; long-form runs weeks — worth showing separately.
-const VIDEO_SHORTFORM = ['Teaser / Reel'];
+// Short-form is expected within days; long-form runs weeks — worth flagging separately.
+const VIDEO_SHORTFORM = ['Wedding Invitation', 'Reel', 'Teaser'];
+// Long unedited-style edits that eat the most editor time
+const VIDEO_LONGFORM = ['Traditional Video', 'Full ceremony', 'Full reception'];
 
 const VIDEO_STAGES = [
   { key:'Awaiting footage', tone:'slate', hint:'Waiting on the drives to come in' },
@@ -3501,7 +3511,7 @@ async function deleteVideoRemote(id){
 }
 
 async function renderVideos(){
-  ['btnAddVideo','btnExportVideos'].forEach(id => {
+  ['btnAddVideo','btnAddVideoPackage','btnExportVideos'].forEach(id => {
     const b = document.getElementById(id);
     if(b) b.style.display = isAdmin() ? '' : 'none';
   });
@@ -3567,10 +3577,11 @@ function videoCardHtml(v, today){
   const late = v.dueDate && v.stage !== 'Delivered' && v.dueDate < today;
   const overRev = v.revisionRound > v.revisionsIncluded;
   const isShort = VIDEO_SHORTFORM.includes(v.kind);
+  const isLong = VIDEO_LONGFORM.includes(v.kind);
   return `<article class="alb-card${late ? ' alb-card-late' : ''}">
     <div class="alb-card-top">
       <div>
-        <div class="alb-card-client">${escapeHtml(v.kind)}${isShort ? ' <span class="vid-fast">fast turnaround</span>' : ''}</div>
+        <div class="alb-card-client">${escapeHtml(v.kind)}${isShort ? ' <span class="vid-fast">fast turnaround</span>' : ''}${isLong ? ' <span class="vid-long">long edit</span>' : ''}</div>
         ${v.duration ? `<div class="alb-card-spec">${escapeHtml(v.duration)}${v.song ? ' · ' + escapeHtml(v.song) : ''}</div>` : (v.song ? `<div class="alb-card-spec">${escapeHtml(v.song)}</div>` : '')}
       </div>
       ${isAdmin() ? `<select class="alb-stage-select" data-vid-stage="${v.id}">
@@ -3684,6 +3695,33 @@ function openVideoModal(v){
 function closeVideoModal(){ document.getElementById('videoOverlay').classList.remove('open'); editingVideo = null; }
 
 document.getElementById('btnAddVideo').addEventListener('click', () => openVideoModal(null));
+
+// Most weddings need the same set of deliverables. Rather than adding four
+// separately for every client, create the whole package in one go.
+const VIDEO_PACKAGE = ['Wedding Invitation', 'Reel', 'Highlight film', 'Traditional Video'];
+document.getElementById('btnAddVideoPackage').addEventListener('click', async () => {
+  const btn = document.getElementById('btnAddVideoPackage');
+  if(btn.disabled) return;
+  const known = Array.from(new Set(videosData.map(x => x.client).concat(data.events.map(e => e.client)))).filter(Boolean).sort();
+  const client = (window.prompt('Client / couple name for this package:\n\nCreates: ' + VIDEO_PACKAGE.join(', ')) || '').trim();
+  if(!client) return;
+
+  const existing = videosData.filter(v => v.client.toLowerCase() === client.toLowerCase()).map(v => v.kind);
+  const toAdd = VIDEO_PACKAGE.filter(k => !existing.includes(k));
+  if(!toAdd.length){ toast(`${client} already has all four deliverables.`); return; }
+
+  btn.disabled = true;
+  for(const kind of toAdd){
+    const rec = { id: uid(), client, kind, editor:'', stage:'Awaiting footage',
+      duration:'', song:'', revisionRound:0, revisionsIncluded:2,
+      startDate:'', dueDate:'', deliveredDate:'', link:'', notes:'' };
+    videosData.unshift(rec);
+    await persistVideo(rec);
+  }
+  btn.disabled = false;
+  drawVideos();
+  toast(`Added ${toAdd.length} deliverable${toAdd.length===1?'':'s'} for ${client}`);
+});
 document.getElementById('btnCancelVideo').addEventListener('click', closeVideoModal);
 document.getElementById('videoOverlay').addEventListener('click', e => { if(e.target.id === 'videoOverlay') closeVideoModal(); });
 document.getElementById('btnSaveVideo').addEventListener('click', async () => {
