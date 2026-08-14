@@ -334,6 +334,12 @@
   .enq-log-row:last-child{border-bottom:none;}
   .enq-log-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-muted);flex-shrink:0;}
 
+  .vid-fast{
+    font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+    color:var(--blue);background:var(--blue-tint);border:1px solid rgba(29,95,184,0.25);
+    border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;
+  }
+
   /* ---------- Album Studio ---------- */
   .alb-summary{
     display:grid;grid-template-columns:repeat(4,auto) 1fr;gap:18px;align-items:center;
@@ -1539,6 +1545,7 @@
       <a href="#" data-view="schedule">Crew Schedule</a>
       <a href="#" data-view="enquiries" data-admin-only>Enquiries</a>
       <a href="#" data-view="albums">Album Studio</a>
+      <a href="#" data-view="videos">Video Studio</a>
       <a href="#" data-view="calendar">Calendar</a>
     </div>
     <div class="sidebar-spacer"></div>
@@ -1565,6 +1572,10 @@
     <a href="#" data-view="albums">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
       Albums
+    </a>
+    <a href="#" data-view="videos">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="14" height="12" rx="2"/><path d="m16.5 10.5 5-3v9l-5-3z"/></svg>
+      Videos
     </a>
     <a href="#" data-view="calendar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><circle cx="8" cy="15" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
@@ -1667,6 +1678,17 @@
       </div>
     </div>
     <div id="enquiriesBody"></div>
+  </div>
+
+  <div id="viewVideos" class="view-panel" style="display:none;">
+    <div class="panel-title">
+      <h2>Video Studio</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" id="btnExportVideos" style="display:none;">Export pendency</button>
+        <button class="btn btn-primary btn-sm" id="btnAddVideo" style="display:none;">+ New deliverable</button>
+      </div>
+    </div>
+    <div id="videosBody"></div>
   </div>
 
   <div id="viewAlbums" class="view-panel" style="display:none;">
@@ -1897,6 +1919,17 @@
     <div class="modal-actions">
       <button class="btn" id="btnCancelEnquiry">Cancel</button>
       <button class="btn btn-primary" id="btnSaveEnquiry">Save enquiry</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="videoOverlay">
+  <div class="modal">
+    <h3 id="videoModalTitle">New deliverable</h3>
+    <div id="videoModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelVideo">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveVideo">Save deliverable</button>
     </div>
   </div>
 </div>
@@ -2313,6 +2346,7 @@ function switchView(view, clickedLink){
   document.getElementById('viewSchedule').style.display = view === 'schedule' ? '' : 'none';
   document.getElementById('viewCalendar').style.display = view === 'calendar' ? '' : 'none';
   document.getElementById('viewAlbums').style.display = view === 'albums' ? '' : 'none';
+  document.getElementById('viewVideos').style.display = view === 'videos' ? '' : 'none';
   document.getElementById('viewEnquiries').style.display = view === 'enquiries' ? '' : 'none';
 
   // Keep both navs (desktop sidebar + mobile bottom bar) visually in sync
@@ -2328,6 +2362,7 @@ function switchView(view, clickedLink){
   if(view === 'dashboard') renderDashboard();
   if(view === 'calendar') renderCalendar();
   if(view === 'albums') renderAlbums();
+  if(view === 'videos') renderVideos();
   if(view === 'enquiries') renderEnquiries();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
@@ -3396,6 +3431,323 @@ function exportEnquiries(){
   toast(`Exported ${enquiriesData.length} enquir${enquiriesData.length===1?'y':'ies'}`);
 }
 document.getElementById('btnExportEnquiries').addEventListener('click', exportEnquiries);
+
+// ---- Video Studio: every video deliverable for a wedding in one place ----
+// Types reflect what studios actually deliver: a fast social teaser/reel, the headline
+// highlight film, and long-form ceremony/reception edits that take much longer.
+const VIDEO_KINDS = [
+  'Teaser / Reel', 'Highlight film', 'Cinematic film',
+  'Full ceremony', 'Full reception', 'Sangeet / Haldi edit',
+  'Pre-wedding film', 'Documentary edit', 'Other'
+];
+// Short-form is expected within days; long-form runs weeks — worth showing separately.
+const VIDEO_SHORTFORM = ['Teaser / Reel'];
+
+const VIDEO_STAGES = [
+  { key:'Awaiting footage', tone:'slate', hint:'Waiting on the drives to come in' },
+  { key:'Editing',          tone:'blue',  hint:'Cut in progress' },
+  { key:'Sent for review',  tone:'amber', hint:'With the client' },
+  { key:'Revisions',        tone:'amber', hint:'Client asked for changes' },
+  { key:'Colour & sound',   tone:'blue',  hint:'Grading and audio mix' },
+  { key:'Delivered',        tone:'ok',    hint:'Handed over' }
+];
+const VIDEO_ACTIVE = ['Awaiting footage','Editing','Sent for review','Revisions','Colour & sound'];
+
+let videosData = [];
+
+function videoToRow(v){
+  return {
+    id:v.id, client:v.client, kind:v.kind||'Highlight film', editor:v.editor||'',
+    stage:v.stage||'Awaiting footage', duration:v.duration||'', song:v.song||'',
+    revision_round:Number(v.revisionRound)||0, revisions_included:Number(v.revisionsIncluded)||2,
+    start_date:v.startDate||null, due_date:v.dueDate||null, delivered_date:v.deliveredDate||null,
+    link:v.link||'', notes:v.notes||'', updated_by:whoAmI(), updated_at:new Date().toISOString()
+  };
+}
+function rowToVideo(r){
+  return {
+    id:r.id, client:r.client, kind:r.kind||'Highlight film', editor:r.editor||'',
+    stage:r.stage||'Awaiting footage', duration:r.duration||'', song:r.song||'',
+    revisionRound:r.revision_round||0, revisionsIncluded:r.revisions_included||2,
+    startDate:r.start_date||'', dueDate:r.due_date||'', deliveredDate:r.delivered_date||'',
+    link:r.link||'', notes:r.notes||'', updatedBy:r.updated_by||'', updatedAt:r.updated_at
+  };
+}
+
+async function loadVideos(){
+  try{
+    const { data:rows, error } = await sb.from('video_deliverables').select('*').order('updated_at',{ascending:false});
+    if(error) throw error;
+    videosData = (rows||[]).map(rowToVideo);
+  }catch(e){ videosData = []; toast("Couldn't load video deliverables", true); }
+}
+async function persistVideo(v){
+  try{
+    const { error } = await sb.from('video_deliverables').upsert(videoToRow(v));
+    if(error) throw error;
+  }catch(e){ toast("Couldn't save deliverable", true); }
+}
+async function deleteVideoRemote(id){
+  try{
+    const { error } = await sb.from('video_deliverables').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){ toast("Couldn't remove deliverable", true); return false; }
+}
+
+async function renderVideos(){
+  ['btnAddVideo','btnExportVideos'].forEach(id => {
+    const b = document.getElementById(id);
+    if(b) b.style.display = isAdmin() ? '' : 'none';
+  });
+  if(!videosData.length) await loadVideos();
+  drawVideos();
+}
+
+function drawVideos(){
+  const body = document.getElementById('videosBody');
+  if(!body) return;
+  const today = new Date().toISOString().slice(0,10);
+
+  if(!videosData.length){
+    body.innerHTML = `<div class="empty-state"><h3>No video deliverables yet</h3><p>${isAdmin() ? 'Add a reel, highlight film or long-form edit to start tracking it.' : 'Nothing added yet.'}</p></div>`;
+    return;
+  }
+
+  const total = videosData.length;
+  const delivered = videosData.filter(v => v.stage === 'Delivered').length;
+  const running = videosData.filter(v => VIDEO_ACTIVE.includes(v.stage)).length;
+  const withClient = videosData.filter(v => v.stage === 'Sent for review' || v.stage === 'Revisions').length;
+  const overdue = videosData.filter(v => v.dueDate && v.stage !== 'Delivered' && v.dueDate < today).length;
+  const pct = total ? Math.round((delivered/total)*100) : 0;
+
+  const summary = `
+    <div class="alb-summary">
+      <div class="alb-stat"><div class="alb-stat-num">${running}</div><div class="alb-stat-lbl">In progress</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${withClient}</div><div class="alb-stat-lbl">With client</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${delivered}</div><div class="alb-stat-lbl">Delivered</div></div>
+      <div class="alb-stat${overdue ? ' alb-stat-alert' : ''}"><div class="alb-stat-num">${overdue}</div><div class="alb-stat-lbl">Overdue</div></div>
+      <div class="alb-progress-wrap">
+        <div class="alb-progress-top"><span>Completed</span><span class="mono">${delivered} of ${total} · ${pct}%</span></div>
+        <div class="alb-progress-track"><div class="alb-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+
+  // Group by client so every deliverable for one wedding sits together —
+  // that's the whole point of "one place".
+  const byClient = {};
+  videosData.forEach(v => { (byClient[v.client] = byClient[v.client] || []).push(v); });
+  const clients = Object.keys(byClient).sort((a,b) => a.localeCompare(b));
+
+  const groups = clients.map(client => {
+    const items = byClient[client].slice().sort((a,b) =>
+      VIDEO_KINDS.indexOf(a.kind) - VIDEO_KINDS.indexOf(b.kind));
+    const done = items.filter(v => v.stage === 'Delivered').length;
+    const lateHere = items.some(v => v.dueDate && v.stage !== 'Delivered' && v.dueDate < today);
+    return `<section class="alb-stage">
+      <div class="alb-stage-head">
+        <span class="alb-stage-dot ${done === items.length ? 'alb-tone-ok' : (lateHere ? 'alb-tone-amber' : 'alb-tone-blue')}"></span>
+        <h3>${escapeHtml(client)}</h3>
+        <span class="alb-stage-count">${done}/${items.length} delivered</span>
+      </div>
+      <div class="alb-cards">${items.map(v => videoCardHtml(v, today)).join('')}</div>
+    </section>`;
+  }).join('');
+
+  body.innerHTML = summary + groups;
+  wireVideoCards();
+}
+
+function videoCardHtml(v, today){
+  const late = v.dueDate && v.stage !== 'Delivered' && v.dueDate < today;
+  const overRev = v.revisionRound > v.revisionsIncluded;
+  const isShort = VIDEO_SHORTFORM.includes(v.kind);
+  return `<article class="alb-card${late ? ' alb-card-late' : ''}">
+    <div class="alb-card-top">
+      <div>
+        <div class="alb-card-client">${escapeHtml(v.kind)}${isShort ? ' <span class="vid-fast">fast turnaround</span>' : ''}</div>
+        ${v.duration ? `<div class="alb-card-spec">${escapeHtml(v.duration)}${v.song ? ' · ' + escapeHtml(v.song) : ''}</div>` : (v.song ? `<div class="alb-card-spec">${escapeHtml(v.song)}</div>` : '')}
+      </div>
+      ${isAdmin() ? `<select class="alb-stage-select" data-vid-stage="${v.id}">
+        ${VIDEO_STAGES.map(s => `<option value="${s.key}" ${v.stage===s.key?'selected':''}>${s.key}</option>`).join('')}
+      </select>` : `<span class="status-badge">${escapeHtml(v.stage)}</span>`}
+    </div>
+    <div class="alb-card-meta">
+      ${v.editor ? `<span class="alb-chip">${escapeHtml(v.editor)}</span>` : `<span class="alb-chip alb-chip-empty">Unassigned</span>`}
+      ${v.revisionRound ? `<span class="alb-chip${overRev ? ' alb-chip-warn' : ''}">Revision ${v.revisionRound} of ${v.revisionsIncluded}${overRev ? ' — chargeable' : ''}</span>` : ''}
+      ${v.startDate ? `<span class="alb-chip">Started ${fmtDate(v.startDate)}</span>` : ''}
+      ${v.dueDate ? `<span class="alb-chip${late ? ' alb-chip-late' : ''}">Due ${fmtDate(v.dueDate)}</span>` : ''}
+      ${v.deliveredDate ? `<span class="alb-chip alb-chip-ok">Delivered ${fmtDate(v.deliveredDate)}</span>` : ''}
+      ${v.link ? `<a class="alb-chip" href="${escapeHtml(v.link)}" target="_blank" rel="noopener">Open link</a>` : ''}
+    </div>
+    ${v.notes ? `<p class="alb-card-notes">${escapeHtml(v.notes)}</p>` : ''}
+    ${isAdmin() ? `<div class="alb-card-actions">
+      <button class="btn-ghost btn-sm" data-vid-edit="${v.id}">Edit</button>
+      <button class="btn-ghost btn-sm" data-vid-revision="${v.id}">+ Revision round</button>
+      <button class="btn-danger-ghost btn-sm" data-vid-del="${v.id}">Remove</button>
+    </div>` : ''}
+  </article>`;
+}
+
+function wireVideoCards(){
+  const body = document.getElementById('videosBody');
+
+  body.querySelectorAll('[data-vid-stage]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const v = videosData.find(x => x.id === sel.getAttribute('data-vid-stage'));
+      if(!v) return;
+      v.stage = sel.value;
+      if(v.stage === 'Delivered' && !v.deliveredDate) v.deliveredDate = new Date().toISOString().slice(0,10);
+      if(v.stage !== 'Delivered') v.deliveredDate = '';
+      sel.disabled = true;
+      await persistVideo(v);
+      sel.disabled = false;
+      toast(`${v.client} — ${v.kind} → ${v.stage}`);
+      drawVideos();
+    });
+  });
+
+  body.querySelectorAll('[data-vid-revision]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const v = videosData.find(x => x.id === btn.getAttribute('data-vid-revision'));
+      if(!v) return;
+      v.revisionRound = (Number(v.revisionRound)||0) + 1;
+      v.stage = 'Revisions';
+      await persistVideo(v);
+      const over = v.revisionRound > v.revisionsIncluded;
+      toast(over ? `Revision ${v.revisionRound} — beyond the included ${v.revisionsIncluded}, chargeable` : `Revision round ${v.revisionRound} logged`);
+      drawVideos();
+    });
+  });
+
+  body.querySelectorAll('[data-vid-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openVideoModal(videosData.find(x => x.id === btn.getAttribute('data-vid-edit'))));
+  });
+
+  body.querySelectorAll('[data-vid-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const v = videosData.find(x => x.id === btn.getAttribute('data-vid-del'));
+      if(!v) return;
+      askConfirm('Remove this deliverable?', `"${v.kind}" for ${v.client} will be permanently removed.`, async () => {
+        if(await deleteVideoRemote(v.id)){
+          videosData = videosData.filter(x => x.id !== v.id);
+          drawVideos();
+          toast('Deliverable removed');
+        }
+      }, 'Remove permanently');
+    });
+  });
+}
+
+let editingVideo = null;
+function openVideoModal(v){
+  editingVideo = v ? Object.assign({}, v)
+    : { id:uid(), client:'', kind:'Highlight film', editor:'', stage:'Awaiting footage',
+        duration:'', song:'', revisionRound:0, revisionsIncluded:2,
+        startDate:'', dueDate:'', deliveredDate:'', link:'', notes:'' };
+  const d = editingVideo;
+  // Suggest clients already in the system so deliverables group correctly
+  const known = Array.from(new Set(videosData.map(x => x.client).concat(data.events.map(e => e.client)))).filter(Boolean).sort();
+  document.getElementById('videoModalTitle').textContent = v ? 'Edit deliverable' : 'New deliverable';
+  document.getElementById('videoModalBody').innerHTML = `
+    <div class="field"><label>Client / couple <span class="required-mark">*</span></label>
+      <input type="text" id="vid_client" list="vidClients" value="${escapeHtml(d.client)}" placeholder="e.g. Aseem Weds Nivedita" maxlength="120">
+      <datalist id="vidClients">${known.map(k => `<option value="${escapeHtml(k)}">`).join('')}</datalist></div>
+    <div class="field-row">
+      <div class="field"><label>Deliverable</label>
+        <select id="vid_kind">${VIDEO_KINDS.map(k => `<option value="${k}" ${d.kind===k?'selected':''}>${k}</option>`).join('')}</select></div>
+      <div class="field"><label>Stage</label>
+        <select id="vid_stage">${VIDEO_STAGES.map(s => `<option value="${s.key}" ${d.stage===s.key?'selected':''}>${s.key}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Editor</label><input type="text" id="vid_editor" value="${escapeHtml(d.editor)}" placeholder="e.g. Karan" maxlength="80"></div>
+      <div class="field"><label>Target length</label><input type="text" id="vid_duration" value="${escapeHtml(d.duration)}" placeholder="e.g. 60 sec, 8 min" maxlength="40"></div>
+    </div>
+    <div class="field"><label>Song / music</label><input type="text" id="vid_song" value="${escapeHtml(d.song)}" placeholder="Track chosen for this edit" maxlength="120"></div>
+    <div class="field-row">
+      <div class="field"><label>Editing started</label><input type="date" id="vid_start" value="${d.startDate||''}"></div>
+      <div class="field"><label>Due date</label><input type="date" id="vid_due" value="${d.dueDate||''}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Revisions included</label><input type="number" id="vid_revinc" value="${d.revisionsIncluded}" min="0"></div>
+      <div class="field"><label>Revision rounds used</label><input type="number" id="vid_revround" value="${d.revisionRound||0}" min="0"></div>
+    </div>
+    <div class="field"><label>Delivery link</label><input type="url" id="vid_link" value="${escapeHtml(d.link)}" placeholder="Drive / WeTransfer / YouTube link" maxlength="300"></div>
+    <div class="field"><label>Notes</label><textarea id="vid_notes" maxlength="500" placeholder="Client requests, music licensing, special instructions…">${escapeHtml(d.notes)}</textarea></div>`;
+  document.getElementById('videoOverlay').classList.add('open');
+}
+function closeVideoModal(){ document.getElementById('videoOverlay').classList.remove('open'); editingVideo = null; }
+
+document.getElementById('btnAddVideo').addEventListener('click', () => openVideoModal(null));
+document.getElementById('btnCancelVideo').addEventListener('click', closeVideoModal);
+document.getElementById('videoOverlay').addEventListener('click', e => { if(e.target.id === 'videoOverlay') closeVideoModal(); });
+document.getElementById('btnSaveVideo').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveVideo');
+  if(btn.disabled || !editingVideo) return;
+  const client = document.getElementById('vid_client').value.trim();
+  if(!client){ document.getElementById('vid_client').style.borderColor = 'var(--danger)'; return; }
+  btn.disabled = true;
+  const d = editingVideo;
+  d.client = client;
+  d.kind = document.getElementById('vid_kind').value;
+  d.stage = document.getElementById('vid_stage').value;
+  d.editor = document.getElementById('vid_editor').value.trim();
+  d.duration = document.getElementById('vid_duration').value.trim();
+  d.song = document.getElementById('vid_song').value.trim();
+  d.startDate = document.getElementById('vid_start').value || '';
+  d.dueDate = document.getElementById('vid_due').value || '';
+  d.revisionsIncluded = Number(document.getElementById('vid_revinc').value) || 0;
+  d.revisionRound = Number(document.getElementById('vid_revround').value) || 0;
+  d.link = document.getElementById('vid_link').value.trim();
+  d.notes = document.getElementById('vid_notes').value.trim();
+  if(d.stage === 'Delivered' && !d.deliveredDate) d.deliveredDate = new Date().toISOString().slice(0,10);
+  await persistVideo(d);
+  const i = videosData.findIndex(x => x.id === d.id);
+  if(i >= 0) videosData[i] = d; else videosData.unshift(d);
+  btn.disabled = false;
+  closeVideoModal();
+  drawVideos();
+  toast('Deliverable saved');
+});
+
+function exportVideoPendency(){
+  const today = new Date().toISOString().slice(0,10);
+  const rows = videosData.filter(v => v.stage !== 'Delivered')
+    .sort((a,b) => {
+      const aL = a.dueDate && a.dueDate < today, bL = b.dueDate && b.dueDate < today;
+      if(aL !== bL) return aL ? -1 : 1;
+      return (a.dueDate||'9999').localeCompare(b.dueDate||'9999');
+    });
+  if(!rows.length){ toast('Nothing pending — every video is delivered.'); return; }
+
+  const headers = ['Client','Deliverable','Editor','Stage','Length','Song','Started','Due',
+                   'Days overdue','Revisions used','Revisions included','Chargeable','Notes'];
+  const lines = [
+    ['Meraki Production — Video Pendency Report'],
+    ['Generated', today],
+    ['Pending', rows.length],
+    ['Overdue', rows.filter(v => v.dueDate && v.dueDate < today).length],
+    [],
+    headers
+  ].map(r => r.map(csvCell).join(','));
+
+  rows.forEach(v => {
+    const overdueDays = (v.dueDate && v.dueDate < today) ? daysBetween(v.dueDate, today) : 0;
+    lines.push([v.client, v.kind, v.editor||'Unassigned', v.stage, v.duration, v.song,
+      v.startDate, v.dueDate, overdueDays, v.revisionRound||0, v.revisionsIncluded||0,
+      (v.revisionRound > v.revisionsIncluded) ? 'YES' : '', (v.notes||'').replace(/\s+/g,' ')]
+      .map(csvCell).join(','));
+  });
+
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = `meraki-video-pendency-${today}.csv`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast(`Exported ${rows.length} pending deliverable${rows.length===1?'':'s'}`);
+}
+document.getElementById('btnExportVideos').addEventListener('click', exportVideoPendency);
 
 // ---- Album Studio: track album design from selection through to delivery ----
 // Stages follow the standard professional album workflow: photo selection → design →
