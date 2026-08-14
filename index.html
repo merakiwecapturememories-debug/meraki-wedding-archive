@@ -1545,7 +1545,7 @@
       <a href="#" data-view="schedule">Crew Schedule</a>
       <a href="#" data-view="enquiries" data-admin-only>Enquiries</a>
       <a href="#" data-view="albums">Album Studio</a>
-      <a href="#" data-view="videos">Video Studio</a>
+      <a href="#" data-view="videos" data-admin-only>Video Studio</a>
       <a href="#" data-view="calendar">Calendar</a>
     </div>
     <div class="sidebar-spacer"></div>
@@ -1573,7 +1573,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
       Albums
     </a>
-    <a href="#" data-view="videos">
+    <a href="#" data-view="videos" data-admin-only>
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="14" height="12" rx="2"/><path d="m16.5 10.5 5-3v9l-5-3z"/></svg>
       Videos
     </a>
@@ -2338,6 +2338,11 @@ function switchView(view, clickedLink){
   // would briefly flash the content before redirecting.
   if(view === 'enquiries' && !isAdmin()){
     toast('Enquiries are admin only.', true);
+    return switchView('dashboard');
+  }
+  // Video Studio is admin-only until it's signed off for the wider team.
+  if(view === 'videos' && !isAdmin()){
+    toast('Video Studio is admin only for now.', true);
     return switchView('dashboard');
   }
   document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
