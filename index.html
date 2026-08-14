@@ -1566,7 +1566,7 @@
       <a href="#" data-view="drives">Drive registry <span class="count" id="navDriveCount">–</span></a>
       <a href="#" data-view="ledger">Event ledger <span class="count" id="navEventCount">–</span></a>
       <a href="#" data-view="schedule">Crew Schedule</a>
-      <a href="#" data-view="enquiries" data-admin-only>Enquiries</a>
+      <a href="#" data-view="enquiries" data-enq-nav>Enquiries</a>
       <a href="#" data-view="albums">Album Studio</a>
       <a href="#" data-view="videos" data-admin-only>Video Studio</a>
       <a href="#" data-view="calendar">Calendar</a>
@@ -1588,7 +1588,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       Schedule
     </a>
-    <a href="#" data-view="enquiries" data-admin-only>
+    <a href="#" data-view="enquiries" data-enq-nav>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-9A8.4 8.4 0 1 1 21 11.5z"/></svg>
       Enquiries
     </a>
@@ -2358,6 +2358,9 @@ function renderUserBadge(){
   document.querySelectorAll('[data-admin-only]').forEach(el => {
     el.style.display = isAdmin() ? '' : 'none';
   });
+  document.querySelectorAll('[data-enq-nav]').forEach(el => {
+    el.style.display = canViewEnquiries() ? '' : 'none';
+  });
 
   const addDriveBtn = document.getElementById('btnAddDrive');
   if(addDriveBtn) addDriveBtn.style.display = isAdmin() ? '' : 'none';
@@ -2371,8 +2374,8 @@ function renderUserBadge(){
 function switchView(view, clickedLink){
   // Block admin-only views up front, before any panel is displayed — checking later
   // would briefly flash the content before redirecting.
-  if(view === 'enquiries' && !isAdmin()){
-    toast('Enquiries are admin only.', true);
+  if(view === 'enquiries' && !canViewEnquiries()){
+    toast("You don't have access to Enquiries.", true);
     return switchView('dashboard');
   }
   // Video Studio is admin-only until it's signed off for the wider team.
@@ -2551,7 +2554,8 @@ sb.auth.onAuthStateChange((event, session) => {
       name: (session.user.user_metadata && session.user.user_metadata.full_name) || '',
       title: (session.user.user_metadata && session.user.user_metadata.title) || '',
       role: (session.user.user_metadata && session.user.user_metadata.role) || 'member',
-      canManageSchedule: !!(session.user.user_metadata && session.user.user_metadata.can_manage_schedule)
+      canManageSchedule: !!(session.user.user_metadata && session.user.user_metadata.can_manage_schedule),
+      canViewEnquiries: !!(session.user.user_metadata && session.user.user_metadata.can_view_enquiries)
     };
     renderUserBadge();
     showApp();
@@ -2629,6 +2633,8 @@ function isAdmin(){ return !!(currentUser && currentUser.role === 'admin'); }
 // Crew Schedule permission is separate from full admin, so someone can be trusted to
 // run the shoot roster without also getting control of drives and archive records.
 function canManageSchedule(){ return isAdmin() || !!(currentUser && currentUser.canManageSchedule); }
+// Read-only access to Enquiries. Editing stays admin-only — this only opens the view.
+function canViewEnquiries(){ return isAdmin() || !!(currentUser && currentUser.canViewEnquiries); }
 // ===================== /AUTH =====================
 
 // ===================== IDLE AUTO-LOGOUT =====================
