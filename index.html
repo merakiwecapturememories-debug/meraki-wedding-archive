@@ -334,6 +334,24 @@
   .enq-log-row:last-child{border-bottom:none;}
   .enq-log-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-muted);flex-shrink:0;}
 
+  .pkg-list{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px;
+    border:1px solid var(--line);border-radius:9px;padding:5px;background:var(--card-sunken);
+  }
+  .pkg-item{
+    display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;
+    cursor:pointer;font-size:13px;color:var(--ink);
+  }
+  .pkg-item:hover{background:var(--card);}
+  .pkg-item input{width:16px;height:16px;flex-shrink:0;accent-color:var(--wine);cursor:pointer;}
+  .pkg-name{flex:1;min-width:0;}
+  .pkg-tag{font-size:10px;color:var(--ink-muted);font-style:italic;flex-shrink:0;}
+  .pkg-item-have{opacity:0.5;cursor:not-allowed;}
+  .pkg-item-have:hover{background:none;}
+  .pkg-note{
+    font-size:12px;color:var(--ink-soft);background:var(--card-sunken);
+    border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:10px;
+  }
   .vid-long{
     font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
     color:var(--amber);background:var(--amber-tint);border:1px solid rgba(154,98,0,0.25);
@@ -1690,7 +1708,7 @@
       <h2>Video Studio</h2>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-sm" id="btnExportVideos" style="display:none;">Export pendency</button>
-        <button class="btn btn-sm" id="btnAddVideoPackage" style="display:none;">+ Standard package</button>
+        <button class="btn btn-sm" id="btnAddVideoPackage" style="display:none;">+ Add multiple</button>
         <button class="btn btn-primary btn-sm" id="btnAddVideo" style="display:none;">+ New deliverable</button>
       </div>
     </div>
@@ -1925,6 +1943,17 @@
     <div class="modal-actions">
       <button class="btn" id="btnCancelEnquiry">Cancel</button>
       <button class="btn btn-primary" id="btnSaveEnquiry">Save enquiry</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="vidPkgOverlay">
+  <div class="modal">
+    <h3>Add deliverables</h3>
+    <div id="vidPkgBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelVideoPkg">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveVideoPkg">Add selected</button>
     </div>
   </div>
 </div>
@@ -3696,22 +3725,75 @@ function closeVideoModal(){ document.getElementById('videoOverlay').classList.re
 
 document.getElementById('btnAddVideo').addEventListener('click', () => openVideoModal(null));
 
-// Most weddings need the same set of deliverables. Rather than adding four
-// separately for every client, create the whole package in one go.
-const VIDEO_PACKAGE = ['Wedding Invitation', 'Reel', 'Highlight film', 'Traditional Video'];
-document.getElementById('btnAddVideoPackage').addEventListener('click', async () => {
-  const btn = document.getElementById('btnAddVideoPackage');
-  if(btn.disabled) return;
-  const known = Array.from(new Set(videosData.map(x => x.client).concat(data.events.map(e => e.client)))).filter(Boolean).sort();
-  const client = (window.prompt('Client / couple name for this package:\n\nCreates: ' + VIDEO_PACKAGE.join(', ')) || '').trim();
-  if(!client) return;
+// Bulk-add deliverables with a proper picker — packages vary per client, so a fixed
+// four-item set only covers the common case. Pre-ticks the usual ones, greys out any
+// this client already has, and shows how many are already covered.
+const VIDEO_DEFAULT_PACKAGE = ['Wedding Invitation', 'Reel', 'Highlight film', 'Traditional Video'];
 
-  const existing = videosData.filter(v => v.client.toLowerCase() === client.toLowerCase()).map(v => v.kind);
-  const toAdd = VIDEO_PACKAGE.filter(k => !existing.includes(k));
-  if(!toAdd.length){ toast(`${client} already has all four deliverables.`); return; }
+document.getElementById('btnAddVideoPackage').addEventListener('click', () => {
+  const known = Array.from(new Set(videosData.map(x => x.client).concat(data.events.map(e => e.client)))).filter(Boolean).sort();
+  document.getElementById('vidPkgBody').innerHTML = `
+    <div class="field"><label>Client / couple <span class="required-mark">*</span></label>
+      <input type="text" id="pkg_client" list="pkgClients" placeholder="e.g. Aseem Weds Nivedita" maxlength="120" autocomplete="off">
+      <datalist id="pkgClients">${known.map(k => `<option value="${escapeHtml(k)}">`).join('')}</datalist></div>
+    <div class="field">
+      <label>Which deliverables?</label>
+      <p class="ros-field-hint">The usual four are pre-ticked — untick what you don't need, tick anything extra.</p>
+      <div class="pkg-list" id="pkg_list">
+        ${VIDEO_KINDS.map(k => `
+          <label class="pkg-item">
+            <input type="checkbox" value="${escapeHtml(k)}" ${VIDEO_DEFAULT_PACKAGE.includes(k) ? 'checked' : ''}>
+            <span class="pkg-name">${escapeHtml(k)}</span>
+            <span class="pkg-tag" data-tagfor="${escapeHtml(k)}"></span>
+          </label>`).join('')}
+      </div>
+    </div>
+    <div id="pkg_note" class="pkg-note" style="display:none;"></div>`;
+  document.getElementById('vidPkgOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('pkg_client').focus(), 50);
+
+  // As soon as a known client is typed, flag which deliverables they already have
+  document.getElementById('pkg_client').addEventListener('input', refreshPkgExisting);
+  refreshPkgExisting();
+});
+
+function refreshPkgExisting(){
+  const nameEl = document.getElementById('pkg_client');
+  if(!nameEl) return;
+  const client = nameEl.value.trim().toLowerCase();
+  const have = client
+    ? videosData.filter(v => v.client.toLowerCase() === client).map(v => v.kind)
+    : [];
+  document.querySelectorAll('#pkg_list .pkg-item').forEach(item => {
+    const cb = item.querySelector('input');
+    const tag = item.querySelector('.pkg-tag');
+    const exists = have.includes(cb.value);
+    item.classList.toggle('pkg-item-have', exists);
+    cb.disabled = exists;
+    if(exists) cb.checked = false;
+    tag.textContent = exists ? 'already added' : '';
+  });
+  const note = document.getElementById('pkg_note');
+  if(note){
+    note.style.display = have.length ? 'block' : 'none';
+    note.textContent = have.length ? `${client ? nameEl.value.trim() : 'This client'} already has ${have.length} deliverable${have.length===1?'':'s'} — those are greyed out.` : '';
+  }
+}
+
+function closeVideoPkgModal(){ document.getElementById('vidPkgOverlay').classList.remove('open'); }
+document.getElementById('btnCancelVideoPkg').addEventListener('click', closeVideoPkgModal);
+document.getElementById('vidPkgOverlay').addEventListener('click', e => { if(e.target.id === 'vidPkgOverlay') closeVideoPkgModal(); });
+
+document.getElementById('btnSaveVideoPkg').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveVideoPkg');
+  if(btn.disabled) return;
+  const client = document.getElementById('pkg_client').value.trim();
+  if(!client){ document.getElementById('pkg_client').style.borderColor = 'var(--danger)'; return; }
+  const picked = Array.from(document.querySelectorAll('#pkg_list input:checked:not(:disabled)')).map(cb => cb.value);
+  if(!picked.length){ toast('Tick at least one deliverable.', true); return; }
 
   btn.disabled = true;
-  for(const kind of toAdd){
+  for(const kind of picked){
     const rec = { id: uid(), client, kind, editor:'', stage:'Awaiting footage',
       duration:'', song:'', revisionRound:0, revisionsIncluded:2,
       startDate:'', dueDate:'', deliveredDate:'', link:'', notes:'' };
@@ -3719,9 +3801,11 @@ document.getElementById('btnAddVideoPackage').addEventListener('click', async ()
     await persistVideo(rec);
   }
   btn.disabled = false;
+  closeVideoPkgModal();
   drawVideos();
-  toast(`Added ${toAdd.length} deliverable${toAdd.length===1?'':'s'} for ${client}`);
+  toast(`Added ${picked.length} deliverable${picked.length===1?'':'s'} for ${client}`);
 });
+
 document.getElementById('btnCancelVideo').addEventListener('click', closeVideoModal);
 document.getElementById('videoOverlay').addEventListener('click', e => { if(e.target.id === 'videoOverlay') closeVideoModal(); });
 document.getElementById('btnSaveVideo').addEventListener('click', async () => {
