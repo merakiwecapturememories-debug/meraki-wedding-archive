@@ -497,6 +497,23 @@
   }
 
   /* ---------- Dashboard widgets ---------- */
+  /* Lead row: the day-to-day view gets prominence, supporting panels sit beside it */
+  .dash-lead{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:26px;align-items:start;}
+  .dash-side{display:grid;gap:16px;}
+  .dash-card-lead{padding:20px 22px 22px;}
+  .dash-card-lead .dash-card-head h3{font-size:15.5px;}
+  @media (max-width:900px){
+    .dash-lead{grid-template-columns:1fr;}
+  }
+
+  /* Section dividers so the panels read as grouped, not a wall of equal cards */
+  .dash-section-title{
+    font-size:11.5px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;
+    color:var(--ink-muted);margin:0 0 12px;padding-bottom:8px;
+    border-bottom:1px solid var(--line);
+  }
+  .dash-grid + .dash-section-title{margin-top:28px;}
+
   .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;}
   .dash-card{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
@@ -4575,45 +4592,32 @@ function renderDashboard(){
         ${albOverdue.length > 3 ? `<div class="dash-alb-late-more">+${albOverdue.length - 3} more overdue</div>` : ''}
       </div>` : ''}`;
 
-  /* --- What's coming up: festivals and shoots merged onto one timeline --- */
+  /* --- Festivals ahead. Shoots already have their own panel, so this one only
+         carries festivals — but flags any that clash with a booked shoot day. --- */
   const horizon = new Date(Date.now() + 45*86400000).toISOString().slice(0,10);
-  const timeline = [];
+  const shootDates = new Set(upcoming.map(u => u.date));
+  const festAhead = (calFestivals || [])
+    .filter(f => f.festival_date && f.festival_date >= todayKey && f.festival_date <= horizon)
+    .sort((a,b) => a.festival_date.localeCompare(b.festival_date));
+  const clashCount = festAhead.filter(f => shootDates.has(f.festival_date)).length;
 
-  (calFestivals || []).filter(f => f.festival_date && f.festival_date >= todayKey && f.festival_date <= horizon)
-    .forEach(f => timeline.push({
-      date: f.festival_date, kind: 'festival',
-      label: f.name, sub: f.category === 'chhattisgarhi' ? 'Chhattisgarhi' : 'National'
-    }));
-
-  upcoming.filter(u => u.date <= horizon).forEach(u => timeline.push({
-    date: u.date, kind: 'shoot',
-    label: u.title, sub: u.fn || 'Shoot day'
-  }));
-
-  timeline.sort((a,b) => a.date.localeCompare(b.date) || (a.kind === 'shoot' ? -1 : 1));
-
-  // Flag any day where a shoot lands on a festival — that's the clash worth knowing about
-  const festDates = new Set(timeline.filter(t => t.kind === 'festival').map(t => t.date));
-  const shootDates = new Set(timeline.filter(t => t.kind === 'shoot').map(t => t.date));
-  const clashes = [...shootDates].filter(d => festDates.has(d));
-
-  const timelineHtml = timeline.length ? `
-    ${clashes.length ? `<div class="dash-clash">${clashes.length} shoot day${clashes.length===1?'':'s'} fall${clashes.length===1?'s':''} on a festival — check crew availability.</div>` : ''}
-    ${timeline.slice(0, 8).map(t => {
-      const clash = festDates.has(t.date) && shootDates.has(t.date);
+  const festivalHtml = festAhead.length ? `
+    ${clashCount ? `<div class="dash-clash">${clashCount} festival${clashCount===1?'':'s'} fall${clashCount===1?'s':''} on a booked shoot day.</div>` : ''}
+    ${festAhead.slice(0, 6).map(f => {
+      const clash = shootDates.has(f.festival_date);
+      const dt = new Date(f.festival_date + 'T00:00:00');
       return `<div class="dash-cal-row${clash ? ' dash-cal-clash' : ''}">
         <div class="dash-cal-date">
-          <div class="dash-cal-day">${new Date(t.date + 'T00:00:00').getDate()}</div>
-          <div class="dash-cal-mon">${new Date(t.date + 'T00:00:00').toLocaleDateString('en-IN',{month:'short'})}</div>
+          <div class="dash-cal-day">${dt.getDate()}</div>
+          <div class="dash-cal-mon">${dt.toLocaleDateString('en-IN',{month:'short'})}</div>
         </div>
         <div class="dash-cal-main">
-          <div class="dash-cal-label">${escapeHtml(t.label)}</div>
-          <div class="dash-cal-sub">${escapeHtml(t.sub)}</div>
+          <div class="dash-cal-label">${escapeHtml(f.name)}</div>
+          <div class="dash-cal-sub">${f.category === 'chhattisgarhi' ? 'Chhattisgarhi' : 'National'}${clash ? ' · shoot booked' : ''}</div>
         </div>
-        <span class="dash-cal-tag dash-cal-${t.kind}">${t.kind === 'shoot' ? 'Shoot' : 'Festival'}</span>
       </div>`;
     }).join('')}`
-    : `<p class="dash-empty">Nothing scheduled in the next 45 days.</p>`;
+    : `<p class="dash-empty">No festivals in the next 45 days.</p>`;
 
   /* --- Delivery pipeline --- */
   const statuses = ['In Editing','Edited','Delivered','Raw Deleted'];
@@ -4673,19 +4677,25 @@ function renderDashboard(){
   }).join('');
 
   body.innerHTML = `
-    <div class="dash-grid">
-      <section class="dash-card">
+    <div class="dash-lead">
+      <section class="dash-card dash-card-lead">
         <div class="dash-card-head"><h3>Upcoming shoots</h3><span class="dash-card-sub">${upcoming.length} day${upcoming.length===1?'':'s'} booked</span></div>
         ${upcomingHtml}
       </section>
-      <section class="dash-card">
-        <div class="dash-card-head"><h3>Crew this week</h3><span class="dash-card-sub">Next 7 days</span></div>
-        ${crewLoadHtml}
-      </section>
-      <section class="dash-card">
-        <div class="dash-card-head"><h3>What's coming up</h3><span class="dash-card-sub">Next 45 days</span></div>
-        ${timelineHtml}
-      </section>
+      <aside class="dash-side">
+        <section class="dash-card">
+          <div class="dash-card-head"><h3>Crew this week</h3><span class="dash-card-sub">Next 7 days</span></div>
+          ${crewLoadHtml}
+        </section>
+        <section class="dash-card">
+          <div class="dash-card-head"><h3>Festivals ahead</h3><span class="dash-card-sub">Next 45 days</span></div>
+          ${festivalHtml}
+        </section>
+      </aside>
+    </div>
+
+    <h3 class="dash-section-title">Work in progress</h3>
+    <div class="dash-grid">
       <section class="dash-card">
         <div class="dash-card-head"><h3>Album Studio</h3><span class="dash-card-sub">${dashAlbums.length} album${dashAlbums.length===1?'':'s'}</span></div>
         ${albumHtml}
@@ -4698,6 +4708,10 @@ function renderDashboard(){
         <div class="dash-card-head"><h3>Recent activity</h3><span class="dash-card-sub">Last updated</span></div>
         ${recentHtml}
       </section>
+    </div>
+
+    <h3 class="dash-section-title">Archive health</h3>
+    <div class="dash-grid">
       <section class="dash-card">
         <div class="dash-card-head"><h3>Biggest events</h3><span class="dash-card-sub">Space hogs</span></div>
         ${biggestHtml}
