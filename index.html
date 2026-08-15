@@ -556,6 +556,31 @@
   .dash-shoot-crew{font-size:11.5px;color:var(--ink-soft);margin-top:3px;line-height:1.45;}
   .dash-shoot-crew em{color:var(--ink-muted);}
 
+  /* Upcoming calendar timeline */
+  .dash-clash{
+    font-size:11.5px;line-height:1.5;color:var(--amber);
+    background:var(--amber-tint);border:1px solid rgba(154,98,0,0.25);
+    border-radius:8px;padding:8px 11px;margin-bottom:11px;font-weight:600;
+  }
+  .dash-cal-row{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .dash-cal-row:last-child{border-bottom:none;padding-bottom:0;}
+  .dash-cal-date{
+    flex-shrink:0;width:38px;text-align:center;border-radius:7px;
+    background:var(--card-sunken);border:1px solid var(--line);padding:3px 0 4px;
+  }
+  .dash-cal-day{font-size:15px;font-weight:700;color:var(--ink);line-height:1;}
+  .dash-cal-mon{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-muted);margin-top:1px;}
+  .dash-cal-main{flex:1;min-width:0;}
+  .dash-cal-label{font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dash-cal-sub{font-size:11px;color:var(--ink-muted);margin-top:1px;}
+  .dash-cal-tag{
+    flex-shrink:0;font-size:9.5px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;
+    border-radius:20px;padding:2px 8px;
+  }
+  .dash-cal-shoot{color:var(--wine);background:var(--wine-tint);border:1px solid rgba(139,58,80,0.22);}
+  .dash-cal-festival{color:var(--amber);background:var(--amber-tint);border:1px solid rgba(154,98,0,0.22);}
+  .dash-cal-clash .dash-cal-date{border-color:rgba(154,98,0,0.45);background:var(--amber-tint);}
+
   /* Album Studio summary */
   .dash-alb-top{display:flex;gap:18px;margin-bottom:14px;}
   .dash-alb-top > div{display:flex;flex-direction:column;}
@@ -2282,7 +2307,8 @@ async function loadData(isBackgroundRefresh){
       sb.from('drives').select('*').order('label'),
       sb.from('events').select('*').order('event_date', { ascending: false }),
       loadDashRoster(),
-      loadDashAlbums()
+      loadDashAlbums(),
+      loadFestivals()
     ]);
     if(drivesRes.error) throw drivesRes.error;
     if(eventsRes.error) throw eventsRes.error;
@@ -4549,6 +4575,46 @@ function renderDashboard(){
         ${albOverdue.length > 3 ? `<div class="dash-alb-late-more">+${albOverdue.length - 3} more overdue</div>` : ''}
       </div>` : ''}`;
 
+  /* --- What's coming up: festivals and shoots merged onto one timeline --- */
+  const horizon = new Date(Date.now() + 45*86400000).toISOString().slice(0,10);
+  const timeline = [];
+
+  (calFestivals || []).filter(f => f.festival_date && f.festival_date >= todayKey && f.festival_date <= horizon)
+    .forEach(f => timeline.push({
+      date: f.festival_date, kind: 'festival',
+      label: f.name, sub: f.category === 'chhattisgarhi' ? 'Chhattisgarhi' : 'National'
+    }));
+
+  upcoming.filter(u => u.date <= horizon).forEach(u => timeline.push({
+    date: u.date, kind: 'shoot',
+    label: u.title, sub: u.fn || 'Shoot day'
+  }));
+
+  timeline.sort((a,b) => a.date.localeCompare(b.date) || (a.kind === 'shoot' ? -1 : 1));
+
+  // Flag any day where a shoot lands on a festival — that's the clash worth knowing about
+  const festDates = new Set(timeline.filter(t => t.kind === 'festival').map(t => t.date));
+  const shootDates = new Set(timeline.filter(t => t.kind === 'shoot').map(t => t.date));
+  const clashes = [...shootDates].filter(d => festDates.has(d));
+
+  const timelineHtml = timeline.length ? `
+    ${clashes.length ? `<div class="dash-clash">${clashes.length} shoot day${clashes.length===1?'':'s'} fall${clashes.length===1?'s':''} on a festival — check crew availability.</div>` : ''}
+    ${timeline.slice(0, 8).map(t => {
+      const clash = festDates.has(t.date) && shootDates.has(t.date);
+      return `<div class="dash-cal-row${clash ? ' dash-cal-clash' : ''}">
+        <div class="dash-cal-date">
+          <div class="dash-cal-day">${new Date(t.date + 'T00:00:00').getDate()}</div>
+          <div class="dash-cal-mon">${new Date(t.date + 'T00:00:00').toLocaleDateString('en-IN',{month:'short'})}</div>
+        </div>
+        <div class="dash-cal-main">
+          <div class="dash-cal-label">${escapeHtml(t.label)}</div>
+          <div class="dash-cal-sub">${escapeHtml(t.sub)}</div>
+        </div>
+        <span class="dash-cal-tag dash-cal-${t.kind}">${t.kind === 'shoot' ? 'Shoot' : 'Festival'}</span>
+      </div>`;
+    }).join('')}`
+    : `<p class="dash-empty">Nothing scheduled in the next 45 days.</p>`;
+
   /* --- Delivery pipeline --- */
   const statuses = ['In Editing','Edited','Delivered','Raw Deleted'];
   const counts = statuses.map(s => ({ s, n: events.filter(e => (e.status||'In Editing') === s).length }));
@@ -4615,6 +4681,10 @@ function renderDashboard(){
       <section class="dash-card">
         <div class="dash-card-head"><h3>Crew this week</h3><span class="dash-card-sub">Next 7 days</span></div>
         ${crewLoadHtml}
+      </section>
+      <section class="dash-card">
+        <div class="dash-card-head"><h3>What's coming up</h3><span class="dash-card-sub">Next 45 days</span></div>
+        ${timelineHtml}
       </section>
       <section class="dash-card">
         <div class="dash-card-head"><h3>Album Studio</h3><span class="dash-card-sub">${dashAlbums.length} album${dashAlbums.length===1?'':'s'}</span></div>
