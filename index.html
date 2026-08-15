@@ -556,6 +556,23 @@
   .dash-shoot-crew{font-size:11.5px;color:var(--ink-soft);margin-top:3px;line-height:1.45;}
   .dash-shoot-crew em{color:var(--ink-muted);}
 
+  /* Album Studio summary */
+  .dash-alb-top{display:flex;gap:18px;margin-bottom:14px;}
+  .dash-alb-top > div{display:flex;flex-direction:column;}
+  .dash-alb-num{font-size:20px;font-weight:700;color:var(--ink);line-height:1.1;}
+  .dash-alb-alert{color:var(--danger);}
+  .dash-alb-lbl{font-size:10.5px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-top:2px;}
+  .dash-alb-stages{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);}
+  .dash-alb-late{
+    margin-top:12px;padding:9px 11px;border-radius:8px;
+    background:var(--danger-tint);border:1px solid rgba(194,42,42,0.22);
+  }
+  .dash-alb-late-row{
+    display:flex;justify-content:space-between;gap:10px;
+    font-size:12px;color:var(--danger);font-weight:600;padding:2px 0;
+  }
+  .dash-alb-late-more{font-size:11px;color:var(--danger);opacity:0.8;margin-top:3px;}
+
   /* Crew load */
   .dash-load-block{margin-bottom:14px;}
   .dash-load-block:last-child{margin-bottom:0;}
@@ -2246,6 +2263,16 @@ async function loadDashRoster(){
   }catch(e){ /* leave empty — the panel shows an empty state */ }
 }
 
+// Albums only load when Album Studio is opened, so the dashboard fetches its own copy.
+let dashAlbums = [];
+async function loadDashAlbums(){
+  try{
+    const res = await sb.from('albums').select('*');
+    if(res.error) throw res.error;
+    dashAlbums = (res.data || []).map(rowToAlbum);
+  }catch(e){ dashAlbums = []; }
+}
+
 let consecutiveSyncFailures = 0;
 
 async function loadData(isBackgroundRefresh){
@@ -2254,7 +2281,8 @@ async function loadData(isBackgroundRefresh){
     const [drivesRes, eventsRes] = await Promise.all([
       sb.from('drives').select('*').order('label'),
       sb.from('events').select('*').order('event_date', { ascending: false }),
-      loadDashRoster()
+      loadDashRoster(),
+      loadDashAlbums()
     ]);
     if(drivesRes.error) throw drivesRes.error;
     if(eventsRes.error) throw eventsRes.error;
@@ -4489,6 +4517,38 @@ function renderDashboard(){
     </div>` : ''}`
     : `<p class="dash-empty">No crew members added yet.</p>`;
 
+  /* --- Album Studio: what's in progress and what's stuck --- */
+  const albActive = dashAlbums.filter(a => ALBUM_ACTIVE.includes(a.stage));
+  const albDelivered = dashAlbums.filter(a => a.stage === 'Delivered').length;
+  const albWithClient = dashAlbums.filter(a => a.stage === 'Sent for proofing' || a.stage === 'Revisions');
+  const albOverdue = albActive.filter(a => a.dueDate && a.dueDate < todayKey);
+  const albPct = dashAlbums.length ? Math.round((albDelivered / dashAlbums.length) * 100) : 0;
+
+  // Break the active work down by stage so it's clear where albums are sitting
+  const albByStage = {};
+  albActive.forEach(a => { albByStage[a.stage] = (albByStage[a.stage] || 0) + 1; });
+  const albStageRows = Object.entries(albByStage).sort((a,b) => b[1] - a[1]);
+
+  const albumHtml = !dashAlbums.length
+    ? `<p class="dash-empty">No albums tracked yet.</p>`
+    : `
+      <div class="dash-alb-top">
+        <div><span class="dash-alb-num">${albActive.length}</span><span class="dash-alb-lbl">in progress</span></div>
+        <div><span class="dash-alb-num">${albWithClient.length}</span><span class="dash-alb-lbl">with client</span></div>
+        <div><span class="dash-alb-num${albOverdue.length ? ' dash-alb-alert' : ''}">${albOverdue.length}</span><span class="dash-alb-lbl">overdue</span></div>
+      </div>
+      <div class="dash-bar-row">
+        <div class="dash-bar-label"><span>Delivered</span><span class="mono">${albDelivered} of ${dashAlbums.length} · ${albPct}%</span></div>
+        <div class="dash-bar-track"><div class="dash-bar-fill dash-ok" style="width:${albPct}%"></div></div>
+      </div>
+      ${albStageRows.length ? `<div class="dash-alb-stages">
+        ${albStageRows.map(([stage, n]) => `<div class="dash-load-row"><span>${escapeHtml(stage)}</span><span class="mono">${n}</span></div>`).join('')}
+      </div>` : ''}
+      ${albOverdue.length ? `<div class="dash-alb-late">
+        ${albOverdue.slice(0,3).map(a => `<div class="dash-alb-late-row"><span>${escapeHtml(a.client)}</span><span class="mono">due ${escapeHtml(fmtDate(a.dueDate))}</span></div>`).join('')}
+        ${albOverdue.length > 3 ? `<div class="dash-alb-late-more">+${albOverdue.length - 3} more overdue</div>` : ''}
+      </div>` : ''}`;
+
   /* --- Delivery pipeline --- */
   const statuses = ['In Editing','Edited','Delivered','Raw Deleted'];
   const counts = statuses.map(s => ({ s, n: events.filter(e => (e.status||'In Editing') === s).length }));
@@ -4555,6 +4615,10 @@ function renderDashboard(){
       <section class="dash-card">
         <div class="dash-card-head"><h3>Crew this week</h3><span class="dash-card-sub">Next 7 days</span></div>
         ${crewLoadHtml}
+      </section>
+      <section class="dash-card">
+        <div class="dash-card-head"><h3>Album Studio</h3><span class="dash-card-sub">${dashAlbums.length} album${dashAlbums.length===1?'':'s'}</span></div>
+        ${albumHtml}
       </section>
       <section class="dash-card">
         <div class="dash-card-head"><h3>Delivery pipeline</h3><span class="dash-card-sub">${events.length} event${events.length===1?'':'s'}</span></div>
