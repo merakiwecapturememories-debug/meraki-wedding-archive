@@ -2207,8 +2207,19 @@ async function loadData(isBackgroundRefresh){
 
     consecutiveSyncFailures = 0;
     setStatus('Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}));
-    renderAll();
+
+    // Render OUTSIDE the network try/catch. Previously a rendering bug would be caught
+    // here and reported as "Offline", which is actively misleading — the data had
+    // loaded fine. Surface render failures as what they are instead.
+    try{
+      renderAll();
+    }catch(renderErr){
+      console.error('Render failed after a successful load:', renderErr);
+      setStatus('Loaded, but something failed to display — try reloading the page', true);
+    }
+    return;
   }catch(e){
+    console.error('Supabase load failed:', e);
     if(!isBackgroundRefresh){
       // A failure on the initial/manual load is worth surfacing right away — it's actionable.
       setStatus("Offline — showing last loaded data (check connection or Supabase config)", true);
@@ -4346,6 +4357,17 @@ function renderDashboard(){
     body.innerHTML = `<div class="empty-state"><h3>Nothing tracked yet</h3><p>Add a drive and log your first event to see your overview here.</p></div>`;
     return;
   }
+
+  /* --- Delivery pipeline --- */
+  const statuses = ['In Editing','Edited','Delivered','Raw Deleted'];
+  const counts = statuses.map(s => ({ s, n: events.filter(e => (e.status||'In Editing') === s).length }));
+  const maxCount = Math.max(1, ...counts.map(c => c.n));
+  const pipelineHtml = events.length ? counts.map(c => `
+    <div class="dash-pipe-row">
+      <span class="status-badge ${statusClass(c.s)}">${escapeHtml(c.s)}</span>
+      <div class="dash-pipe-track"><div class="dash-pipe-fill" style="width:${(c.n/maxCount*100).toFixed(0)}%"></div></div>
+      <span class="dash-pipe-count mono">${c.n}</span>
+    </div>`).join('') : `<p class="dash-empty">No events logged yet.</p>`;
 
   /* --- Recent activity --- */
   const recent = events.slice()
