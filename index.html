@@ -268,6 +268,14 @@
   }
   .capacity-fix:hover{filter:brightness(0.92);}
 
+  .fu-due{
+    font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    background:var(--card-sunken);border:1px solid var(--line);
+    border-radius:8px;padding:9px 12px;margin-bottom:14px;
+  }
+  .fu-due-late{color:var(--danger);background:var(--danger-tint);border-color:rgba(194,42,42,0.25);}
+  .enq-log-by{font-style:normal;color:var(--ink-muted);font-size:11px;}
+
   /* ---------- Enquiries ---------- */
   /* Labelled key/value facts — clearer than a row of unlabelled chips */
   .enq-facts{display:grid;gap:5px 14px;margin:0 0 10px;grid-template-columns:1fr;}
@@ -2057,6 +2065,17 @@
   </div>
 </div>
 
+<div class="overlay" id="followupOverlay">
+  <div class="modal">
+    <h3 id="followupModalTitle">Follow-up</h3>
+    <div id="followupModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelFollowup">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveFollowup">Save follow-up</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="enquiryOverlay">
   <div class="modal">
     <h3 id="enquiryModalTitle">New enquiry</h3>
@@ -3429,7 +3448,7 @@ function enquiryCardHtml(x, today){
     ${lastNote ? `<p class="alb-card-notes"><strong>Last contact ${escapeHtml(fmtDate(lastNote.date))}:</strong> ${escapeHtml(lastNote.text)}</p>` : (x.notes ? `<p class="alb-card-notes">${escapeHtml(x.notes)}</p>` : '')}
     ${isAdmin() ? `<div class="alb-card-actions">
       <button class="btn-ghost btn-sm" data-enq-edit="${x.id}">Edit</button>
-      <button class="btn-ghost btn-sm" data-enq-log="${x.id}">+ Log contact</button>
+      <button class="btn-ghost btn-sm" data-enq-log="${x.id}">Log follow-up</button>
       <button class="btn-danger-ghost btn-sm" data-enq-del="${x.id}">Remove</button>
     </div>` : ''}
   </article>`;
@@ -3455,16 +3474,7 @@ function wireEnquiryCards(){
   });
 
   body.querySelectorAll('[data-enq-log]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const x = enquiriesData.find(e => e.id === btn.getAttribute('data-enq-log'));
-      if(!x) return;
-      const text = (window.prompt(`Log a contact with ${x.client}:`) || '').trim();
-      if(!text) return;
-      x.log = (x.log||[]).concat([{ date:new Date().toISOString().slice(0,10), text, by:whoAmI() }]);
-      await persistEnquiry(x);
-      drawEnquiries();
-      toast('Contact logged');
-    });
+    btn.addEventListener('click', () => openFollowupModal(enquiriesData.find(e => e.id === btn.getAttribute('data-enq-log'))));
   });
 
   body.querySelectorAll('[data-enq-edit]').forEach(btn => {
@@ -3485,6 +3495,106 @@ function wireEnquiryCards(){
     });
   });
 }
+
+// ---- Logging a follow-up ----
+// A one-line prompt lost the important part: what the client actually said, whether
+// this moves the deal on, and when to chase next. This captures all three together,
+// because an enquiry with no next date is the one that quietly goes cold.
+let followupTarget = null;
+const FOLLOWUP_OUTCOMES = [
+  { key:'Spoke — interested',   next:7,  hint:'Keen, wants to continue' },
+  { key:'Spoke — thinking',     next:7,  hint:'Needs time to decide' },
+  { key:'No answer',            next:2,  hint:'Try again shortly' },
+  { key:'Asked to call later',  next:14, hint:'They named a later time' },
+  { key:'Sent quote',           next:5,  hint:'Waiting on their response' },
+  { key:'Meeting fixed',        next:0,  hint:'Consultation booked' },
+  { key:'Booked',               next:0,  hint:'Won the job' },
+  { key:'Not going ahead',      next:0,  hint:'Lost' }
+];
+
+function openFollowupModal(x){
+  if(!x) return;
+  followupTarget = x;
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('followupModalTitle').textContent = 'Follow-up — ' + x.client;
+  const history = (x.log || []).slice().reverse();
+  document.getElementById('followupModalBody').innerHTML = `
+    ${x.nextFollowup ? `<div class="fu-due${x.nextFollowup <= today ? ' fu-due-late' : ''}">
+      Follow-up was due ${escapeHtml(fmtDate(x.nextFollowup))}${x.nextFollowup <= today ? ' — overdue' : ''}
+    </div>` : ''}
+    <div class="field">
+      <label>What happened? <span class="required-mark">*</span></label>
+      <select id="fu_outcome">
+        ${FOLLOWUP_OUTCOMES.map(o => `<option value="${o.key}" data-next="${o.next}">${o.key} — ${o.hint}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field">
+      <label>What did the client say?</label>
+      <textarea id="fu_note" maxlength="500" rows="3" placeholder="e.g. Budget is tight, wants to drop the pre-wedding shoot. Will confirm after Diwali."></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Next follow-up</label>
+        <input type="date" id="fu_next" value="">
+      </div>
+      <div class="field">
+        <label>Move to stage</label>
+        <select id="fu_stage">${ENQ_STAGES.map(s => `<option value="${s.key}" ${x.stage===s.key?'selected':''}>${s.key}</option>`).join('')}</select>
+      </div>
+    </div>
+    ${history.length ? `<div class="field">
+      <label>Previous contact</label>
+      <div class="enq-log">${history.map(l => `
+        <div class="enq-log-row">
+          <span class="enq-log-date">${escapeHtml(fmtDate(l.date))}</span>
+          <span>${escapeHtml(l.text)}${l.by ? ` <em class="enq-log-by">— ${escapeHtml(l.by)}</em>` : ''}</span>
+        </div>`).join('')}</div>
+    </div>` : ''}`;
+
+  // Pre-fill the next date and stage from whichever outcome is chosen
+  const outcomeEl = document.getElementById('fu_outcome');
+  function applyOutcome(){
+    const opt = outcomeEl.selectedOptions[0];
+    const days = Number(opt.getAttribute('data-next')) || 0;
+    const nextEl = document.getElementById('fu_next');
+    nextEl.value = days ? new Date(Date.now() + days*86400000).toISOString().slice(0,10) : '';
+    const map = { 'Meeting fixed':'Meeting', 'Sent quote':'Quote sent', 'Booked':'Booked', 'Not going ahead':'Lost' };
+    if(map[opt.value]) document.getElementById('fu_stage').value = map[opt.value];
+  }
+  outcomeEl.addEventListener('change', applyOutcome);
+  applyOutcome();
+
+  document.getElementById('followupOverlay').classList.add('open');
+}
+function closeFollowupModal(){ document.getElementById('followupOverlay').classList.remove('open'); followupTarget = null; }
+
+document.getElementById('btnCancelFollowup').addEventListener('click', closeFollowupModal);
+document.getElementById('followupOverlay').addEventListener('click', e => { if(e.target.id === 'followupOverlay') closeFollowupModal(); });
+
+document.getElementById('btnSaveFollowup').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveFollowup');
+  if(btn.disabled || !followupTarget) return;
+  const x = followupTarget;
+  const outcome = document.getElementById('fu_outcome').value;
+  const note = document.getElementById('fu_note').value.trim();
+  const next = document.getElementById('fu_next').value || '';
+  const stage = document.getElementById('fu_stage').value;
+
+  btn.disabled = true;
+  x.log = (x.log || []).concat([{
+    date: new Date().toISOString().slice(0,10),
+    text: note ? `${outcome} — ${note}` : outcome,
+    by: whoAmI()
+  }]);
+  x.nextFollowup = next;
+  x.stage = stage;
+  if(!ENQ_OPEN.includes(stage)) x.nextFollowup = '';
+  await persistEnquiry(x);
+  btn.disabled = false;
+  closeFollowupModal();
+  drawEnquiries();
+  toast(next ? `Logged — next follow-up ${fmtDate(next)}` : 'Follow-up logged');
+});
 
 let editingEnquiry = null;
 function openEnquiryModal(x){
