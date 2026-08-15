@@ -696,7 +696,6 @@
   .drive-bar-track{height:6px;border-radius:4px;background:var(--slate-tint);margin:10px 0 7px;overflow:hidden;}
   .drive-bar-fill{height:100%;background:var(--wine);border-radius:4px;}
   .drive-bar-fill.full{background:var(--danger);}
-  .dmy-input.dmy-bad{border-color:var(--danger) !important;box-shadow:0 0 0 2px var(--danger-tint) !important;}
   .verified-tag{
     font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
     color:var(--ok);background:var(--ok-tint);border:1px solid rgba(15,122,76,0.25);
@@ -2894,93 +2893,6 @@ function fmtTB(gb){
   if(n < 1000) return (n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString()) + ' GB';
   return (n/1000).toFixed(2).replace(/\.00$/,'') + ' TB';
 }
-// ===================== DAY-FIRST DATE INPUTS =====================
-// Native <input type="date"> renders in the browser's locale, so a browser set to
-// US English shows mm/dd/yyyy with no way to override it from HTML, CSS or JS.
-// Each one is swapped for a text field that DISPLAYS dd/mm/yyyy, while its .value
-// property is shimmed to still read and write ISO (yyyy-mm-dd) — so every existing
-// save/load handler keeps working untouched.
-(function initDayFirstDates(){
-  const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
-
-  function isoToDmy(iso){
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '').trim());
-    return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
-  }
-  function dmyToIso(dmy){
-    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(dmy || '').trim());
-    if(!m) return '';
-    const d = +m[1], mo = +m[2], y = +m[3];
-    if(mo < 1 || mo > 12 || d < 1 || d > 31) return '';
-    const dt = new Date(y, mo - 1, d);
-    // Rejects impossible dates like 31/02 by checking the parts survived normalisation
-    if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return '';
-    return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  }
-
-  function upgrade(orig){
-    const el = document.createElement('input');
-    el.type = 'text';
-    el.inputMode = 'numeric';
-    el.autocomplete = 'off';
-    el.placeholder = 'dd/mm/yyyy';
-    el.maxLength = 10;
-    // Copy every attribute (id, class, data-*) so existing selectors and layout hold
-    Array.from(orig.attributes).forEach(a => {
-      if(a.name === 'type' || a.name === 'value' || a.name === 'placeholder') return;
-      el.setAttribute(a.name, a.value);
-    });
-    el.classList.add('dmy-input');
-
-    nativeValue.set.call(el, isoToDmy(orig.getAttribute('value') || orig.value || ''));
-
-    Object.defineProperty(el, 'value', {
-      configurable: true,
-      get(){ return dmyToIso(nativeValue.get.call(el)); },
-      set(v){ nativeValue.set.call(el, isoToDmy(v)); }
-    });
-
-    // Insert the slashes as they type, so nobody has to reach for the / key
-    el.addEventListener('input', () => {
-      const digits = nativeValue.get.call(el).replace(/\D/g, '').slice(0, 8);
-      let out = digits.slice(0, 2);
-      if(digits.length >= 3) out += '/' + digits.slice(2, 4);
-      if(digits.length >= 5) out += '/' + digits.slice(4, 8);
-      if(out !== nativeValue.get.call(el)) nativeValue.set.call(el, out);
-      el.classList.remove('dmy-bad');
-    });
-
-    // Flag an impossible date rather than silently discarding it
-    el.addEventListener('blur', () => {
-      const raw = nativeValue.get.call(el).trim();
-      el.classList.toggle('dmy-bad', raw !== '' && !dmyToIso(raw));
-    });
-
-    orig.replaceWith(el);
-  }
-
-  function upgradeAll(root){
-    (root || document).querySelectorAll('input[type="date"]').forEach(upgrade);
-  }
-
-  // Modals and cards are re-rendered constantly, so catch new fields as they appear
-  const observer = new MutationObserver(muts => {
-    muts.forEach(m => m.addedNodes.forEach(node => {
-      if(node.nodeType !== 1) return;
-      if(node.matches && node.matches('input[type="date"]')) upgrade(node);
-      else if(node.querySelectorAll) upgradeAll(node);
-    }));
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', () => upgradeAll());
-  } else {
-    upgradeAll();
-  }
-})();
-// ===================== /DAY-FIRST DATE INPUTS =====================
-
 function fmtDate(d){
   if(!d) return '—';
   const dt = new Date(d + 'T00:00:00');
