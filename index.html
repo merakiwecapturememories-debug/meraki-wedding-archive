@@ -506,6 +506,19 @@
     .dash-lead{grid-template-columns:1fr;}
   }
 
+  /* Calendar card on the dashboard — slightly tighter than the full Calendar view */
+  .dash-cal-card{margin-bottom:26px;padding:18px 20px 20px;}
+  .dash-cal-card .cal-cell{min-height:78px;}
+  .dash-cal-card .cal-tag{font-size:9.5px;padding:2px 5px;}
+  .dash-cal-card .dash-card-sub{display:flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-weight:500;}
+  .dash-cal-card .dash-card-sub .cal-dot{margin-left:7px;}
+  .dash-cal-card .dash-card-sub .cal-dot:first-child{margin-left:0;}
+  @media (max-width:640px){
+    .dash-cal-card{padding:14px 12px 16px;}
+    .dash-cal-card .cal-cell{min-height:54px;}
+    .dash-cal-card .dash-card-sub{display:none;}
+  }
+
   /* Section dividers so the panels read as grouped, not a wall of equal cards */
   .dash-section-title{
     font-size:11.5px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;
@@ -4399,9 +4412,10 @@ async function loadFestivals(){
 }
 
 // Shoot days come from the Crew Schedule roster (state.events), keyed by YYYY-MM-DD
-function shootDaysByDate(){
+function shootDaysByDate(source){
   const map = {};
-  const evs = (typeof state !== 'undefined' && Array.isArray(state.events)) ? state.events : [];
+  const evs = Array.isArray(source) ? source
+    : ((typeof state !== 'undefined' && Array.isArray(state.events)) ? state.events : []);
   evs.forEach(ev => {
     (ev.days || []).forEach(d => {
       if(!d.date) return;
@@ -4419,22 +4433,18 @@ async function renderCalendar(){
   drawCalendar();
 }
 
-function drawCalendar(){
-  const body = document.getElementById('calendarBody');
-  const titleEl = document.getElementById('calTitle');
-  if(!body) return;
-
-  const year = calCursor.getFullYear(), month = calCursor.getMonth();
-  titleEl.textContent = calCursor.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-
-  const first = new Date(year, month, 1);
-  const startPad = (first.getDay() + 6) % 7;           // Monday-first grid
+// Builds the month grid itself. Shared so the dashboard shows the exact same
+// calendar as the Calendar section rather than a separate list view.
+function buildCalendarGrid(cursor, opts){
+  opts = opts || {};
+  const year = cursor.getFullYear(), month = cursor.getMonth();
+  const startPad = (new Date(year, month, 1).getDay() + 6) % 7;   // Monday-first
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayKey = new Date().toISOString().slice(0,10);
 
-  const shoots = shootDaysByDate();
+  const shoots = shootDaysByDate(opts.rosterEvents);
   const datedFest = {};
-  calFestivals.filter(f => f.festival_date).forEach(f => {
+  (calFestivals || []).filter(f => f.festival_date).forEach(f => {
     (datedFest[f.festival_date] = datedFest[f.festival_date] || []).push(f);
   });
 
@@ -4452,6 +4462,21 @@ function drawCalendar(){
     </div>`;
   }
 
+  return `<div class="cal-grid">
+      ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-head">${d}</div>`).join('')}
+      ${cells}
+    </div>`;
+}
+
+function drawCalendar(){
+  const body = document.getElementById('calendarBody');
+  const titleEl = document.getElementById('calTitle');
+  if(!body) return;
+
+  const month = calCursor.getMonth();
+  titleEl.textContent = calCursor.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const gridHtml = buildCalendarGrid(calCursor);
+
   // Festivals whose exact date shifts each year with the lunar calendar
   const monthly = calFestivals.filter(f => !f.festival_date && Number(f.approx_month) === month + 1);
   const monthlyHtml = monthly.length ? `
@@ -4467,10 +4492,7 @@ function drawCalendar(){
       <span><i class="cal-dot cal-dot-shoot"></i>Shoot day</span>
       <span class="cal-disclaimer">Lunar dates can shift a day by region — check a local panchang before committing.</span>
     </div>
-    <div class="cal-grid">
-      ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-head">${d}</div>`).join('')}
-      ${cells}
-    </div>
+    ${gridHtml}
     ${monthlyHtml}`;
 }
 
@@ -4592,32 +4614,10 @@ function renderDashboard(){
         ${albOverdue.length > 3 ? `<div class="dash-alb-late-more">+${albOverdue.length - 3} more overdue</div>` : ''}
       </div>` : ''}`;
 
-  /* --- Festivals ahead. Shoots already have their own panel, so this one only
-         carries festivals — but flags any that clash with a booked shoot day. --- */
-  const horizon = new Date(Date.now() + 45*86400000).toISOString().slice(0,10);
-  const shootDates = new Set(upcoming.map(u => u.date));
-  const festAhead = (calFestivals || [])
-    .filter(f => f.festival_date && f.festival_date >= todayKey && f.festival_date <= horizon)
-    .sort((a,b) => a.festival_date.localeCompare(b.festival_date));
-  const clashCount = festAhead.filter(f => shootDates.has(f.festival_date)).length;
-
-  const festivalHtml = festAhead.length ? `
-    ${clashCount ? `<div class="dash-clash">${clashCount} festival${clashCount===1?'':'s'} fall${clashCount===1?'s':''} on a booked shoot day.</div>` : ''}
-    ${festAhead.slice(0, 6).map(f => {
-      const clash = shootDates.has(f.festival_date);
-      const dt = new Date(f.festival_date + 'T00:00:00');
-      return `<div class="dash-cal-row${clash ? ' dash-cal-clash' : ''}">
-        <div class="dash-cal-date">
-          <div class="dash-cal-day">${dt.getDate()}</div>
-          <div class="dash-cal-mon">${dt.toLocaleDateString('en-IN',{month:'short'})}</div>
-        </div>
-        <div class="dash-cal-main">
-          <div class="dash-cal-label">${escapeHtml(f.name)}</div>
-          <div class="dash-cal-sub">${f.category === 'chhattisgarhi' ? 'Chhattisgarhi' : 'National'}${clash ? ' · shoot booked' : ''}</div>
-        </div>
-      </div>`;
-    }).join('')}`
-    : `<p class="dash-empty">No festivals in the next 45 days.</p>`;
+  /* --- Month calendar, using the same grid as the Calendar section --- */
+  const dashMonthCursor = new Date();
+  const dashCalHtml = buildCalendarGrid(dashMonthCursor, { rosterEvents: dashRoster.events });
+  const dashMonthLabel = dashMonthCursor.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
 
   /* --- Delivery pipeline --- */
   const statuses = ['In Editing','Edited','Delivered','Raw Deleted'];
@@ -4687,12 +4687,20 @@ function renderDashboard(){
           <div class="dash-card-head"><h3>Crew this week</h3><span class="dash-card-sub">Next 7 days</span></div>
           ${crewLoadHtml}
         </section>
-        <section class="dash-card">
-          <div class="dash-card-head"><h3>Festivals ahead</h3><span class="dash-card-sub">Next 45 days</span></div>
-          ${festivalHtml}
-        </section>
       </aside>
     </div>
+
+    <section class="dash-card dash-cal-card">
+      <div class="dash-card-head">
+        <h3>${escapeHtml(dashMonthLabel)}</h3>
+        <span class="dash-card-sub">
+          <i class="cal-dot cal-dot-cg"></i>Chhattisgarhi
+          <i class="cal-dot cal-dot-nat"></i>National
+          <i class="cal-dot cal-dot-shoot"></i>Shoot
+        </span>
+      </div>
+      ${dashCalHtml}
+    </section>
 
     <h3 class="dash-section-title">Work in progress</h3>
     <div class="dash-grid">
