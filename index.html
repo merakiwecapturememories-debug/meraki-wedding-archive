@@ -662,7 +662,6 @@
   .dash-recent-main{flex:1;min-width:0;}
   .dash-recent-name{font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .dash-recent-meta{font-size:11.5px;color:var(--ink-soft);margin-top:1px;}
-  .dash-big-size{font-size:12.5px;font-weight:700;color:var(--ink);flex-shrink:0;}
   @media (prefers-reduced-motion: reduce){
     .dash-bar-fill, .dash-pipe-fill{transition:none;}
   }
@@ -4758,17 +4757,6 @@ function renderDashboard(){
     </div>`;
   }).join('') : `<p class="dash-empty">No activity yet.</p>`;
 
-  /* --- Biggest events: first place to look when a drive fills up --- */
-  const biggest = events.slice().sort((a,b) => (Number(b.sizeGB)||0) - (Number(a.sizeGB)||0)).slice(0, 6);
-  const biggestHtml = biggest.length ? biggest.map(e => `
-    <div class="dash-recent-row">
-      <div class="dash-recent-main">
-        <div class="dash-recent-name">${escapeHtml(e.client)}</div>
-        <div class="dash-recent-meta">${e.driveId && driveMap[e.driveId] ? escapeHtml(driveMap[e.driveId]) : 'Unassigned'}</div>
-      </div>
-      <span class="mono dash-big-size">${fmtTB(e.sizeGB||0)}</span>
-    </div>`).join('') : `<p class="dash-empty">No events yet.</p>`;
-
   /* --- Data completeness: several standard KPIs are blocked by missing fields --- */
   const totalEv = events.length;
   const completeness = [
@@ -4830,10 +4818,6 @@ function renderDashboard(){
 
     <h3 class="dash-section-title">Archive health</h3>
     <div class="dash-grid">
-      <section class="dash-card">
-        <div class="dash-card-head"><h3>Biggest events</h3><span class="dash-card-sub">Space hogs</span></div>
-        ${biggestHtml}
-      </section>
       <section class="dash-card">
         <div class="dash-card-head"><h3>Data completeness</h3><span class="dash-card-sub">Unlocks more stats</span></div>
         ${completeHtml}
