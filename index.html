@@ -405,7 +405,10 @@
     font-size:11.5px;font-weight:600;color:var(--ok);
     background:var(--ok-tint);border:1px solid rgba(15,122,76,0.22);
     border-radius:20px;padding:3px 11px 3px 8px;white-space:nowrap;
+    cursor:pointer;font-family:inherit;transition:filter 0.12s, box-shadow 0.12s;
   }
+  .vid-done-item:hover{filter:brightness(0.96);box-shadow:0 1px 4px rgba(16,24,40,0.12);}
+  .vid-done-item:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ok-tint);}
   .vid-done-item svg{width:12px;height:12px;flex-shrink:0;}
   .vid-all-done{
     font-size:12.5px;color:var(--ok);background:var(--ok-tint);
@@ -3945,10 +3948,10 @@ function drawVideos(){
     // attention on the job that actually needs doing.
     const doneStrip = doneItems.length ? `
       <div class="vid-done-strip">
-        ${doneItems.map(v => `<span class="vid-done-item" title="${escapeHtml(v.deliveredDate ? 'Delivered ' + fmtDate(v.deliveredDate) : 'Delivered')}">
+        ${doneItems.map(v => `<button type="button" class="vid-done-item" data-vid-open="${v.id}" title="${escapeHtml(v.deliveredDate ? 'Delivered ' + fmtDate(v.deliveredDate) + ' — click to open' : 'Click to open')}">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           ${escapeHtml(v.kind)}
-        </span>`).join('')}
+        </button>`).join('')}
       </div>` : '';
 
     const openCards = openItems.length
@@ -4059,6 +4062,12 @@ function wireVideoCards(){
     btn.addEventListener('click', () => openVideoModal(videosData.find(x => x.id === btn.getAttribute('data-vid-edit'))));
   });
 
+  // Delivered items collapse to chips — clicking one opens it, otherwise finished
+  // work would be completely unreachable.
+  body.querySelectorAll('[data-vid-open]').forEach(btn => {
+    btn.addEventListener('click', () => openVideoModal(videosData.find(x => x.id === btn.getAttribute('data-vid-open'))));
+  });
+
   body.querySelectorAll('[data-vid-del]').forEach(btn => {
     btn.addEventListener('click', () => {
       const v = videosData.find(x => x.id === btn.getAttribute('data-vid-del'));
@@ -4108,7 +4117,19 @@ function openVideoModal(v){
       <div class="field"><label>Revision rounds used</label><input type="number" id="vid_revround" value="${d.revisionRound||0}" min="0"></div>
     </div>
     <div class="field"><label>Delivery link</label><input type="url" id="vid_link" value="${escapeHtml(d.link)}" placeholder="Drive / WeTransfer / YouTube link" maxlength="300"></div>
-    <div class="field"><label>Notes</label><textarea id="vid_notes" maxlength="500" placeholder="Client requests, music licensing, special instructions…">${escapeHtml(d.notes)}</textarea></div>`;
+    <div class="field"><label>Notes</label><textarea id="vid_notes" maxlength="500" placeholder="Client requests, music licensing, special instructions…">${escapeHtml(d.notes)}</textarea></div>
+    ${(d.log && d.log.length) ? `<div class="field">
+      <label>History</label>
+      ${d.createdBy ? `<p class="ros-field-hint">Added by <strong>${escapeHtml(d.createdBy)}</strong>${d.deliveredDate ? ` · delivered ${escapeHtml(fmtDate(d.deliveredDate))}${d.editor ? ` by ${escapeHtml(d.editor)}` : ''}` : ''}</p>` : ''}
+      <div class="vid-history-list">
+        ${d.log.slice().reverse().map(l => `
+          <div class="vid-history-row">
+            <span class="vid-history-when">${escapeHtml(fmtDateTime(l.at))}</span>
+            <span class="vid-history-what">${escapeHtml(l.text)}</span>
+            ${l.by ? `<span class="vid-history-by">${escapeHtml(l.by)}</span>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>` : ''}`;
   document.getElementById('videoOverlay').classList.add('open');
 }
 function closeVideoModal(){ document.getElementById('videoOverlay').classList.remove('open'); editingVideo = null; }
