@@ -360,15 +360,43 @@
     font-size:12px;color:var(--ink-soft);background:var(--card-sunken);
     border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:10px;
   }
+  /* Client group header with an inline progress bar */
+  .vid-client .alb-stage-head{gap:11px;}
+  .vid-client-bar{
+    flex:1;min-width:70px;max-width:190px;height:5px;
+    background:var(--card-sunken);border-radius:20px;overflow:hidden;
+  }
+  .vid-client-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#12885A,var(--ok));transition:width 0.4s ease;}
+  .vid-client-left{font-size:11px;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
+  .vid-client-complete{color:var(--ok);}
+
+  /* Delivered work collapses to a compact strip */
+  .vid-done-strip{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .vid-done-item{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:11.5px;font-weight:600;color:var(--ok);
+    background:var(--ok-tint);border:1px solid rgba(15,122,76,0.22);
+    border-radius:20px;padding:3px 11px 3px 8px;white-space:nowrap;
+  }
+  .vid-done-item svg{width:12px;height:12px;flex-shrink:0;}
+  .vid-all-done{
+    font-size:12.5px;color:var(--ok);background:var(--ok-tint);
+    border:1px solid rgba(15,122,76,0.2);border-radius:9px;
+    padding:11px 14px;margin:0;text-align:center;font-weight:600;
+  }
+
+  /* Tags sit on the spec line now, so they can't wrap and break the title */
+  .alb-card-spec .vid-fast, .alb-card-spec .vid-long{margin-left:0;margin-right:5px;}
+
   .vid-long{
     font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
     color:var(--amber);background:var(--amber-tint);border:1px solid rgba(154,98,0,0.25);
-    border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;
+    border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;white-space:nowrap;
   }
   .vid-fast{
     font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
     color:var(--blue);background:var(--blue-tint);border:1px solid rgba(29,95,184,0.25);
-    border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;
+    border-radius:20px;padding:1px 7px;margin-left:5px;vertical-align:middle;white-space:nowrap;
   }
 
   /* ---------- Album Studio ---------- */
@@ -3858,15 +3886,37 @@ function drawVideos(){
   const groups = clients.map(client => {
     const items = byClient[client].slice().sort((a,b) =>
       VIDEO_KINDS.indexOf(a.kind) - VIDEO_KINDS.indexOf(b.kind));
-    const done = items.filter(v => v.stage === 'Delivered').length;
-    const lateHere = items.some(v => v.dueDate && v.stage !== 'Delivered' && v.dueDate < today);
-    return `<section class="alb-stage">
+    const doneItems = items.filter(v => v.stage === 'Delivered');
+    const openItems = items.filter(v => v.stage !== 'Delivered');
+    const done = doneItems.length;
+    const lateHere = openItems.some(v => v.dueDate && v.dueDate < today);
+    const pct = Math.round((done / items.length) * 100);
+
+    // Finished work is reference, not something to act on — so it collapses to one
+    // line each. Only what's still outstanding gets a full card, which puts the
+    // attention on the job that actually needs doing.
+    const doneStrip = doneItems.length ? `
+      <div class="vid-done-strip">
+        ${doneItems.map(v => `<span class="vid-done-item" title="${escapeHtml(v.deliveredDate ? 'Delivered ' + fmtDate(v.deliveredDate) : 'Delivered')}">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          ${escapeHtml(v.kind)}
+        </span>`).join('')}
+      </div>` : '';
+
+    const openCards = openItems.length
+      ? `<div class="alb-cards">${openItems.map(v => videoCardHtml(v, today)).join('')}</div>`
+      : `<p class="vid-all-done">All deliverables handed over.</p>`;
+
+    return `<section class="alb-stage vid-client">
       <div class="alb-stage-head">
         <span class="alb-stage-dot ${done === items.length ? 'alb-tone-ok' : (lateHere ? 'alb-tone-amber' : 'alb-tone-blue')}"></span>
         <h3>${escapeHtml(client)}</h3>
-        <span class="alb-stage-count">${done}/${items.length} delivered</span>
+        <span class="alb-stage-count">${done}/${items.length}</span>
+        <div class="vid-client-bar"><div class="vid-client-fill" style="width:${pct}%"></div></div>
+        ${openItems.length ? `<span class="vid-client-left">${openItems.length} to go</span>` : '<span class="vid-client-left vid-client-complete">Complete</span>'}
       </div>
-      <div class="alb-cards">${items.map(v => videoCardHtml(v, today)).join('')}</div>
+      ${doneStrip}
+      ${openCards}
     </section>`;
   }).join('');
 
@@ -3882,15 +3932,18 @@ function videoCardHtml(v, today){
   return `<article class="alb-card${late ? ' alb-card-late' : ''}">
     <div class="alb-card-top">
       <div>
-        <div class="alb-card-client">${escapeHtml(v.kind)}${isShort ? ' <span class="vid-fast">fast turnaround</span>' : ''}${isLong ? ' <span class="vid-long">long edit</span>' : ''}</div>
-        ${v.duration ? `<div class="alb-card-spec">${escapeHtml(v.duration)}${v.song ? ' · ' + escapeHtml(v.song) : ''}</div>` : (v.song ? `<div class="alb-card-spec">${escapeHtml(v.song)}</div>` : '')}
+        <div class="alb-card-client">${escapeHtml(v.kind)}</div>
+        <div class="alb-card-spec">
+          ${isShort ? '<span class="vid-fast">fast</span>' : ''}${isLong ? '<span class="vid-long">long edit</span>' : ''}
+          ${[v.duration, v.song].filter(Boolean).map(t => escapeHtml(t)).join(' · ')}
+        </div>
       </div>
       ${isAdmin() ? `<select class="alb-stage-select" data-vid-stage="${v.id}">
         ${VIDEO_STAGES.map(s => `<option value="${s.key}" ${v.stage===s.key?'selected':''}>${s.key}</option>`).join('')}
       </select>` : `<span class="status-badge">${escapeHtml(v.stage)}</span>`}
     </div>
     <div class="alb-card-meta">
-      ${v.editor ? `<span class="alb-chip">${escapeHtml(v.editor)}</span>` : `<span class="alb-chip alb-chip-empty">Unassigned</span>`}
+      ${v.editor ? `<span class="alb-chip">${escapeHtml(v.editor)}</span>` : `<span class="alb-chip alb-chip-warn">No editor</span>`}
       ${v.revisionRound ? `<span class="alb-chip${overRev ? ' alb-chip-warn' : ''}">Revision ${v.revisionRound} of ${v.revisionsIncluded}${overRev ? ' — chargeable' : ''}</span>` : ''}
       ${v.startDate ? `<span class="alb-chip">Started ${fmtDate(v.startDate)}</span>` : ''}
       ${v.dueDate ? `<span class="alb-chip${late ? ' alb-chip-late' : ''}">Due ${fmtDate(v.dueDate)}</span>` : ''}
