@@ -360,6 +360,34 @@
     font-size:12px;color:var(--ink-soft);background:var(--card-sunken);
     border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:10px;
   }
+  /* Per-deliverable history trail */
+  .vid-history{margin-bottom:9px;}
+  .vid-history > summary{
+    list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+    font-size:11.5px;font-weight:600;color:var(--ink-soft);padding:3px 0;
+  }
+  .vid-history > summary::-webkit-details-marker{display:none;}
+  .vid-history > summary::before{content:'▸';font-size:9px;transition:transform 0.15s;}
+  .vid-history[open] > summary::before{transform:rotate(90deg);}
+  .vid-history > summary span{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;
+    background:var(--card-sunken);border:1px solid var(--line);
+    border-radius:20px;padding:0 6px;color:var(--ink-muted);
+  }
+  .vid-history-list{
+    margin-top:6px;border:1px solid var(--line);border-radius:8px;
+    background:var(--card-sunken);padding:3px;max-height:180px;overflow-y:auto;
+  }
+  .vid-history-row{
+    display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:baseline;
+    padding:6px 8px;border-bottom:1px solid var(--line);font-size:11.5px;
+  }
+  .vid-history-row:last-child{border-bottom:none;}
+  .vid-history-when{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-muted);white-space:nowrap;}
+  .vid-history-what{color:var(--ink);line-height:1.4;}
+  .vid-history-by{font-size:10px;color:var(--ink-muted);white-space:nowrap;}
+  .alb-chip-quiet{color:var(--ink-muted);font-weight:500;}
+
   /* Client group header with an inline progress bar */
   .vid-client .alb-stage-head{gap:11px;}
   .vid-client-bar{
@@ -3799,13 +3827,31 @@ const VIDEO_ACTIVE = ['Awaiting footage','Editing','Sent for review','Revisions'
 
 let videosData = [];
 
+// Records who did what and when, so a finished reel can always answer
+// "who made this, and when was it signed off?"
+function fmtDateTime(iso){
+  if(!iso) return '—';
+  const dt = new Date(iso);
+  if(isNaN(dt)) return String(iso).slice(0,10);
+  return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short' }) + ', ' +
+         dt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+function logVideo(v, text){
+  v.log = (Array.isArray(v.log) ? v.log : []).concat([{
+    at: new Date().toISOString(), by: whoAmI(), text
+  }]);
+}
+
 function videoToRow(v){
   return {
     id:v.id, client:v.client, kind:v.kind||'Highlight film', editor:v.editor||'',
     stage:v.stage||'Awaiting footage', duration:v.duration||'', song:v.song||'',
     revision_round:Number(v.revisionRound)||0, revisions_included:Number(v.revisionsIncluded)||2,
     start_date:v.startDate||null, due_date:v.dueDate||null, delivered_date:v.deliveredDate||null,
-    link:v.link||'', notes:v.notes||'', updated_by:whoAmI(), updated_at:new Date().toISOString()
+    link:v.link||'', notes:v.notes||'',
+    log:Array.isArray(v.log)?v.log:[], created_by:v.createdBy||whoAmI(),
+    updated_by:whoAmI(), updated_at:new Date().toISOString()
   };
 }
 function rowToVideo(r){
@@ -3814,7 +3860,9 @@ function rowToVideo(r){
     stage:r.stage||'Awaiting footage', duration:r.duration||'', song:r.song||'',
     revisionRound:r.revision_round||0, revisionsIncluded:r.revisions_included||2,
     startDate:r.start_date||'', dueDate:r.due_date||'', deliveredDate:r.delivered_date||'',
-    link:r.link||'', notes:r.notes||'', updatedBy:r.updated_by||'', updatedAt:r.updated_at
+    link:r.link||'', notes:r.notes||'',
+    log:Array.isArray(r.log)?r.log:[], createdBy:r.created_by||'', createdAt:r.created_at,
+    updatedBy:r.updated_by||'', updatedAt:r.updated_at
   };
 }
 
@@ -3948,9 +3996,21 @@ function videoCardHtml(v, today){
       ${v.startDate ? `<span class="alb-chip">Started ${fmtDate(v.startDate)}</span>` : ''}
       ${v.dueDate ? `<span class="alb-chip${late ? ' alb-chip-late' : ''}">Due ${fmtDate(v.dueDate)}</span>` : ''}
       ${v.deliveredDate ? `<span class="alb-chip alb-chip-ok">Delivered ${fmtDate(v.deliveredDate)}</span>` : ''}
+      ${v.createdBy ? `<span class="alb-chip alb-chip-quiet">Added by ${escapeHtml(v.createdBy)}</span>` : ''}
       ${v.link ? `<a class="alb-chip" href="${escapeHtml(v.link)}" target="_blank" rel="noopener">Open link</a>` : ''}
     </div>
     ${v.notes ? `<p class="alb-card-notes">${escapeHtml(v.notes)}</p>` : ''}
+    ${(v.log && v.log.length) ? `<details class="vid-history">
+      <summary>History <span>${v.log.length}</span></summary>
+      <div class="vid-history-list">
+        ${v.log.slice().reverse().map(l => `
+          <div class="vid-history-row">
+            <span class="vid-history-when">${escapeHtml(fmtDateTime(l.at))}</span>
+            <span class="vid-history-what">${escapeHtml(l.text)}</span>
+            ${l.by ? `<span class="vid-history-by">${escapeHtml(l.by)}</span>` : ''}
+          </div>`).join('')}
+      </div>
+    </details>` : ''}
     ${isAdmin() ? `<div class="alb-card-actions">
       <button class="btn-ghost btn-sm" data-vid-edit="${v.id}">Edit</button>
       <button class="btn-ghost btn-sm" data-vid-revision="${v.id}">+ Revision round</button>
@@ -3966,9 +4026,13 @@ function wireVideoCards(){
     sel.addEventListener('change', async () => {
       const v = videosData.find(x => x.id === sel.getAttribute('data-vid-stage'));
       if(!v) return;
+      const fromStage = v.stage;
       v.stage = sel.value;
       if(v.stage === 'Delivered' && !v.deliveredDate) v.deliveredDate = new Date().toISOString().slice(0,10);
       if(v.stage !== 'Delivered') v.deliveredDate = '';
+      logVideo(v, v.stage === 'Delivered'
+        ? `Delivered${v.editor ? ' — edited by ' + v.editor : ''}`
+        : `${fromStage} → ${v.stage}`);
       sel.disabled = true;
       await persistVideo(v);
       sel.disabled = false;
@@ -3983,6 +4047,7 @@ function wireVideoCards(){
       if(!v) return;
       v.revisionRound = (Number(v.revisionRound)||0) + 1;
       v.stage = 'Revisions';
+      logVideo(v, `Revision round ${v.revisionRound} requested`);
       await persistVideo(v);
       const over = v.revisionRound > v.revisionsIncluded;
       toast(over ? `Revision ${v.revisionRound} — beyond the included ${v.revisionsIncluded}, chargeable` : `Revision round ${v.revisionRound} logged`);
@@ -4014,7 +4079,7 @@ function openVideoModal(v){
   editingVideo = v ? Object.assign({}, v)
     : { id:uid(), client:'', kind:'Highlight film', editor:'', stage:'Awaiting footage',
         duration:'', song:'', revisionRound:0, revisionsIncluded:2,
-        startDate:'', dueDate:'', deliveredDate:'', link:'', notes:'' };
+        startDate:'', dueDate:'', deliveredDate:'', link:'', notes:'', log:[], createdBy: whoAmI() };
   const d = editingVideo;
   // Suggest clients already in the system so deliverables group correctly
   const known = Array.from(new Set(videosData.map(x => x.client).concat(data.events.map(e => e.client)))).filter(Boolean).sort();
@@ -4121,7 +4186,8 @@ document.getElementById('btnSaveVideoPkg').addEventListener('click', async () =>
   for(const kind of picked){
     const rec = { id: uid(), client, kind, editor:'', stage:'Awaiting footage',
       duration:'', song:'', revisionRound:0, revisionsIncluded:2,
-      startDate:'', dueDate:'', deliveredDate:'', link:'', notes:'' };
+      startDate:'', dueDate:'', deliveredDate:'', link:'', notes:'', log:[], createdBy: whoAmI() };
+    logVideo(rec, 'Added to the board');
     videosData.unshift(rec);
     await persistVideo(rec);
   }
@@ -4140,6 +4206,8 @@ document.getElementById('btnSaveVideo').addEventListener('click', async () => {
   if(!client){ document.getElementById('vid_client').style.borderColor = 'var(--danger)'; return; }
   btn.disabled = true;
   const d = editingVideo;
+  const isNew = !videosData.some(x => x.id === d.id);
+  const prevEditor = d.editor, prevStage = d.stage;
   d.client = client;
   d.kind = document.getElementById('vid_kind').value;
   d.stage = document.getElementById('vid_stage').value;
@@ -4153,6 +4221,21 @@ document.getElementById('btnSaveVideo').addEventListener('click', async () => {
   d.link = document.getElementById('vid_link').value.trim();
   d.notes = document.getElementById('vid_notes').value.trim();
   if(d.stage === 'Delivered' && !d.deliveredDate) d.deliveredDate = new Date().toISOString().slice(0,10);
+
+  if(isNew){
+    d.createdBy = d.createdBy || whoAmI();
+    logVideo(d, 'Added to the board');
+  } else {
+    if(d.editor !== prevEditor){
+      logVideo(d, prevEditor ? `Editor changed from ${prevEditor} to ${d.editor || 'unassigned'}` : `Assigned to ${d.editor || 'unassigned'}`);
+    }
+    if(d.stage !== prevStage){
+      logVideo(d, d.stage === 'Delivered'
+        ? `Delivered${d.editor ? ' — edited by ' + d.editor : ''}`
+        : `${prevStage} → ${d.stage}`);
+    }
+  }
+
   await persistVideo(d);
   const i = videosData.findIndex(x => x.id === d.id);
   if(i >= 0) videosData[i] = d; else videosData.unshift(d);
