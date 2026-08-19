@@ -445,6 +445,9 @@
   .alb-progress-track{height:8px;background:var(--card-sunken);border-radius:20px;overflow:hidden;}
   .alb-progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#12885A,var(--ok));transition:width 0.5s cubic-bezier(0.16,1,0.3,1);}
 
+  .alb-overdue-note{
+    font-size:11px;font-weight:600;color:var(--danger);margin-top:7px;
+  }
   .alb-stage{margin-bottom:26px;}
   .alb-stage-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
   .alb-stage-head h3{margin:0;font-size:13.5px;font-weight:700;color:var(--ink);}
@@ -3909,22 +3912,32 @@ function drawVideos(){
     return;
   }
 
+  // Each deliverable falls in exactly ONE bucket, so the numbers add up to the total.
+  // Previously "In progress" included the "With client" items, which double-counted
+  // them and made the figures look wrong.
   const total = videosData.length;
+  const waiting   = videosData.filter(v => v.stage === 'Awaiting footage').length;
+  const inEdit    = videosData.filter(v => v.stage === 'Editing' || v.stage === 'Colour & sound').length;
+  const withClient= videosData.filter(v => v.stage === 'Sent for review' || v.stage === 'Revisions').length;
   const delivered = videosData.filter(v => v.stage === 'Delivered').length;
-  const running = videosData.filter(v => VIDEO_ACTIVE.includes(v.stage)).length;
-  const withClient = videosData.filter(v => v.stage === 'Sent for review' || v.stage === 'Revisions').length;
+  // Overdue deliberately overlaps the buckets above — it's a flag, not a stage,
+  // so it's shown separately and labelled as such.
   const overdue = videosData.filter(v => v.dueDate && v.stage !== 'Delivered' && v.dueDate < today).length;
   const pct = total ? Math.round((delivered/total)*100) : 0;
 
   const summary = `
     <div class="alb-summary">
-      <div class="alb-stat"><div class="alb-stat-num">${running}</div><div class="alb-stat-lbl">In progress</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${waiting}</div><div class="alb-stat-lbl">Awaiting footage</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${inEdit}</div><div class="alb-stat-lbl">In edit</div></div>
       <div class="alb-stat"><div class="alb-stat-num">${withClient}</div><div class="alb-stat-lbl">With client</div></div>
       <div class="alb-stat"><div class="alb-stat-num">${delivered}</div><div class="alb-stat-lbl">Delivered</div></div>
-      <div class="alb-stat${overdue ? ' alb-stat-alert' : ''}"><div class="alb-stat-num">${overdue}</div><div class="alb-stat-lbl">Overdue</div></div>
       <div class="alb-progress-wrap">
-        <div class="alb-progress-top"><span>Completed</span><span class="mono">${delivered} of ${total} · ${pct}%</span></div>
+        <div class="alb-progress-top">
+          <span>Completed</span>
+          <span class="mono">${delivered} of ${total} · ${pct}%</span>
+        </div>
         <div class="alb-progress-track"><div class="alb-progress-fill" style="width:${pct}%"></div></div>
+        ${overdue ? `<div class="alb-overdue-note">${overdue} of the ${total - delivered} outstanding ${overdue===1?'is':'are'} past its due date</div>` : ''}
       </div>
     </div>`;
 
@@ -4378,11 +4391,14 @@ function drawAlbums(){
   const body = document.getElementById('albumsBody');
   if(!body) return;
 
+  // Mutually exclusive buckets so the figures sum to the total — "In studio"
+  // previously overlapped "With client" and double-counted those albums.
   const total = albumsData.length;
-  const delivered = albumsData.filter(a => a.stage === 'Delivered').length;
-  const running = albumsData.filter(a => ALBUM_ACTIVE.includes(a.stage)).length;
-  const withClient = albumsData.filter(a => a.stage === 'Sent for proofing' || a.stage === 'Revisions').length;
   const todayKey = new Date().toISOString().slice(0,10);
+  const waiting = albumsData.filter(a => a.stage === 'Awaiting selection').length;
+  const inStudio = albumsData.filter(a => ['Designing','Approved','Retouching','Sent to print'].includes(a.stage)).length;
+  const withClient = albumsData.filter(a => a.stage === 'Sent for proofing' || a.stage === 'Revisions').length;
+  const delivered = albumsData.filter(a => a.stage === 'Delivered').length;
   const overdue = albumsData.filter(a => a.dueDate && a.stage !== 'Delivered' && a.dueDate < todayKey).length;
   const pct = total ? Math.round((delivered/total)*100) : 0;
 
@@ -4393,13 +4409,14 @@ function drawAlbums(){
 
   const summary = `
     <div class="alb-summary">
-      <div class="alb-stat"><div class="alb-stat-num">${running}</div><div class="alb-stat-lbl">In progress</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${waiting}</div><div class="alb-stat-lbl">Awaiting selection</div></div>
+      <div class="alb-stat"><div class="alb-stat-num">${inStudio}</div><div class="alb-stat-lbl">In studio</div></div>
       <div class="alb-stat"><div class="alb-stat-num">${withClient}</div><div class="alb-stat-lbl">With client</div></div>
       <div class="alb-stat"><div class="alb-stat-num">${delivered}</div><div class="alb-stat-lbl">Delivered</div></div>
-      <div class="alb-stat${overdue ? ' alb-stat-alert' : ''}"><div class="alb-stat-num">${overdue}</div><div class="alb-stat-lbl">Overdue</div></div>
       <div class="alb-progress-wrap">
         <div class="alb-progress-top"><span>Completed</span><span class="mono">${delivered} of ${total} · ${pct}%</span></div>
         <div class="alb-progress-track"><div class="alb-progress-fill" style="width:${pct}%"></div></div>
+        ${overdue ? `<div class="alb-overdue-note">${overdue} of the ${total - delivered} outstanding ${overdue===1?'is':'are'} past its due date</div>` : ''}
       </div>
     </div>`;
 
