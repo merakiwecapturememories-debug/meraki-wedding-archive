@@ -1379,6 +1379,28 @@
   .ros-field-hint strong { color: var(--ros-ink); font-weight: 600; }
   /* ---------- Per-day call sheet cards ---------- */
   .ros-day-cards { display: grid; gap: 12px; }
+  /* Whole-event summary line — the list reads as an index, not a wall of call sheets */
+  .ros-event-block > summary{ list-style:none; cursor:pointer; }
+  .ros-event-block > summary::-webkit-details-marker{ display:none; }
+  .ros-event-summary{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:14px 16px; border-radius:11px; transition:background 0.12s;
+  }
+  .ros-event-summary:hover{ background:var(--ros-surface-muted); }
+  .ros-evt-chevron{
+    font-size:11px; color:var(--ros-ink-faint); margin-top:3px;
+    transition:transform 0.15s; flex-shrink:0;
+  }
+  .ros-event-block[open] .ros-evt-chevron{ transform:rotate(90deg); }
+  .ros-evt-sum-main{ flex:1; min-width:0; }
+  .ros-evt-sum-top{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+  .ros-evt-sum-title{ font-size:15px; font-weight:700; color:var(--ros-ink); letter-spacing:-0.01em; }
+  .ros-evt-sum-sub{ font-size:12.5px; color:var(--ros-ink-soft); margin-top:4px; line-height:1.5; }
+  .ros-evt-sum-sub strong{ color:var(--ros-ink); font-weight:600; }
+  .ros-evt-sum-sub em{ color:var(--ros-ink-faint); font-style:italic; }
+  .ros-event-block[open] > summary{ border-bottom:1px solid var(--ros-border); border-radius:11px 11px 0 0; }
+  .ros-event-block[open] .ros-event-block-header{ padding-top:14px; }
+
   /* Collapsible day cards — one 4-day event used to fill the whole screen */
   .ros-day-card > summary{ list-style: none; cursor: pointer; }
   .ros-day-card > summary::-webkit-details-marker{ display: none; }
@@ -6386,6 +6408,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   }
 
   function buildEventListHtml() {
+    window.__rosOpenedOne = false;   // only the nearest upcoming event opens by default
     if (!state.events.length) return emptyStateHtml('No events on the board yet', 'Add your first shoot to get the roster going.', 'New event', 'add-first-event');
     var events = state.events.slice();
     if (state.searchQuery) {
@@ -6483,13 +6506,44 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '</details>';
     }).join('');
 
-    return '<div class="ros-event-block">' +
+    // A one-line summary that answers when / what / who without opening anything.
+    var allCrew = [];
+    days.forEach(function (day) {
+      ROLE_KEYS.forEach(function (role) {
+        var raw = day.roles && day.roles[role];
+        if (!raw || !String(raw).trim() || isNotRequiredValue(raw)) return;
+        namesInRoleValue(raw).forEach(function (n) { if (allCrew.indexOf(n) === -1) allCrew.push(n); });
+      });
+    });
+    var dated = days.map(function (d) { return d.date; }).filter(Boolean).sort();
+    var whenLabel = dated.length
+      ? (dated.length > 1 ? formatDate(dated[0]) + ' – ' + formatDate(dated[dated.length - 1]) : formatDate(dated[0]))
+      : 'No dates set';
+    var todayIso = new Date().toISOString().slice(0, 10);
+    var isUpcoming = dated.length && dated[dated.length - 1] >= todayIso;
+    // Open only the nearest upcoming event; everything else starts collapsed
+    var openThis = isUpcoming && !window.__rosOpenedOne;
+    if (openThis) window.__rosOpenedOne = true;
+
+    return '<details class="ros-event-block"' + (openThis ? ' open' : '') + '>' +
+      '<summary class="ros-event-summary">' +
+        '<span class="ros-evt-chevron" aria-hidden="true">▸</span>' +
+        '<div class="ros-evt-sum-main">' +
+          '<div class="ros-evt-sum-top">' +
+            '<span class="ros-evt-sum-title">' + escapeHtml(ev.title || 'Untitled event') + '</span>' +
+            '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span>' +
+            '<span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
+          '</div>' +
+          '<div class="ros-evt-sum-sub">' +
+            '<strong>' + escapeHtml(whenLabel) + '</strong>' +
+            (days.length ? ' · ' + days.length + ' day' + (days.length === 1 ? '' : 's') : '') +
+            (allCrew.length ? ' · ' + escapeHtml(allCrew.join(', ')) : ' · <em>no crew assigned</em>') +
+          '</div>' +
+        '</div>' +
+      '</summary>' +
       '<div class="ros-event-block-header">' +
       '<div class="ros-event-block-heading">' +
       '<div class="ros-ref-code">' + escapeHtml(ev.refCode || '') + '</div>' +
-      '<h3 class="ros-callsheet-title">' + escapeHtml(ev.title || 'Untitled event') + '</h3>' +
-      '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span> ' +
-      '<span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
       '</div>' +
       (canManageSchedule() ? '<div class="ros-event-block-actions">' +
       '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
@@ -6509,7 +6563,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
           '</summary><div class="ros-day-cards">' + rows + '</div></details>'
         : '<div class="ros-day-cards">' + rows + '</div>') +
       (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
-      '</div>';
+      '</details>';
   }
 
   /* ---------- Team tab ---------- */
