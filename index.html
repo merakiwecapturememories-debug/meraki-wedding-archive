@@ -1209,7 +1209,18 @@
   }
   .ros-section-label:first-child { margin-top: 0; }
 
-  .ros-search-row { margin-bottom: 22px; }
+  .ros-search-row { margin-bottom: 22px; display: flex; gap: 10px; align-items: center; }
+  .ros-search-row input { flex: 1; min-width: 0; }
+  .ros-search-row select {
+    flex-shrink: 0; max-width: 210px; padding: 11px 12px; border-radius: 8px;
+    border: 1px solid var(--ros-border-strong); background: var(--ros-surface);
+    color: var(--ros-ink); font-family: var(--ros-font-sans); font-size: 14px; cursor: pointer;
+  }
+  .ros-search-row select:focus { outline: none; border-color: var(--ros-accent); box-shadow: 0 0 0 3px var(--ros-accent-soft-bg); }
+  @media (max-width: 560px) {
+    .ros-search-row { flex-direction: column; align-items: stretch; }
+    .ros-search-row select { max-width: none; }
+  }
   .ros-search-row input { width: 100%; padding: 11px 14px; border-radius: 8px; border: 1px solid var(--ros-border-strong); background: var(--ros-surface); color: var(--ros-ink); font-family: var(--ros-font-sans); font-size: 15px; }
   .ros-search-row input::placeholder { color: var(--ros-ink-faint); }
   .ros-search-row input:focus { outline: none; border-color: var(--ros-accent); box-shadow: 0 0 0 3px var(--ros-accent-soft-bg); }
@@ -6059,6 +6070,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     myName: '',
     view: 'my',
     searchQuery: '',
+    monthFilter: '',
     editingEvent: null,
     editingCrew: null
   };
@@ -6256,7 +6268,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     if (state.view === 'my') { el.innerHTML = myScheduleHtml(); }
     else if (state.view === 'crew') { el.innerHTML = crewTabHtml(); }
     else {
-      el.innerHTML = '<div class="ros-search-row"><input type="text" id="rosSearchInput" placeholder="Search events, venues, crew…" value="' + escapeHtml(state.searchQuery) + '"></div><div id="rosEventListArea"></div>';
+      el.innerHTML = '<div class="ros-search-row">' +
+        '<input type="text" id="rosSearchInput" placeholder="Search events, venues, crew…" value="' + escapeHtml(state.searchQuery) + '">' +
+        buildMonthFilterHtml() +
+        '</div><div id="rosEventListArea"></div>';
       updateEventListArea();
     }
   }
@@ -6346,6 +6361,30 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     if (!area) return;
     area.innerHTML = buildEventListHtml();
   }
+  // Only lists months that actually have events, so the dropdown never offers an
+  // empty view. Counts make it obvious where the busy months are.
+  function buildMonthFilterHtml() {
+    var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var counts = {}, order = [];
+    state.events.slice().sort(function (a, b) {
+      return eventEarliestDate(a).localeCompare(eventEarliestDate(b));
+    }).forEach(function (ev) {
+      var d = eventEarliestDate(ev);
+      var key = d === '9999-99-99' ? 'undated' : d.slice(0, 7);
+      if (counts[key] === undefined) { counts[key] = 0; order.push(key); }
+      counts[key]++;
+    });
+    if (!order.length) return '';
+    var opts = '<option value="">All months (' + state.events.length + ')</option>' +
+      order.map(function (key) {
+        var label = key === 'undated' ? 'No date yet'
+          : monthNames[parseInt(key.split('-')[1], 10) - 1] + ' ' + key.split('-')[0];
+        return '<option value="' + key + '"' + (state.monthFilter === key ? ' selected' : '') + '>' +
+          escapeHtml(label) + ' (' + counts[key] + ')</option>';
+      }).join('');
+    return '<select id="rosMonthFilter" aria-label="Filter by month">' + opts + '</select>';
+  }
+
   function buildEventListHtml() {
     if (!state.events.length) return emptyStateHtml('No events on the board yet', 'Add your first shoot to get the roster going.', 'New event', 'add-first-event');
     var events = state.events.slice();
@@ -6354,6 +6393,15 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       events = events.filter(function (ev) { return eventMatchesSearch(ev, q); });
     }
     if (!events.length) return '<p class="ros-no-results">No events match "' + escapeHtml(state.searchQuery) + '".</p>';
+
+    if (state.monthFilter) {
+      events = events.filter(function (ev) {
+        var d = eventEarliestDate(ev);
+        var key = d === '9999-99-99' ? 'undated' : d.slice(0, 7);
+        return key === state.monthFilter;
+      });
+      if (!events.length) return '<p class="ros-no-results">No events in that month.</p>';
+    }
 
     events.sort(function (a, b) { return eventEarliestDate(a).localeCompare(eventEarliestDate(b)); });
     var groups = {}, order = [];
@@ -6774,6 +6822,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
 
     document.getElementById('ros-content').addEventListener('input', function (e) {
       if (e.target.id === 'rosSearchInput') { state.searchQuery = e.target.value; updateEventListArea(); }
+    });
+    // Selects fire 'input' in modern browsers, but 'change' is the reliable one
+    document.getElementById('ros-content').addEventListener('change', function (e) {
+      if (e.target.id === 'rosMonthFilter') { state.monthFilter = e.target.value; updateEventListArea(); }
     });
 
     document.getElementById('rosEventModalClose').addEventListener('click', rosCloseEventModal);
