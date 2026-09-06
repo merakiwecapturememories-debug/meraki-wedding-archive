@@ -1388,7 +1388,7 @@
   }
   .ros-event-summary:hover{ background:var(--ros-surface-muted); }
   .ros-evt-chevron{
-    font-size:11px; color:var(--ros-ink-faint); margin-top:3px;
+    width:14px; height:14px; color:var(--ros-ink-faint); margin-top:4px;
     transition:transform 0.15s; flex-shrink:0;
   }
   .ros-event-block[open] .ros-evt-chevron{ transform:rotate(90deg); }
@@ -6423,7 +6423,6 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   }
 
   function buildEventListHtml() {
-    window.__rosOpenedOne = false;   // only the nearest upcoming event opens by default
     if (!state.events.length) return emptyStateHtml('No events on the board yet', 'Add your first shoot to get the roster going.', 'New event', 'add-first-event');
     var events = state.events.slice();
     if (state.searchQuery) {
@@ -6569,15 +6568,9 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var whenLabel = dated.length
       ? (dated.length > 1 ? formatDate(dated[0]) + ' – ' + formatDate(dated[dated.length - 1]) : formatDate(dated[0]))
       : 'No dates set';
-    var todayIso = new Date().toISOString().slice(0, 10);
-    var isUpcoming = dated.length && dated[dated.length - 1] >= todayIso;
-    // Open only the nearest upcoming event; everything else starts collapsed
-    var openThis = isUpcoming && !window.__rosOpenedOne;
-    if (openThis) window.__rosOpenedOne = true;
-
-    return '<details class="ros-event-block"' + (openThis ? ' open' : '') + '>' +
+    return '<details class="ros-event-block">' +
       '<summary class="ros-event-summary">' +
-        '<span class="ros-evt-chevron" aria-hidden="true">▸</span>' +
+        '<svg class="ros-evt-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '<div class="ros-evt-sum-main">' +
           '<div class="ros-evt-sum-top">' +
             '<span class="ros-evt-sum-title">' + escapeHtml(ev.title || 'Untitled event') + '</span>' +
