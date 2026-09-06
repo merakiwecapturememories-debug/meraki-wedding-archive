@@ -1398,6 +1398,11 @@
   .ros-evt-sum-sub{ font-size:12.5px; color:var(--ros-ink-soft); margin-top:4px; line-height:1.5; }
   .ros-evt-sum-sub strong{ color:var(--ros-ink); font-weight:600; }
   .ros-evt-sum-sub em{ color:var(--ros-ink-faint); font-style:italic; }
+  .ros-evt-other{
+    font-size:11px; color:var(--ros-ink-faint);
+    background:var(--ros-neutral-bg); border:1px solid var(--ros-neutral-border);
+    border-radius:20px; padding:1px 7px; margin-left:2px; white-space:nowrap;
+  }
   .ros-event-block[open] > summary{ border-bottom:1px solid var(--ros-border); border-radius:11px 11px 0 0; }
   .ros-event-block[open] .ros-event-block-header{ padding-top:14px; }
 
@@ -6388,13 +6393,23 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   function buildMonthFilterHtml() {
     var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var counts = {}, order = [];
-    state.events.slice().sort(function (a, b) {
-      return eventEarliestDate(a).localeCompare(eventEarliestDate(b));
-    }).forEach(function (ev) {
-      var d = eventEarliestDate(ev);
-      var key = d === '9999-99-99' ? 'undated' : d.slice(0, 7);
-      if (counts[key] === undefined) { counts[key] = 0; order.push(key); }
-      counts[key]++;
+    state.events.forEach(function (ev) {
+      var months = [];
+      (ev.days || []).forEach(function (d) {
+        if (!d.date) return;
+        var k = d.date.slice(0, 7);
+        if (months.indexOf(k) === -1) months.push(k);
+      });
+      if (!months.length) months = ['undated'];
+      months.forEach(function (k) {
+        if (counts[k] === undefined) { counts[k] = 0; order.push(k); }
+        counts[k]++;
+      });
+    });
+    order.sort(function (a, b) {
+      if (a === 'undated') return 1;
+      if (b === 'undated') return -1;
+      return a.localeCompare(b);
     });
     if (!order.length) return '';
     var opts = '<option value="">All months (' + state.events.length + ')</option>' +
@@ -6419,31 +6434,60 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
 
     if (state.monthFilter) {
       events = events.filter(function (ev) {
-        var d = eventEarliestDate(ev);
-        var key = d === '9999-99-99' ? 'undated' : d.slice(0, 7);
-        return key === state.monthFilter;
+        var dates = (ev.days || []).map(function (d) { return d.date; }).filter(Boolean);
+        if (state.monthFilter === 'undated') return dates.length === 0;
+        return dates.some(function (d) { return d.slice(0, 7) === state.monthFilter; });
       });
       if (!events.length) return '<p class="ros-no-results">No events in that month.</p>';
     }
 
-    events.sort(function (a, b) { return eventEarliestDate(a).localeCompare(eventEarliestDate(b)); });
+    // An event spanning months (engagement in August, wedding in November) belongs in
+    // BOTH — grouping only by its earliest date hid the November wedding under August.
+    // So it's listed under every month it actually has shoot days in, and the summary
+    // under each heading shows only that month's days.
     var groups = {}, order = [];
     events.forEach(function (ev) {
-      var d = eventEarliestDate(ev);
-      var key = d === '9999-99-99' ? 'undated' : d.slice(0, 7);
-      if (!groups[key]) { groups[key] = []; order.push(key); }
-      groups[key].push(ev);
+      var monthsHere = [];
+      (ev.days || []).forEach(function (d) {
+        if (!d.date) return;
+        var k = d.date.slice(0, 7);
+        if (monthsHere.indexOf(k) === -1) monthsHere.push(k);
+      });
+      if (!monthsHere.length) monthsHere = ['undated'];
+      monthsHere.forEach(function (k) {
+        if (!groups[k]) groups[k] = [];
+        groups[k].push(ev);
+        if (order.indexOf(k) === -1) order.push(k);
+      });
     });
+    order.sort(function (a, b) {
+      if (a === 'undated') return 1;
+      if (b === 'undated') return -1;
+      return a.localeCompare(b);
+    });
+
     var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     return order.map(function (key) {
       var label = key === 'undated' ? 'No date yet' : (monthNames[parseInt(key.split('-')[1], 10) - 1] + ' ' + key.split('-')[0]);
-      var n = groups[key].length;
+      var list = groups[key].slice().sort(function (a, b) {
+        return firstDateInMonth(a, key).localeCompare(firstDateInMonth(b, key));
+      });
+      var n = list.length;
       return '<h2 class="ros-section-label">' + label +
         '<span class="ros-section-count">' + n + ' event' + (n === 1 ? '' : 's') + '</span></h2>' +
-        '<div class="ros-event-blocks">' + groups[key].map(function (ev) { return eventBlockHtml(ev); }).join('') + '</div>';
+        '<div class="ros-event-blocks">' + list.map(function (ev) { return eventBlockHtml(ev, key); }).join('') + '</div>';
     }).join('');
   }
-  function eventBlockHtml(ev) {
+
+  // Earliest day of an event that falls inside a given month, so events sort
+  // correctly within the month heading they're listed under.
+  function firstDateInMonth(ev, monthKey) {
+    if (monthKey === 'undated') return '9999-99-99';
+    var inMonth = (ev.days || []).map(function (d) { return d.date; })
+      .filter(function (d) { return d && d.slice(0, 7) === monthKey; }).sort();
+    return inMonth.length ? inMonth[0] : '9999-99-99';
+  }
+  function eventBlockHtml(ev, monthKey) {
     var tc = getTypeColors(ev.eventType);
     var albumLine = (ev.rentalFrom || ev.rentalStatus)
       ? '<div class="ros-meta-item"><dt>Camera rental</dt><dd>' + escapeHtml(ev.rentalFrom || '—') + (ev.rentalStatus ? ' · ' + escapeHtml(ev.rentalStatus) : '') + '</dd></div>'
@@ -6515,7 +6559,13 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
         namesInRoleValue(raw).forEach(function (n) { if (allCrew.indexOf(n) === -1) allCrew.push(n); });
       });
     });
-    var dated = days.map(function (d) { return d.date; }).filter(Boolean).sort();
+    // When listed under a month heading, show that month's dates — not the whole
+    // span. Otherwise a November wedding reads "25 Aug – 6 Nov" under November.
+    var daysHere = (monthKey && monthKey !== 'undated')
+      ? days.filter(function (d) { return d.date && d.date.slice(0, 7) === monthKey; })
+      : days;
+    var otherCount = days.length - daysHere.length;
+    var dated = daysHere.map(function (d) { return d.date; }).filter(Boolean).sort();
     var whenLabel = dated.length
       ? (dated.length > 1 ? formatDate(dated[0]) + ' – ' + formatDate(dated[dated.length - 1]) : formatDate(dated[0]))
       : 'No dates set';
@@ -6536,7 +6586,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
           '</div>' +
           '<div class="ros-evt-sum-sub">' +
             '<strong>' + escapeHtml(whenLabel) + '</strong>' +
-            (days.length ? ' · ' + days.length + ' day' + (days.length === 1 ? '' : 's') : '') +
+            (daysHere.length ? ' · ' + daysHere.length + ' day' + (daysHere.length === 1 ? '' : 's') : '') +
+            (otherCount ? ' <span class="ros-evt-other">+' + otherCount + ' in another month</span>' : '') +
             (allCrew.length ? ' · ' + escapeHtml(allCrew.join(', ')) : ' · <em>no crew assigned</em>') +
           '</div>' +
         '</div>' +
