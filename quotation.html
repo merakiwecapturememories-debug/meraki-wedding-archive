@@ -1065,6 +1065,38 @@
   }
   @keyframes qgspin{ to{ transform:rotate(360deg); } }
   #qGate a{ color:#a9782f; font-weight:600; }
+  .q-saved-tag{
+    display:inline-flex;align-items:center;font-size:12px;font-weight:600;
+    color:#6a5a33;background:#f3e7cd;border:1px solid #ddc99a;
+    border-radius:20px;padding:4px 12px;margin-left:4px;
+  }
+  #qListOverlay{
+    position:fixed;inset:0;background:rgba(35,32,29,0.55);
+    align-items:center;justify-content:center;padding:20px;z-index:9999;
+  }
+  #qListPanel{
+    background:#faf5ea;border-radius:14px;width:100%;max-width:620px;
+    max-height:82vh;display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,0.3);
+  }
+  #qListHead{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:16px 20px;border-bottom:1px solid #ddd0b8;
+  }
+  #qListHead h2{margin:0;font-size:17px;color:#23201d;}
+  #qListBody{overflow-y:auto;padding:8px 12px 14px;}
+  .q-list-row{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 8px;border-bottom:1px solid #e6dac4;
+  }
+  .q-list-row:last-child{border-bottom:none;}
+  .q-list-main{flex:1;min-width:0;}
+  .q-list-client{font-size:14.5px;font-weight:700;color:#23201d;}
+  .q-list-meta{font-size:12px;color:#7a6a55;margin-top:2px;}
+  .q-list-empty{text-align:center;color:#7a6a55;font-size:13.5px;padding:26px 0;}
+  .q-del{color:#a33;border-color:#e0bcbc;}
+  @media print{ #qListOverlay, .q-saved-tag{ display:none !important; } }
+
 </style>
 </head>
 <body>
@@ -1224,6 +1256,9 @@
   <div class="sticky-actions">
     <button type="button" class="btn solid" id="generateBtn">Update Document</button>
     <button type="button" class="btn" id="printBtn">Print / Save as PDF</button>
+    <button type="button" class="btn" id="qSaveBtn">Save quotation</button>
+    <button type="button" class="btn" id="qOpenBtn">Saved quotations</button>
+    <span id="qSavedTag" class="q-saved-tag" style="display:none;"></span>
   </div>
 </div>
 
@@ -2241,7 +2276,189 @@
     });
   });
 
+  // ---------- Save / open quotations ----------
+  // Everything the form holds lives in three places: the id'd inputs, the `days`
+  // array and PAY_ROWS. Snapshotting all three means a reopened quotation is
+  // byte-for-byte what was saved, without needing a field-by-field mapping.
+  var QSB = null, currentQuoteId = null;
+  try {
+    QSB = supabase.createClient(
+      'https://ulemlypcabupyphefgse.supabase.co',
+      'sb_publishable_NYgJGSw9tVVEJESMLZZ-WA_2JJdrai9'
+    );
+  } catch (e) { /* gate already reported the failure */ }
+
+  function qWho(){
+    try {
+      var raw = Object.keys(localStorage).filter(function(k){ return k.indexOf('-auth-token') !== -1; })[0];
+      var s = raw ? JSON.parse(localStorage.getItem(raw)) : null;
+      var u = s && s.user ? s.user : null;
+      return (u && u.user_metadata && u.user_metadata.full_name) || (u && u.email) || 'Unknown';
+    } catch (e) { return 'Unknown'; }
+  }
+
+  function qCapture(){
+    collectDaysFromForm();
+    var fields = {};
+    document.querySelectorAll('.controls input[id], .controls select[id], .controls textarea[id]')
+      .forEach(function(inp){
+        if (inp.type === 'checkbox') fields[inp.id] = inp.checked;
+        else fields[inp.id] = inp.value;
+      });
+    return {
+      fields: fields,
+      days: JSON.parse(JSON.stringify(days)),
+      payRows: JSON.parse(JSON.stringify(PAY_ROWS)),
+      deliverablesText: el('deliverablesText') ? el('deliverablesText').value : '',
+      paymentText: el('paymentText') ? el('paymentText').value : ''
+    };
+  }
+
+  function qRestore(snap){
+    if (!snap) return;
+    // Rebuild the day rows from the saved model
+    if (Array.isArray(snap.days)) {
+      days.length = 0;
+      snap.days.forEach(function(d){ days.push(d); });
+      if (typeof renderDayEditors === 'function') renderDayEditors();
+    }
+    if (Array.isArray(snap.payRows)) {
+      PAY_ROWS.length = 0;
+      snap.payRows.forEach(function(r){ PAY_ROWS.push(r); });
+      if (typeof renderPayRows === 'function') renderPayRows();
+    }
+    Object.keys(snap.fields || {}).forEach(function(id){
+      var inp = el(id);
+      if (!inp) return;
+      if (inp.type === 'checkbox') inp.checked = !!snap.fields[id];
+      else inp.value = snap.fields[id];
+    });
+    if (snap.deliverablesText && el('deliverablesText')) el('deliverablesText').value = snap.deliverablesText;
+    if (snap.paymentText && el('paymentText')) el('paymentText').value = snap.paymentText;
+    if (typeof generateDocument === 'function') generateDocument();
+  }
+
+  function qTag(msg){
+    var t = el('qSavedTag');
+    if (!t) return;
+    t.textContent = msg;
+    t.style.display = msg ? '' : 'none';
+  }
+
+  el('qSaveBtn').addEventListener('click', async function(){
+    if (!QSB) { alert('Not connected — cannot save.'); return; }
+    var btn = this;
+    if (btn.disabled) return;
+    var client = (el('clientNames').value || '').trim();
+    if (!client) { alert('Enter the client / couple name before saving.'); el('clientNames').focus(); return; }
+
+    btn.disabled = true;
+    var wasExisting = !!currentQuoteId;
+    if (!currentQuoteId) currentQuoteId = 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+    var row = {
+      id: currentQuoteId,
+      client: client,
+      doc_no: (el('docNo').value || '').trim(),
+      wedding_year: (el('weddingYear').value || '').trim(),
+      package_key: el('packageSelect').value || '',
+      total_cost: Number(el('totalCost').value) || null,
+      snapshot: qCapture(),
+      updated_by: qWho(),
+      updated_at: new Date().toISOString()
+    };
+    if (!wasExisting) row.created_by = qWho();
+
+    try {
+      var res = await QSB.from('quotations').upsert(row);
+      if (res.error) throw res.error;
+      qTag((wasExisting ? 'Updated' : 'Saved') + ' \u00b7 ' + client);
+    } catch (e) {
+      alert("Couldn't save — " + (e.message || 'please try again.'));
+      if (!wasExisting) currentQuoteId = null;
+    }
+    btn.disabled = false;
+  });
+
+  el('qOpenBtn').addEventListener('click', async function(){
+    if (!QSB) { alert('Not connected.'); return; }
+    var ov = el('qListOverlay'), body = el('qListBody');
+    body.innerHTML = '<p class="q-list-empty">Loading\u2026</p>';
+    ov.style.display = 'flex';
+    try {
+      var res = await QSB.from('quotations').select('*').order('updated_at', { ascending: false });
+      if (res.error) throw res.error;
+      var rows = res.data || [];
+      if (!rows.length) { body.innerHTML = '<p class="q-list-empty">No saved quotations yet.</p>'; return; }
+      body.innerHTML = rows.map(function(r){
+        var when = r.updated_at ? new Date(r.updated_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '';
+        return '<div class="q-list-row">' +
+          '<div class="q-list-main">' +
+            '<div class="q-list-client">' + (r.client || 'Untitled') + '</div>' +
+            '<div class="q-list-meta">' +
+              (r.doc_no ? r.doc_no + ' \u00b7 ' : '') +
+              (r.wedding_year ? r.wedding_year + ' \u00b7 ' : '') +
+              (r.total_cost ? '\u20b9' + Number(r.total_cost).toLocaleString('en-IN') + ' \u00b7 ' : '') +
+              'saved ' + when + (r.updated_by ? ' by ' + r.updated_by : '') +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="btn" data-qopen="' + r.id + '">Open</button>' +
+          '<button type="button" class="btn q-del" data-qdel="' + r.id + '">Delete</button>' +
+        '</div>';
+      }).join('');
+
+      body.querySelectorAll('[data-qopen]').forEach(function(b){
+        b.addEventListener('click', function(){
+          var row = rows.filter(function(r){ return r.id === b.getAttribute('data-qopen'); })[0];
+          if (!row) return;
+          currentQuoteId = row.id;
+          qRestore(row.snapshot);
+          qTag('Editing \u00b7 ' + (row.client || 'Untitled'));
+          ov.style.display = 'none';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+      body.querySelectorAll('[data-qdel]').forEach(function(b){
+        b.addEventListener('click', async function(){
+          var id = b.getAttribute('data-qdel');
+          var row = rows.filter(function(r){ return r.id === id; })[0];
+          if (!confirm('Delete the saved quotation for ' + ((row && row.client) || 'this client') + '? This cannot be undone.')) return;
+          try {
+            var d = await QSB.from('quotations').delete().eq('id', id);
+            if (d.error) throw d.error;
+            if (currentQuoteId === id) { currentQuoteId = null; qTag(''); }
+            el('qOpenBtn').click();
+          } catch (e) { alert("Couldn't delete."); }
+        });
+      });
+    } catch (e) {
+      body.innerHTML = '<p class="q-list-empty">Couldn\u2019t load saved quotations.</p>';
+    }
+  });
+
+  el('qListClose').addEventListener('click', function(){ el('qListOverlay').style.display = 'none'; });
+  el('qListOverlay').addEventListener('click', function(e){ if (e.target.id === 'qListOverlay') el('qListOverlay').style.display = 'none'; });
+  el('qNewBtn').addEventListener('click', function(){
+    currentQuoteId = null;
+    qTag('');
+    el('qListOverlay').style.display = 'none';
+    alert('Started a new quotation. Saving will create a separate record rather than overwriting the one you had open.');
+  });
+
 })();
 </script>
+<div id="qListOverlay" style="display:none;">
+  <div id="qListPanel">
+    <div id="qListHead">
+      <h2>Saved quotations</h2>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn" id="qNewBtn">Start new</button>
+        <button type="button" class="btn" id="qListClose">Close</button>
+      </div>
+    </div>
+    <div id="qListBody"></div>
+  </div>
+</div>
+
 </body>
 </html>
