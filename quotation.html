@@ -1051,8 +1051,69 @@
   .contact-grid{ gap: 5px; }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style id="qGateStyle">
+  body > *:not(#qGate){ display:none !important; }
+  #qGate{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:14px; background:#faf5ea; color:#55493d;
+    font-family:system-ui,-apple-system,sans-serif; font-size:14px; z-index:99999;
+  }
+  #qGate .qg-spin{
+    width:26px; height:26px; border:3px solid #ddd0b8; border-top-color:#a9782f;
+    border-radius:50%; animation:qgspin 0.8s linear infinite;
+  }
+  @keyframes qgspin{ to{ transform:rotate(360deg); } }
+  #qGate a{ color:#a9782f; font-weight:600; }
+</style>
 </head>
 <body>
+<div id="qGate"><div class="qg-spin"></div><div>Checking access…</div></div>
+<script>
+// This page lives outside the main app, so it enforces the same sign-in itself.
+// Supabase stores its session per-origin, so a session created on the dashboard is
+// visible here without logging in again.
+(function(){
+  var SUPABASE_URL = 'https://ulemlypcabupyphefgse.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_NYgJGSw9tVVEJESMLZZ-WA_2JJdrai9';
+
+  function deny(msg, showLink){
+    var g = document.getElementById('qGate');
+    if(!g) return;
+    g.innerHTML = '<div style="font-size:15px;font-weight:600;">' + msg + '</div>' +
+      (showLink ? '<a href="/">Go to Meraki Archive</a>' : '');
+  }
+
+  function allow(){
+    var s = document.getElementById('qGateStyle');
+    if(s) s.remove();
+    var g = document.getElementById('qGate');
+    if(g) g.remove();
+  }
+
+  try{
+    var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sb.auth.getSession().then(function(res){
+      var session = res && res.data ? res.data.session : null;
+      if(!session){
+        deny('Please sign in first.', true);
+        setTimeout(function(){ window.location.href = '/'; }, 1500);
+        return;
+      }
+      var role = session.user && session.user.user_metadata ? session.user.user_metadata.role : null;
+      if(role !== 'admin'){
+        deny('This page is admin only.', true);
+        return;
+      }
+      allow();
+    }).catch(function(){
+      deny('Could not verify access — check your connection.', true);
+    });
+  }catch(e){
+    deny('Could not verify access.', true);
+  }
+})();
+</script>
 
 <div class="controls no-print">
   <h1>MERAKI — QUOTATION BUILDER</h1>
