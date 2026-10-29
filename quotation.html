@@ -1050,8 +1050,9 @@
   .sign-grid .line{ height: 10px; }
   .contact-grid{ gap: 5px; }
   /* Keep the Terms / Signature / Contact page inside one A4 sheet */
-  ul.terms li{ font-size: 12.5px; line-height: 1.24; margin-bottom: 1.5px; }
-  .sign-space{ height: 20px; }
+  ul.terms li{ font-size: 12.2px; line-height: 1.22; margin-bottom: 1px; }
+  #printArea > .page:last-of-type{ padding-top: 9mm; padding-bottom: 9mm; }
+  .sign-space{ height: 18px; }
   .sign-parties{ margin-bottom: 8px; }
   .signed-title{ margin: 0 0 6px; }
   .contact-grid{ gap: 3px; }
@@ -1101,6 +1102,7 @@
   .q-list-meta{font-size:12px;color:#7a6a55;margin-top:2px;}
   .q-list-empty{text-align:center;color:#7a6a55;font-size:13.5px;padding:26px 0;}
   .q-del{color:#a33;border-color:#e0bcbc;}
+  .q-status{font:inherit;font-size:13px;padding:6px 8px;border:1px solid #d9cfc3;border-radius:8px;background:#fff;}
   @media print{ #qListOverlay, .q-saved-tag{ display:none !important; } }
 
 </style>
@@ -1131,6 +1133,7 @@
 
   try{
     var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.__qClient = sb; // one client = one session, so tokens never fight each other
     sb.auth.getSession().then(function(res){
       var session = res && res.data ? res.data.session : null;
       if(!session){
@@ -2155,6 +2158,28 @@
       });
       day.photo = [day.photoCandid, day.photoTraditional, day.photoAssistant].filter(Boolean).join(', ');
       day.cine = [day.cineLead, day.cineTraditional, day.cineDrone, day.cineSelfie].filter(Boolean).join(', ');
+
+      // Team Size follows the roles listed: whenever the crew changes, recount it so the
+      // number shown can never disagree with the names beneath it. A figure typed by hand
+      // is kept until the crew changes again.
+      var roles = [day.photoCandid, day.photoTraditional, day.photoAssistant, day.cineLead, day.cineTraditional, day.cineDrone, day.cineSelfie];
+      var sig = roles.join('|');
+      var heads = roles.reduce(function(sum, r){
+        r = String(r || '').trim();
+        if (!r) return sum;
+        var m = r.match(/^(\d+)/);
+        return sum + (m ? Number(m[1]) : 1);
+      }, 0);
+      if (day._sig === undefined) {
+        day._sig = sig;               // first sight of this day: leave saved numbers alone
+      } else if (day._sig !== sig) {
+        day._sig = sig;
+        if (heads > 0) {
+          day.members = heads;
+          var mi = block.querySelector('[data-field="members"]');
+          if (mi) mi.value = heads;
+        }
+      }
     });
   }
 
@@ -2288,7 +2313,7 @@
   // byte-for-byte what was saved, without needing a field-by-field mapping.
   var QSB = null, currentQuoteId = null;
   try {
-    QSB = supabase.createClient(
+    QSB = window.__qClient || supabase.createClient(
       'https://ulemlypcabupyphefgse.supabase.co',
       'sb_publishable_NYgJGSw9tVVEJESMLZZ-WA_2JJdrai9'
     );
@@ -2352,37 +2377,11 @@
   }
 
   el('qSaveBtn').addEventListener('click', async function(){
-    if (!QSB) { alert('Not connected — cannot save.'); return; }
     var btn = this;
     if (btn.disabled) return;
-    var client = (el('clientNames').value || '').trim();
-    if (!client) { alert('Enter the client / couple name before saving.'); el('clientNames').focus(); return; }
-
     btn.disabled = true;
-    var wasExisting = !!currentQuoteId;
-    if (!currentQuoteId) currentQuoteId = 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-
-    var row = {
-      id: currentQuoteId,
-      client: client,
-      doc_no: (el('docNo').value || '').trim(),
-      wedding_year: (el('weddingYear').value || '').trim(),
-      package_key: el('packageSelect').value || '',
-      total_cost: Number(el('totalCost').value) || null,
-      snapshot: qCapture(),
-      updated_by: qWho(),
-      updated_at: new Date().toISOString()
-    };
-    if (!wasExisting) row.created_by = qWho();
-
-    try {
-      var res = await QSB.from('quotations').upsert(row);
-      if (res.error) throw res.error;
-      qTag((wasExisting ? 'Updated' : 'Saved') + ' \u00b7 ' + client);
-    } catch (e) {
-      alert("Couldn't save — " + (e.message || 'please try again.'));
-      if (!wasExisting) currentQuoteId = null;
-    }
+    clearTimeout(qTimer);
+    await qSave(false);
     btn.disabled = false;
   });
 
@@ -2408,7 +2407,11 @@
               'saved ' + when + (r.updated_by ? ' by ' + r.updated_by : '') +
             '</div>' +
           '</div>' +
+          '<select class="q-status" data-qstatus="' + r.id + '" title="Quotation status">' +
+            ['Draft','Sent','Accepted','Lost'].map(function(s){ return '<option' + ((r.status || 'Draft') === s ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+          '</select>' +
           '<button type="button" class="btn" data-qopen="' + r.id + '">Open</button>' +
+          '<button type="button" class="btn" data-qdup="' + r.id + '" title="Make a copy to reuse for another client">Duplicate</button>' +
           '<button type="button" class="btn q-del" data-qdel="' + r.id + '">Delete</button>' +
         '</div>';
       }).join('');
@@ -2419,7 +2422,40 @@
           if (!row) return;
           currentQuoteId = row.id;
           qRestore(row.snapshot);
+          qDirty = false;
           qTag('Editing \u00b7 ' + (row.client || 'Untitled'));
+          ov.style.display = 'none';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+      body.querySelectorAll('[data-qstatus]').forEach(function(s){
+        s.addEventListener('change', async function(){
+          try {
+            var u = await QSB.from('quotations').update({ status: s.value, updated_by: qWho(), updated_at: new Date().toISOString() }).eq('id', s.getAttribute('data-qstatus'));
+            if (u.error) throw u.error;
+          } catch (e) { alert("Couldn't change the status."); }
+        });
+      });
+      body.querySelectorAll('[data-qdup]').forEach(function(b){
+        b.addEventListener('click', async function(){
+          var src = rows.filter(function(r){ return r.id === b.getAttribute('data-qdup'); })[0];
+          if (!src) return;
+          var snap = JSON.parse(JSON.stringify(src.snapshot || {}));
+          var name = (src.client || 'Untitled') + ' (copy)';
+          snap.fields = snap.fields || {};
+          snap.fields.clientNames = name;
+          var newId = 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+          try {
+            var r2 = await QSB.from('quotations').upsert({
+              id: newId, client: name, doc_no: '', wedding_year: src.wedding_year, package_key: src.package_key,
+              total_cost: src.total_cost, snapshot: snap, status: 'Draft', created_by: qWho(), updated_by: qWho(), updated_at: new Date().toISOString()
+            });
+            if (r2.error) throw r2.error;
+          } catch (e) { alert("Couldn't duplicate."); return; }
+          currentQuoteId = newId;
+          qRestore(snap);
+          qDirty = false;
+          qTag('Editing copy \u00b7 ' + name);
           ov.style.display = 'none';
           window.scrollTo({ top: 0, behavior: 'smooth' });
         });
@@ -2442,14 +2478,140 @@
     }
   });
 
-  el('qListClose').addEventListener('click', function(){ el('qListOverlay').style.display = 'none'; });
-  el('qListOverlay').addEventListener('click', function(e){ if (e.target.id === 'qListOverlay') el('qListOverlay').style.display = 'none'; });
-  el('qNewBtn').addEventListener('click', function(){
-    currentQuoteId = null;
-    qTag('');
-    el('qListOverlay').style.display = 'none';
-    alert('Started a new quotation. Saving will create a separate record rather than overwriting the one you had open.');
+  // The overlay markup sits after this script, so bind its buttons once the page is parsed.
+  document.addEventListener('DOMContentLoaded', function(){
+    el('qListClose').addEventListener('click', function(){ el('qListOverlay').style.display = 'none'; });
+    el('qListOverlay').addEventListener('click', function(e){ if (e.target.id === 'qListOverlay') el('qListOverlay').style.display = 'none'; });
+    el('qNewBtn').addEventListener('click', function(){
+      if (qDirty && !confirm('You have changes that are not saved yet. Start a new quotation anyway?')) return;
+      currentQuoteId = null;
+      qDirty = false;
+      try { localStorage.removeItem(Q_DRAFT_KEY); } catch (e) {}
+      qTag('');
+      el('qListOverlay').style.display = 'none';
+      alert('Started a new quotation. Saving will create a separate record rather than overwriting the one you had open.');
+    });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') el('qListOverlay').style.display = 'none'; });
+    qOfferDraft();
   });
+
+  // ---------- Autosave + draft recovery ----------
+  // Every change is kept as a local draft immediately and written to the database a
+  // moment after typing stops, so nothing has to be re-entered if the tab is closed.
+  var Q_DRAFT_KEY = 'meraki-quotation-draft-v1';
+  var qDirty = false, qTimer = null, qBusy = false;
+
+  function qStoreDraft(){
+    try { localStorage.setItem(Q_DRAFT_KEY, JSON.stringify({ id: currentQuoteId, at: Date.now(), snap: qCapture() })); } catch (e) {}
+  }
+  function qClock(){ return new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }); }
+
+  // Make sure the request goes out signed in; refresh an expired token before giving up.
+  async function qEnsureSession(){
+    try {
+      var r = await QSB.auth.getSession();
+      if (r && r.data && r.data.session) return true;
+      var rf = await QSB.auth.refreshSession();
+      return !!(rf && rf.data && rf.data.session);
+    } catch (e) { return false; }
+  }
+  function qExpired(silent){
+    qStoreDraft();
+    qTag('Sign-in expired \u2014 please sign in again');
+    if (!silent) {
+      alert('Your sign-in has expired, so this could not be saved yet.\n\nYour work is kept as a draft on this computer. You will be taken to the sign-in page \u2014 after signing in, open Quotation again and tap Restore.');
+      qDirty = false; // the draft is already stored; don't show a "leave site?" prompt
+      window.location.href = '/';
+    }
+  }
+  async function qUpsert(row){
+    var res = await QSB.from('quotations').upsert(row);
+    if (res.error && /row-level security|jwt|not authenticated/i.test(res.error.message || '')) {
+      try { await QSB.auth.refreshSession(); } catch (e) {}
+      res = await QSB.from('quotations').upsert(row);
+    }
+    return res;
+  }
+
+  async function qSave(silent){
+    if (!QSB) { if (!silent) alert('Not connected — cannot save.'); return false; }
+    if (qBusy) return false;
+    var client = (el('clientNames').value || '').trim();
+    if (!client) { if (!silent) { alert('Enter the client / couple name before saving.'); el('clientNames').focus(); } return false; }
+    // The untouched placeholder name must not create a record on its own while autosaving
+    if (silent && !currentQuoteId && client.toLowerCase() === 'the couple') return false;
+    qBusy = true;
+    if (!(await qEnsureSession())) { qBusy = false; qExpired(silent); return false; }
+    var wasExisting = !!currentQuoteId;
+    if (!currentQuoteId) currentQuoteId = 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    var row = {
+      id: currentQuoteId, client: client,
+      doc_no: (el('docNo').value || '').trim(),
+      wedding_year: (el('weddingYear').value || '').trim(),
+      package_key: el('packageSelect').value || '',
+      total_cost: Number(el('totalCost').value) || null,
+      snapshot: qCapture(), updated_by: qWho(), updated_at: new Date().toISOString()
+    };
+    if (!wasExisting) row.created_by = qWho();
+    var ok = false;
+    try {
+      var res = await qUpsert(row);
+      if (res.error) throw res.error;
+      qDirty = false;
+      qTag('Saved \u2713 ' + qClock() + ' \u00b7 ' + client);
+      ok = true;
+    } catch (e) {
+      if (!wasExisting) currentQuoteId = null;
+      qBusy = false;
+      if (/row-level security|jwt|not authenticated/i.test(e.message || '')) { qExpired(silent); return false; }
+      if (!silent) alert("Couldn't save \u2014 " + (e.message || 'please try again.'));
+      else qTag('Not saved yet \u2014 will retry');
+      return false;
+    }
+    qBusy = false;
+    return ok;
+  }
+
+  function qSchedule(){
+    qDirty = true;
+    qTag('Unsaved changes\u2026');
+    qStoreDraft();
+    clearTimeout(qTimer);
+    qTimer = setTimeout(function(){ qSave(true); }, 1800);
+  }
+  document.addEventListener('input', function(e){ if (e.target.closest && e.target.closest('.controls')) qSchedule(); });
+  document.addEventListener('change', function(e){ if (e.target.closest && e.target.closest('.controls')) qSchedule(); });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.controls button');
+    if (b) setTimeout(qSchedule, 50); // add / remove day, payment row, etc.
+  });
+  window.addEventListener('beforeunload', function(e){
+    if (qDirty) { qStoreDraft(); e.preventDefault(); e.returnValue = ''; }
+  });
+
+  function qOfferDraft(){
+    setTimeout(function(){
+      var d = null;
+      try { d = JSON.parse(localStorage.getItem(Q_DRAFT_KEY) || 'null'); } catch (e) {}
+      if (!d || !d.snap || !d.snap.fields) return;
+      var name = (d.snap.fields.clientNames || '').trim();
+      var cur = (el('clientNames').value || '').trim().toLowerCase();
+      if (!name || name.toLowerCase() === 'the couple') return;
+      if (cur && cur !== 'the couple') return;
+      if (Date.now() - d.at > 14 * 86400000) return;
+      var bar = document.createElement('div');
+      bar.id = 'qDraftBar';
+      bar.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99998;background:#fff8e6;border:1px solid #e3c779;border-radius:10px;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,.18);font:14px/1.4 system-ui,sans-serif;display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:92vw;';
+      var txt = document.createElement('span');
+      txt.textContent = 'Continue your unsaved quotation for \u201c' + name + '\u201d? (' + new Date(d.at).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) + ')';
+      var yes = document.createElement('button'); yes.type = 'button'; yes.className = 'btn'; yes.textContent = 'Restore';
+      var no = document.createElement('button'); no.type = 'button'; no.className = 'btn'; no.textContent = 'Discard';
+      yes.onclick = function(){ currentQuoteId = d.id || null; qRestore(d.snap); qTag('Restored draft \u00b7 ' + name); qDirty = true; bar.remove(); };
+      no.onclick = function(){ try { localStorage.removeItem(Q_DRAFT_KEY); } catch (e) {} bar.remove(); };
+      bar.appendChild(txt); bar.appendChild(yes); bar.appendChild(no);
+      document.body.appendChild(bar);
+    }, 900);
+  }
 
 })();
 </script>
@@ -2468,21 +2630,13 @@
 
 
 <script>
-/* Print fit: if any A4 page is taller than one sheet (longer package / more events),
-   shrink just that page slightly so the PDF stays at exactly 3 pages. */
+/* Printing must never include the app's own pop-ups (saved list, draft bar). */
 (function(){
-  var PAGE_PX = 297 / 25.4 * 96; // A4 height in CSS px
-  function fit(){
-    var pages = document.querySelectorAll('#printArea .page');
-    pages.forEach(function(p){
-      p.style.zoom = '';
-      var h = p.scrollHeight;
-      if(h > PAGE_PX + 1){ p.style.zoom = String(((PAGE_PX - 6) / h).toFixed(4)); }
-    });
+  function clean(){
+    var o = document.getElementById('qListOverlay'); if(o) o.style.display = 'none';
+    var b = document.getElementById('qDraftBar'); if(b) b.remove();
   }
-  function reset(){ document.querySelectorAll('#printArea .page').forEach(function(p){ p.style.zoom=''; }); }
-  window.addEventListener('beforeprint', fit);
-  window.addEventListener('afterprint', reset);
+  window.addEventListener('beforeprint', clean);
 })();
 </script>
 </body>
