@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <meta charset="UTF-8">
 <title>Meraki We Capture Memories — Quotation Builder</title>
 <style>
@@ -990,6 +992,7 @@
     margin: 0;
     padding: 13mm 14mm;
   }
+  html, body, #printArea, .page{ zoom: 1 !important; transform: none !important; }
   .page + .page{ page-break-before: always; margin-top:0; }
   .page-one-bg, .page-one-bg::after, .page-one-bg img{
     -webkit-print-color-adjust: exact;
@@ -1141,8 +1144,9 @@
         setTimeout(function(){ window.location.href = '/'; }, 1500);
         return;
       }
-      var role = session.user && session.user.user_metadata ? session.user.user_metadata.role : null;
-      if(role !== 'admin'){
+      var meta = session.user && session.user.user_metadata ? session.user.user_metadata : {};
+      // Admins, plus anyone the admin has granted quotation access to.
+      if(meta.role !== 'admin' && !meta.can_make_quotations){
         deny('This page is admin only.', true);
         return;
       }
@@ -1158,7 +1162,7 @@
 
 <div class="controls no-print">
   <h1>MERAKI — QUOTATION BUILDER</h1>
-  <p class="sub">Fill in the details below. The document beneath updates automatically to match the package and number of event days you choose. When ready, use Print / Save as PDF.</p>
+  <p class="sub">Fill in the details below. The document beneath updates automatically to match the package and number of event days you choose. When ready, use Print / Save as PDF. <span id="qBuild" style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:10px;background:#efe4c8;color:#6a5a33;font-size:11px;font-weight:600;">Build 29-Oct-2026 · G</span></p>
 
   <div class="ctrl-row">
     <div class="ctrl-field">

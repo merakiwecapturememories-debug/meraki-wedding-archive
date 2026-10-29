@@ -1701,6 +1701,59 @@
     .auth-gear{animation:none;}
     .auth-card{animation:none;}
   }
+  /* ---- Payments (admin) + dashboard attention strip ---- */
+  .pay-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px;}
+  .pay-tile{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-card);min-width:0;}
+  .pay-tile .pt-label{font-size:12px;color:var(--ink-soft);font-weight:500;}
+  .pay-tile .pt-num{font-size:22px;font-weight:700;margin-top:4px;letter-spacing:-0.01em;}
+  .pay-tile .pt-sub{font-size:12px;color:var(--ink-muted);margin-top:2px;}
+  .pay-tile.pt-danger .pt-num{color:var(--danger);}
+  .pay-tile.pt-ok .pt-num{color:var(--ok);}
+  .pay-tile.pt-amber .pt-num{color:var(--amber);}
+  .pay-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .pay-toolbar input,.pay-toolbar select{flex:1 1 180px;min-width:0;}
+  .pay-client{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow-card);}
+  .pay-client-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .pay-client-name{font-size:16px;font-weight:700;}
+  .pay-client-meta{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .pay-client-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .pay-bar{height:7px;background:var(--card-sunken);border-radius:20px;overflow:hidden;margin:12px 0 10px;}
+  .pay-bar > i{display:block;height:100%;background:var(--ok);border-radius:20px;}
+  .pay-rows{display:flex;flex-direction:column;gap:6px;}
+  .pay-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card-sunken);}
+  .pay-row .pr-label{font-weight:600;font-size:13.5px;}
+  .pay-row .pr-amt{font-weight:700;font-size:14px;}
+  .pay-row .pr-due{font-size:12.5px;color:var(--ink-soft);}
+  .pay-row .pr-btns{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
+  .pay-chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .pay-chip.paid{background:var(--ok-tint);color:var(--ok);}
+  .pay-chip.overdue{background:var(--danger-tint);color:var(--danger);}
+  .pay-chip.soon{background:var(--amber-tint);color:var(--amber);}
+  .pay-chip.later{background:var(--slate-tint);color:var(--slate);}
+  .pay-plan-rows .ppr{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:8px;margin-bottom:8px;align-items:center;}
+  .pay-plan-rows input{min-width:0;width:100%;}
+  .pay-modal-wide{max-width:560px;}
+  .pay-total-note{font-size:12.5px;margin:4px 0 0;}
+  .pay-total-note.bad{color:var(--danger);}
+  .pay-total-note.good{color:var(--ok);}
+  /* dashboard attention strip */
+  .attn-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-bottom:22px;}
+  .attn-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-card);min-width:0;}
+  .attn-card.attn-bad{border-color:rgba(194,42,42,0.35);}
+  .attn-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;}
+  .attn-head h3{margin:0;font-size:14.5px;}
+  .attn-head a{font-size:12.5px;color:var(--wine-fg);font-weight:600;text-decoration:none;cursor:pointer;}
+  .attn-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:13px;}
+  .attn-row:first-of-type{border-top:0;}
+  .attn-row .ar-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+  .attn-row .ar-side{white-space:nowrap;font-size:12.5px;color:var(--ink-soft);}
+  .attn-ok{font-size:13px;color:var(--ok);}
+  @media (max-width:720px){
+    .pay-tiles{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .pay-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+    .pay-row .pr-btns{grid-column:1 / -1;justify-content:flex-start;}
+    .pay-plan-rows .ppr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  }
 </style>
 </head>
 
@@ -1798,7 +1851,8 @@
       <a href="#" data-view="enquiries" data-enq-nav>Enquiries</a>
       <a href="#" data-view="albums">Album Studio</a>
       <a href="#" data-view="videos" data-admin-only>Video Studio</a>
-      <a href="quotation.html" target="_blank" rel="noopener" data-admin-only>Quotation <svg class="ext-link-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 3h4v4M13 3 7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="quotation.html" target="_blank" rel="noopener" data-quote-nav>Quotation <svg class="ext-link-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 3h4v4M13 3 7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#" data-view="payments" data-admin-only>Payments</a>
       <a href="#" data-view="calendar">Calendar</a>
     </div>
     <div class="sidebar-spacer"></div>
@@ -1830,9 +1884,13 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="14" height="12" rx="2"/><path d="m16.5 10.5 5-3v9l-5-3z"/></svg>
       Videos
     </a>
-    <a href="quotation.html" target="_blank" rel="noopener" data-admin-only>
+    <a href="quotation.html" target="_blank" rel="noopener" data-quote-nav>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M9 12h6M9 15.5h6M9 8.5h3"/></svg>
       Quotation
+    </a>
+    <a href="#" data-view="payments" data-admin-only>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5v.01M17.5 14.5v.01"/></svg>
+      Payments
     </a>
     <a href="#" data-view="calendar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><circle cx="8" cy="15" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
@@ -1947,6 +2005,16 @@
       </div>
     </div>
     <div id="videosBody"></div>
+  </div>
+
+  <div id="viewPayments" class="view-panel" style="display:none;">
+    <div class="panel-title">
+      <h2>Payments</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" id="btnAddPayPlan">+ New payment plan</button>
+      </div>
+    </div>
+    <div id="paymentsBody"></div>
   </div>
 
   <div id="viewAlbums" class="view-panel" style="display:none;">
@@ -2166,6 +2234,28 @@
     <div class="modal-actions">
       <button class="btn" id="btnConfirmCancel">Cancel</button>
       <button class="btn btn-primary" style="background:var(--danger);border-color:var(--danger);" id="btnConfirmOk">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="payPlanOverlay">
+  <div class="modal pay-modal-wide">
+    <h3 id="payPlanTitle">Payment plan</h3>
+    <div id="payPlanBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelPayPlan">Cancel</button>
+      <button class="btn btn-primary" id="btnSavePayPlan">Save plan</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="payPaidOverlay">
+  <div class="modal">
+    <h3 id="payPaidTitle">Record payment</h3>
+    <div id="payPaidBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCancelPayPaid">Cancel</button>
+      <button class="btn btn-primary" id="btnSavePayPaid">Mark as paid</button>
     </div>
   </div>
 </div>
@@ -2642,6 +2732,9 @@ function renderUserBadge(){
   document.querySelectorAll('[data-enq-nav]').forEach(el => {
     el.style.display = canViewEnquiries() ? '' : 'none';
   });
+  document.querySelectorAll('[data-quote-nav]').forEach(el => {
+    el.style.display = canMakeQuotations() ? '' : 'none';
+  });
 
   const addDriveBtn = document.getElementById('btnAddDrive');
   if(addDriveBtn) addDriveBtn.style.display = isAdmin() ? '' : 'none';
@@ -2664,6 +2757,12 @@ function switchView(view, clickedLink){
     toast('Video Studio is admin only for now.', true);
     return switchView('dashboard');
   }
+  // Payments hold client money details — admin only.
+  if(view === 'payments' && !isAdmin()){
+    toast('Payments is admin only.', true);
+    return switchView('dashboard');
+  }
+  document.getElementById('viewPayments').style.display = view === 'payments' ? '' : 'none';
   document.getElementById('viewDashboard').style.display = view === 'dashboard' ? '' : 'none';
   document.getElementById('viewDrives').style.display = view === 'drives' ? '' : 'none';
   document.getElementById('viewLedger').style.display = view === 'ledger' ? '' : 'none';
@@ -2688,6 +2787,7 @@ function switchView(view, clickedLink){
   if(view === 'albums') renderAlbums();
   if(view === 'videos') renderVideos();
   if(view === 'enquiries') renderEnquiries();
+  if(view === 'payments') renderPayments();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
 }
@@ -2836,7 +2936,8 @@ sb.auth.onAuthStateChange((event, session) => {
       title: (session.user.user_metadata && session.user.user_metadata.title) || '',
       role: (session.user.user_metadata && session.user.user_metadata.role) || 'member',
       canManageSchedule: !!(session.user.user_metadata && session.user.user_metadata.can_manage_schedule),
-      canViewEnquiries: !!(session.user.user_metadata && session.user.user_metadata.can_view_enquiries)
+      canViewEnquiries: !!(session.user.user_metadata && session.user.user_metadata.can_view_enquiries),
+      canMakeQuotations: !!(session.user.user_metadata && session.user.user_metadata.can_make_quotations)
     };
     renderUserBadge();
     showApp();
@@ -2916,6 +3017,8 @@ function isAdmin(){ return !!(currentUser && currentUser.role === 'admin'); }
 function canManageSchedule(){ return isAdmin() || !!(currentUser && currentUser.canManageSchedule); }
 // Read-only access to Enquiries. Editing stays admin-only — this only opens the view.
 function canViewEnquiries(){ return isAdmin() || !!(currentUser && currentUser.canViewEnquiries); }
+// Can open the Quotation builder (admins, plus anyone the admin has granted it to).
+function canMakeQuotations(){ return isAdmin() || !!(currentUser && currentUser.canMakeQuotations); }
 // ===================== /AUTH =====================
 
 // ===================== IDLE AUTO-LOGOUT =====================
@@ -5041,6 +5144,7 @@ function renderDashboard(){
         ${completeHtml}
       </section>
     </div>`;
+  if(typeof decorateDashboard === 'function') decorateDashboard(body);
 }
 
 // ---- Folder breakdown (Photos / Video / etc, each with its own size + copy log) ----
@@ -6985,6 +7089,476 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   }
 
 
+
+/* =====================================================================
+   Payments (admin only) + Dashboard "needs attention" strip
+   - client_payments table: one row per installment, grouped by client name
+   - Delivery deadline: last event date + DELIVERY_DAYS, until marked Delivered
+   ===================================================================== */
+const DELIVERY_DAYS = 21;
+const PAY_MODES = ['UPI','Cash','Bank transfer','Cheque','Other'];
+const PAY_PRESETS = {
+  '30-50-20': { name:'30% / 50% / 20%', parts:[['Advance (booking)',30],['Second payment',50],['Final payment',20]] },
+  '50-50':    { name:'50% / 50%',       parts:[['Advance (booking)',50],['Final payment',50]] },
+  '100':      { name:'Full payment',    parts:[['Full payment',100]] },
+  'custom':   { name:'Custom',          parts:[] }
+};
+const PAY = { rows: [], loaded: false, search: '', filter: 'all' };
+
+function inr(n){ return '₹' + (Number(n) || 0).toLocaleString('en-IN'); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function addDaysISO(iso, n){
+  const d = new Date(iso + 'T00:00:00'); if(isNaN(d)) return '';
+  d.setDate(d.getDate() + n); return d.toISOString().slice(0,10);
+}
+function diffDays(aISO, bISO){ // a - b in whole days
+  return Math.round((new Date(aISO + 'T00:00:00') - new Date(bISO + 'T00:00:00')) / 86400000);
+}
+function payKey(c){ return String(c || '').trim().toLowerCase(); }
+
+async function loadPayments(){
+  if(!isAdmin()) return;
+  const { data: rows, error } = await sb.from('client_payments').select('*').order('sort', { ascending: true });
+  if(error){ toast("Couldn't load payments — " + error.message, true); return; }
+  PAY.rows = rows || [];
+  PAY.loaded = true;
+}
+
+function payState(r){
+  if(r.paid_date) return { key:'paid', label:'Paid ' + fmtDate(r.paid_date), rank:3 };
+  if(!r.due_date) return { key:'later', label:'No due date', rank:2 };
+  const d = diffDays(r.due_date, todayISO());
+  if(d < 0)  return { key:'overdue', label:'Overdue ' + Math.abs(d) + 'd', rank:0, days:d };
+  if(d === 0) return { key:'soon', label:'Due today', rank:1, days:0 };
+  if(d <= 7) return { key:'soon', label:'Due in ' + d + 'd', rank:1, days:d };
+  return { key:'later', label:'Due ' + fmtDate(r.due_date), rank:2, days:d };
+}
+
+function payGroups(){
+  const map = new Map();
+  PAY.rows.forEach(r => {
+    const k = payKey(r.client);
+    if(!map.has(k)) map.set(k, { key:k, client:r.client, rows:[] });
+    map.get(k).rows.push(r);
+  });
+  const groups = [...map.values()];
+  groups.forEach(g => {
+    g.rows.sort((a,b) => (a.sort - b.sort));
+    g.total = g.rows.reduce((s,r) => s + (Number(r.amount) || 0), 0);
+    g.received = g.rows.reduce((s,r) => s + (r.paid_date ? (Number(r.paid_amount ?? r.amount) || 0) : 0), 0);
+    g.outstanding = Math.max(0, g.total - g.received);
+    g.overdue = g.rows.filter(r => payState(r).key === 'overdue');
+    g.overdueAmt = g.overdue.reduce((s,r) => s + (Number(r.amount) || 0), 0);
+    const nextUnpaid = g.rows.filter(r => !r.paid_date).sort((a,b) => (a.due_date || '9999').localeCompare(b.due_date || '9999'))[0];
+    g.next = nextUnpaid || null;
+    g.settled = g.outstanding <= 0 && g.rows.every(r => r.paid_date);
+  });
+  return groups;
+}
+
+function payClientNames(){
+  const set = new Map();
+  (data.events || []).forEach(e => { if(e.client && e.client.trim()) set.set(payKey(e.client), e.client.trim()); });
+  PAY.rows.forEach(r => { if(r.client) set.set(payKey(r.client), r.client); });
+  return [...set.values()].sort((a,b) => a.localeCompare(b));
+}
+
+function whatsappReminder(client, r){
+  const text = `Namaste ${client} ji 🙏\n\nThis is a gentle reminder from Meraki We Capture Memories. Your "${r.label}" payment of ${inr(r.amount)}` +
+    (r.due_date ? ` is due on ${fmtDate(r.due_date)}.` : ' is pending.') +
+    `\n\nKindly let us know once it is done. Thank you! 😊`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+}
+
+async function renderPayments(skipLoad){
+  const body = document.getElementById('paymentsBody');
+  if(!body) return;
+  if(!isAdmin()){ body.innerHTML = ''; return; }
+  if(!skipLoad){
+    if(!PAY.loaded) body.innerHTML = '<p class="dash-empty">Loading payments…</p>';
+    await loadPayments();
+  }
+
+  let groups = payGroups();
+  const all = groups;
+  const sum = (f) => all.reduce((s,g) => s + f(g), 0);
+  const billed = sum(g => g.total), received = sum(g => g.received), outstanding = sum(g => g.outstanding);
+  const overdueAmt = sum(g => g.overdueAmt), overdueN = sum(g => g.overdue.length);
+  const q = PAY.search.trim().toLowerCase();
+  if(q) groups = groups.filter(g => g.client.toLowerCase().includes(q));
+  if(PAY.filter === 'overdue') groups = groups.filter(g => g.overdue.length);
+  if(PAY.filter === 'pending') groups = groups.filter(g => !g.settled);
+  if(PAY.filter === 'settled') groups = groups.filter(g => g.settled);
+  groups.sort((a,b) => (b.overdueAmt - a.overdueAmt) || (b.outstanding - a.outstanding) || a.client.localeCompare(b.client));
+
+  const tiles = `
+    <div class="pay-tiles">
+      <div class="pay-tile"><div class="pt-label">Total billed</div><div class="pt-num">${inr(billed)}</div><div class="pt-sub">${all.length} client${all.length===1?'':'s'}</div></div>
+      <div class="pay-tile pt-ok"><div class="pt-label">Received</div><div class="pt-num">${inr(received)}</div><div class="pt-sub">${billed ? Math.round(received/billed*100) : 0}% of billed</div></div>
+      <div class="pay-tile pt-amber"><div class="pt-label">Outstanding</div><div class="pt-num">${inr(outstanding)}</div><div class="pt-sub">still to collect</div></div>
+      <div class="pay-tile ${overdueN ? 'pt-danger' : ''}"><div class="pt-label">Overdue</div><div class="pt-num">${inr(overdueAmt)}</div><div class="pt-sub">${overdueN} installment${overdueN===1?'':'s'}</div></div>
+    </div>
+    <div class="pay-toolbar">
+      <input type="text" id="paySearch" placeholder="Search client…" value="${escapeHtml(PAY.search)}">
+      <select id="payFilter">
+        <option value="all"${PAY.filter==='all'?' selected':''}>All clients</option>
+        <option value="overdue"${PAY.filter==='overdue'?' selected':''}>Overdue only</option>
+        <option value="pending"${PAY.filter==='pending'?' selected':''}>Has pending payment</option>
+        <option value="settled"${PAY.filter==='settled'?' selected':''}>Fully paid</option>
+      </select>
+    </div>`;
+
+  const cards = groups.length ? groups.map(g => {
+    const pct = g.total ? Math.round(g.received / g.total * 100) : 0;
+    const rowsHtml = g.rows.map(r => {
+      const st = payState(r);
+      return `<div class="pay-row">
+        <div class="pr-label">${escapeHtml(r.label)}</div>
+        <div class="pr-amt">${inr(r.amount)}${r.paid_date && r.mode ? `<div class="pr-due">${escapeHtml(r.mode)}${r.paid_amount != null && Number(r.paid_amount) !== Number(r.amount) ? ' · got ' + inr(r.paid_amount) : ''}</div>` : ''}</div>
+        <div><span class="pay-chip ${st.key}">${escapeHtml(st.label)}</span>${!r.paid_date && r.due_date ? `<div class="pr-due">${escapeHtml(fmtDate(r.due_date))}</div>` : ''}${r.note ? `<div class="pr-due">${escapeHtml(r.note)}</div>` : ''}</div>
+        <div class="pr-btns">
+          ${r.paid_date
+            ? `<button class="btn btn-sm" data-pay-undo="${escapeHtml(r.id)}">Undo</button>`
+            : `<button class="btn btn-sm btn-primary" data-pay-paid="${escapeHtml(r.id)}">Mark paid</button>
+               <button class="btn btn-sm" data-pay-wa="${escapeHtml(r.id)}" title="Open a WhatsApp reminder">WhatsApp</button>`}
+        </div>
+      </div>`;
+    }).join('');
+    return `<section class="pay-client">
+      <div class="pay-client-head">
+        <div>
+          <div class="pay-client-name">${escapeHtml(g.client)}</div>
+          <div class="pay-client-meta">${inr(g.received)} received of ${inr(g.total)}${g.outstanding ? ' · <strong>' + inr(g.outstanding) + ' pending</strong>' : ' · <strong style="color:var(--ok)">fully paid</strong>'}</div>
+        </div>
+        <div class="pay-client-actions">
+          <button class="btn btn-sm" data-pay-edit="${escapeHtml(g.key)}">Edit plan</button>
+          <button class="btn btn-danger-ghost" data-pay-del="${escapeHtml(g.key)}">Delete</button>
+        </div>
+      </div>
+      <div class="pay-bar"><i style="width:${pct}%"></i></div>
+      <div class="pay-rows">${rowsHtml}</div>
+    </section>`;
+  }).join('') : `<div class="empty-state"><h3>${all.length ? 'No matching clients' : 'No payment plans yet'}</h3><p>${all.length ? 'Try another search or filter.' : 'Click “+ New payment plan” to add a client’s advance, second and final payments.'}</p></div>`;
+
+  body.innerHTML = tiles + cards;
+  const s = document.getElementById('paySearch');
+  s.addEventListener('input', () => {
+    PAY.search = s.value; renderPayments(true);
+    const n = document.getElementById('paySearch'); n.focus(); n.setSelectionRange(n.value.length, n.value.length);
+  });
+  document.getElementById('payFilter').addEventListener('change', e => { PAY.filter = e.target.value; renderPayments(true); });
+}
+
+/* ---- Create / edit a plan ---- */
+let payPlanState = null; // { client, origKey, rows:[{id,label,amount,due_date,paid_date,paid_amount,mode,note}], removedIds:[] }
+
+function openPayPlanModal(key){
+  const existing = key ? PAY.rows.filter(r => payKey(r.client) === key) : [];
+  payPlanState = {
+    origKey: key || null,
+    client: existing[0] ? existing[0].client : '',
+    preset: 'custom',
+    eventDate: '',
+    total: existing.reduce((s,r) => s + (Number(r.amount) || 0), 0) || '',
+    rows: existing.sort((a,b) => a.sort - b.sort).map(r => ({ ...r })),
+    removedIds: []
+  };
+  if(!existing.length){ payPlanState.preset = '30-50-20'; }
+  document.getElementById('payPlanTitle').textContent = key ? 'Edit payment plan' : 'New payment plan';
+  drawPayPlanForm(!existing.length);
+  document.getElementById('payPlanOverlay').classList.add('open');
+}
+function closePayPlanModal(){ document.getElementById('payPlanOverlay').classList.remove('open'); payPlanState = null; }
+
+function applyPreset(){
+  const st = payPlanState; const p = PAY_PRESETS[st.preset];
+  if(!p || !p.parts.length) return;
+  const keepPaid = st.rows.filter(r => r.paid_date);
+  // installments already received stay as they are; the preset splits what is left
+  const total = Math.max(0, (Number(st.total) || 0) - keepPaid.reduce((s,r) => s + (Number(r.amount) || 0), 0));
+  const today = todayISO();
+  const ev = st.eventDate || '';
+  const dues = p.parts.map((_, i) => {
+    if(i === 0) return today;
+    if(i === p.parts.length - 1) return ev ? addDaysISO(ev, DELIVERY_DAYS) : '';
+    return ev || '';
+  });
+  // keep already-paid rows untouched when re-applying a preset
+  const fresh = p.parts.map((part, i) => ({
+    id: uid(), label: part[0], amount: Math.round(total * part[1] / 100), due_date: dues[i], paid_date: null, paid_amount: null, mode: null, note: ''
+  }));
+  // rounding fix so installments add up exactly
+  const diff = total - fresh.reduce((s,r) => s + r.amount, 0);
+  if(fresh.length) fresh[fresh.length - 1].amount += diff;
+  st.removedIds.push(...st.rows.filter(r => !r.paid_date).map(r => r.id));
+  st.rows = keepPaid.concat(fresh);
+}
+
+function drawPayPlanForm(isNew){
+  const st = payPlanState;
+  const body = document.getElementById('payPlanBody');
+  const names = payClientNames();
+  body.innerHTML = `
+    <div class="field">
+      <label>Client</label>
+      <input type="text" id="pp_client" list="pp_client_list" placeholder="Type or pick a client" value="${escapeHtml(st.client)}">
+      <datalist id="pp_client_list">${names.map(n => `<option value="${escapeHtml(n)}">`).join('')}</datalist>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Package total (₹)</label><input type="number" id="pp_total" min="0" step="1" value="${st.total === '' ? '' : Number(st.total)}" placeholder="e.g. 140000"></div>
+      <div class="field"><label>Event date (optional)</label><input type="date" id="pp_event" value="${escapeHtml(st.eventDate || '')}"></div>
+    </div>
+    <div class="field" id="pp_import_wrap" style="display:none;">
+      <label>Fill from a saved quotation</label>
+      <select id="pp_import"><option value="">Choose a quotation…</option></select>
+    </div>
+    <div class="field">
+      <label>Split</label>
+      <select id="pp_preset">${Object.keys(PAY_PRESETS).map(k => `<option value="${k}"${st.preset===k?' selected':''}>${PAY_PRESETS[k].name}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Installments</label><div class="pay-plan-rows" id="pp_rows"></div>
+      <button class="btn btn-sm" id="pp_addrow" type="button">+ Add installment</button>
+      <p class="pay-total-note" id="pp_note"></p>
+    </div>`;
+
+  // Quotations are admin-readable; offer them as a one-click source for client + total
+  sb.from('quotations').select('id,client,total_cost,doc_no').order('updated_at', { ascending:false }).limit(30).then(({ data: qs }) => {
+    if(!qs || !qs.length || !payPlanState) return;
+    const sel = document.getElementById('pp_import'); if(!sel) return;
+    sel.innerHTML = '<option value="">Choose a quotation…</option>' + qs.map(q =>
+      `<option value="${escapeHtml(q.id)}">${escapeHtml(q.client || 'Untitled')} — ${inr(q.total_cost)}${q.doc_no ? ' · ' + escapeHtml(q.doc_no) : ''}</option>`).join('');
+    document.getElementById('pp_import_wrap').style.display = '';
+    sel.onchange = () => {
+      const q = qs.find(x => x.id === sel.value); if(!q) return;
+      document.getElementById('pp_client').value = q.client || '';
+      document.getElementById('pp_total').value = Number(q.total_cost) || '';
+      st.client = q.client || ''; st.total = Number(q.total_cost) || '';
+      if(st.preset !== 'custom'){ applyPreset(); drawPayPlanRows(); }
+    };
+  });
+
+  document.getElementById('pp_client').addEventListener('input', e => { st.client = e.target.value; });
+  document.getElementById('pp_total').addEventListener('input', e => { st.total = e.target.value; if(st.preset !== 'custom'){ applyPreset(); drawPayPlanRows(); } });
+  document.getElementById('pp_event').addEventListener('change', e => { st.eventDate = e.target.value; if(st.preset !== 'custom'){ applyPreset(); drawPayPlanRows(); } });
+  document.getElementById('pp_preset').addEventListener('change', e => { st.preset = e.target.value; if(st.preset !== 'custom'){ applyPreset(); } drawPayPlanRows(); });
+  document.getElementById('pp_addrow').addEventListener('click', () => {
+    st.rows.push({ id: uid(), label: 'Installment ' + (st.rows.length + 1), amount: 0, due_date: '', paid_date: null, paid_amount: null, mode: null, note: '' });
+    st.preset = 'custom'; document.getElementById('pp_preset').value = 'custom'; drawPayPlanRows();
+  });
+  if(isNew && st.preset !== 'custom'){ applyPreset(); }
+  drawPayPlanRows();
+}
+
+function drawPayPlanRows(){
+  const st = payPlanState; if(!st) return;
+  const wrap = document.getElementById('pp_rows');
+  wrap.innerHTML = st.rows.length ? st.rows.map((r, i) => `
+    <div class="ppr" data-i="${i}">
+      <input type="text" data-f="label" value="${escapeHtml(r.label)}" placeholder="Label" ${r.paid_date ? 'disabled' : ''}>
+      <input type="number" data-f="amount" min="0" step="1" value="${Number(r.amount) || 0}" ${r.paid_date ? 'disabled' : ''}>
+      <input type="date" data-f="due_date" value="${escapeHtml(r.due_date || '')}" ${r.paid_date ? 'disabled' : ''}>
+      ${r.paid_date ? '<span class="pay-chip paid">Paid</span>' : '<button class="btn-danger-ghost" type="button" data-rm="' + i + '" aria-label="Remove">✕</button>'}
+    </div>`).join('') : '<p class="dash-empty">No installments yet.</p>';
+  wrap.querySelectorAll('.ppr').forEach(row => {
+    const i = Number(row.getAttribute('data-i'));
+    row.querySelectorAll('input[data-f]').forEach(inp => inp.addEventListener('input', () => {
+      const f = inp.getAttribute('data-f');
+      st.rows[i][f] = f === 'amount' ? (Number(inp.value) || 0) : inp.value;
+      if(f !== 'due_date'){ st.preset = 'custom'; const ps = document.getElementById('pp_preset'); if(ps) ps.value = 'custom'; }
+      updatePayPlanNote();
+    }));
+    const rm = row.querySelector('[data-rm]');
+    if(rm) rm.addEventListener('click', () => { st.removedIds.push(st.rows[i].id); st.rows.splice(i, 1); drawPayPlanRows(); });
+  });
+  updatePayPlanNote();
+}
+function updatePayPlanNote(){
+  const st = payPlanState; const note = document.getElementById('pp_note'); if(!st || !note) return;
+  const sum = st.rows.reduce((s,r) => s + (Number(r.amount) || 0), 0);
+  const total = Number(st.total) || 0;
+  if(total && sum !== total){
+    note.className = 'pay-total-note bad';
+    note.textContent = `Installments add up to ${inr(sum)} — ${sum > total ? inr(sum - total) + ' more' : inr(total - sum) + ' less'} than the package total ${inr(total)}.`;
+  } else {
+    note.className = 'pay-total-note good';
+    note.textContent = `Installments total ${inr(sum)}.`;
+  }
+}
+
+async function savePayPlan(){
+  const st = payPlanState; if(!st) return;
+  const client = (st.client || '').trim();
+  if(!client){ toast('Enter the client name.', true); return; }
+  if(!st.rows.length){ toast('Add at least one installment.', true); return; }
+  if(st.rows.some(r => !String(r.label || '').trim())){ toast('Every installment needs a label.', true); return; }
+  // A client name that is already used by a different plan would silently merge two plans
+  if(payKey(client) !== st.origKey && PAY.rows.some(r => payKey(r.client) === payKey(client))){
+    toast('A plan for this client already exists — use “Edit plan” on it.', true); return;
+  }
+  const btn = document.getElementById('btnSavePayPlan');
+  btn.disabled = true;
+  const by = whoAmI();
+  const rows = st.rows.map((r, i) => ({
+    id: r.id, client, label: String(r.label).trim(), amount: Number(r.amount) || 0,
+    due_date: r.due_date || null, paid_date: r.paid_date || null,
+    paid_amount: r.paid_amount ?? null, mode: r.mode || null, note: r.note || null,
+    sort: i, updated_by: by, updated_at: new Date().toISOString()
+  }));
+  const { error } = await sb.from('client_payments').upsert(rows);
+  if(error){ btn.disabled = false; toast("Couldn't save — " + error.message, true); return; }
+  const gone = st.removedIds.filter(id => !rows.some(r => r.id === id));
+  if(gone.length){
+    const { error: e2 } = await sb.from('client_payments').delete().in('id', gone);
+    if(e2){ toast("Saved, but couldn't remove old installments — " + e2.message, true); }
+  }
+  btn.disabled = false;
+  closePayPlanModal();
+  toast('Payment plan saved');
+  await renderPayments();
+  refreshDashAttention();
+}
+
+/* ---- Mark paid / undo ---- */
+let payPaidTarget = null;
+function openPayPaidModal(id){
+  const r = PAY.rows.find(x => x.id === id); if(!r) return;
+  payPaidTarget = r;
+  document.getElementById('payPaidTitle').textContent = `${r.client} — ${r.label}`;
+  document.getElementById('payPaidBody').innerHTML = `
+    <div class="field-row">
+      <div class="field"><label>Date received</label><input type="date" id="pd_date" value="${todayISO()}"></div>
+      <div class="field"><label>Amount received (₹)</label><input type="number" id="pd_amt" min="0" step="1" value="${Number(r.amount) || 0}"></div>
+    </div>
+    <div class="field"><label>Mode</label><select id="pd_mode">${PAY_MODES.map(m => `<option>${m}</option>`).join('')}</select></div>
+    <div class="field"><label>Note (optional)</label><input type="text" id="pd_note" placeholder="e.g. paid by father, UPI ref…" value="${escapeHtml(r.note || '')}"></div>`;
+  document.getElementById('payPaidOverlay').classList.add('open');
+}
+function closePayPaidModal(){ document.getElementById('payPaidOverlay').classList.remove('open'); payPaidTarget = null; }
+
+async function savePayPaid(){
+  const r = payPaidTarget; if(!r) return;
+  const date = document.getElementById('pd_date').value;
+  const amt = Number(document.getElementById('pd_amt').value);
+  if(!date){ toast('Pick the date it was received.', true); return; }
+  if(!(amt >= 0)){ toast('Enter the amount received.', true); return; }
+  const btn = document.getElementById('btnSavePayPaid'); btn.disabled = true;
+  const { error } = await sb.from('client_payments').update({
+    paid_date: date, paid_amount: amt, mode: document.getElementById('pd_mode').value,
+    note: document.getElementById('pd_note').value.trim() || null, updated_by: whoAmI(), updated_at: new Date().toISOString()
+  }).eq('id', r.id);
+  btn.disabled = false;
+  if(error){ toast("Couldn't save — " + error.message, true); return; }
+  closePayPaidModal(); toast('Payment recorded');
+  await renderPayments(); refreshDashAttention();
+}
+
+async function undoPaid(id){
+  const { error } = await sb.from('client_payments').update({ paid_date: null, paid_amount: null, mode: null, updated_by: whoAmI(), updated_at: new Date().toISOString() }).eq('id', id);
+  if(error){ toast("Couldn't undo — " + error.message, true); return; }
+  toast('Marked as unpaid'); await renderPayments(); refreshDashAttention();
+}
+
+document.getElementById('btnCancelPayPlan').addEventListener('click', closePayPlanModal);
+document.getElementById('btnSavePayPlan').addEventListener('click', savePayPlan);
+document.getElementById('payPlanOverlay').addEventListener('click', e => { if(e.target.id === 'payPlanOverlay') closePayPlanModal(); });
+document.getElementById('btnCancelPayPaid').addEventListener('click', closePayPaidModal);
+document.getElementById('btnSavePayPaid').addEventListener('click', savePayPaid);
+document.getElementById('payPaidOverlay').addEventListener('click', e => { if(e.target.id === 'payPaidOverlay') closePayPaidModal(); });
+document.getElementById('btnAddPayPlan').addEventListener('click', () => openPayPlanModal(null));
+
+document.getElementById('paymentsBody').addEventListener('click', e => {
+  const t = e.target.closest('[data-pay-paid],[data-pay-undo],[data-pay-wa],[data-pay-edit],[data-pay-del]');
+  if(!t) return;
+  if(t.hasAttribute('data-pay-paid')) return openPayPaidModal(t.getAttribute('data-pay-paid'));
+  if(t.hasAttribute('data-pay-undo')) return undoPaid(t.getAttribute('data-pay-undo'));
+  if(t.hasAttribute('data-pay-edit')) return openPayPlanModal(t.getAttribute('data-pay-edit'));
+  if(t.hasAttribute('data-pay-wa')){
+    const r = PAY.rows.find(x => x.id === t.getAttribute('data-pay-wa'));
+    if(r) whatsappReminder(r.client, r);
+    return;
+  }
+  if(t.hasAttribute('data-pay-del')){
+    const key = t.getAttribute('data-pay-del');
+    const g = payGroups().find(x => x.key === key); if(!g) return;
+    askConfirm('Delete this payment plan?', `All ${g.rows.length} installment(s) for ${g.client} will be removed, including payments already recorded.`, async () => {
+      const { error } = await sb.from('client_payments').delete().in('id', g.rows.map(r => r.id));
+      if(error){ toast("Couldn't delete — " + error.message, true); return; }
+      toast('Plan deleted'); await renderPayments(); refreshDashAttention();
+    });
+  }
+});
+
+/* ---- Dashboard: "needs attention" strip (money for admin, deliveries for everyone) ---- */
+function deliveryDue(){
+  const by = new Map();
+  (data.events || []).forEach(ev => {
+    const k = payKey(ev.client); if(!k) return;
+    if(!by.has(k)) by.set(k, { client: ev.client, last: '', pending: false });
+    const g = by.get(k);
+    const d = /^\d{4}-\d{2}-\d{2}/.test(ev.eventDate || '') ? ev.eventDate.slice(0,10) : '';
+    if(d && d > g.last) g.last = d;
+    if(ev.status !== 'Delivered' && ev.status !== 'Raw Deleted') g.pending = true;
+  });
+  const today = todayISO();
+  const out = [];
+  by.forEach(g => {
+    if(!g.pending || !g.last) return;
+    const due = addDaysISO(g.last, DELIVERY_DAYS);
+    if(g.last > today) return; // shoot hasn't happened yet
+    out.push({ client: g.client, due, days: diffDays(due, today) });
+  });
+  return out.sort((a,b) => a.days - b.days);
+}
+
+function dashAttentionHtml(){
+  const parts = [];
+  if(isAdmin() && PAY.loaded){
+    const rows = PAY.rows.filter(r => !r.paid_date);
+    const withState = rows.map(r => ({ r, s: payState(r) })).filter(x => x.s.key === 'overdue' || (x.s.key === 'soon'));
+    withState.sort((a,b) => a.s.rank - b.s.rank || (a.r.due_date || '').localeCompare(b.r.due_date || ''));
+    const overdue = withState.filter(x => x.s.key === 'overdue');
+    const amt = overdue.reduce((s,x) => s + (Number(x.r.amount) || 0), 0);
+    parts.push(`<section class="attn-card${overdue.length ? ' attn-bad' : ''}">
+      <div class="attn-head"><h3>Payments to collect</h3><a data-goto="payments">Open →</a></div>
+      ${overdue.length ? `<div style="font-size:13px;margin-bottom:6px;color:var(--danger);font-weight:600;">${inr(amt)} overdue across ${overdue.length} installment${overdue.length===1?'':'s'}</div>` : ''}
+      ${withState.length ? withState.slice(0,5).map(x => `<div class="attn-row"><span class="ar-main">${escapeHtml(x.r.client)} · ${escapeHtml(x.r.label)}</span><span class="ar-side"><span class="pay-chip ${x.s.key}">${escapeHtml(x.s.label)}</span> ${inr(x.r.amount)}</span></div>`).join('')
+        : `<div class="attn-ok">Nothing overdue or due this week ✓</div>`}
+    </section>`);
+  }
+  const dd = deliveryDue().filter(x => x.days <= 7);
+  const late = dd.filter(x => x.days < 0);
+  parts.push(`<section class="attn-card${late.length ? ' attn-bad' : ''}">
+    <div class="attn-head"><h3>Deliveries due</h3><a data-goto="ledger">Ledger →</a></div>
+    ${late.length ? `<div style="font-size:13px;margin-bottom:6px;color:var(--danger);font-weight:600;">${late.length} client${late.length===1?'':'s'} past the ${DELIVERY_DAYS}-day delivery window</div>` : ''}
+    ${dd.length ? dd.slice(0,5).map(x => `<div class="attn-row"><span class="ar-main">${escapeHtml(x.client)}</span><span class="ar-side"><span class="pay-chip ${x.days < 0 ? 'overdue' : 'soon'}">${x.days < 0 ? 'Late ' + Math.abs(x.days) + 'd' : (x.days === 0 ? 'Due today' : 'Due in ' + x.days + 'd')}</span></span></div>`).join('')
+      : `<div class="attn-ok">All deliveries on time ✓</div>`}
+  </section>`);
+  return `<div class="attn-strip" id="dashAttention">${parts.join('')}</div>`;
+}
+
+function decorateDashboard(body){
+  if(!body) return;
+  const old = document.getElementById('dashAttention'); if(old) old.remove();
+  body.insertAdjacentHTML('afterbegin', dashAttentionHtml());
+  wireDashAttention();
+  // Payments load in the background so the dashboard itself never waits on them
+  if(isAdmin() && !PAY.loaded && !PAY.loading){
+    PAY.loading = true;
+    loadPayments().finally(() => { PAY.loading = false; refreshDashAttention(); });
+  }
+}
+function wireDashAttention(){
+  document.querySelectorAll('#dashAttention [data-goto]').forEach(a => {
+    a.onclick = () => switchView(a.getAttribute('data-goto'));
+  });
+}
+function refreshDashAttention(){
+  const body = document.getElementById('dashboardBody');
+  const cur = document.getElementById('dashAttention');
+  if(!body || !cur) return;
+  cur.outerHTML = dashAttentionHtml();
+  wireDashAttention();
+}
 </script>
   </div>
 </div>
