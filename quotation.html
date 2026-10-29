@@ -1049,6 +1049,12 @@
   .sign-grid .field-label{ margin-bottom: 3px; }
   .sign-grid .line{ height: 10px; }
   .contact-grid{ gap: 5px; }
+  /* Keep the Terms / Signature / Contact page inside one A4 sheet */
+  ul.terms li{ font-size: 12.5px; line-height: 1.24; margin-bottom: 1.5px; }
+  .sign-space{ height: 20px; }
+  .sign-parties{ margin-bottom: 8px; }
+  .signed-title{ margin: 0 0 6px; }
+  .contact-grid{ gap: 3px; }
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -2460,5 +2466,24 @@
   </div>
 </div>
 
+
+<script>
+/* Print fit: if any A4 page is taller than one sheet (longer package / more events),
+   shrink just that page slightly so the PDF stays at exactly 3 pages. */
+(function(){
+  var PAGE_PX = 297 / 25.4 * 96; // A4 height in CSS px
+  function fit(){
+    var pages = document.querySelectorAll('#printArea .page');
+    pages.forEach(function(p){
+      p.style.zoom = '';
+      var h = p.scrollHeight;
+      if(h > PAGE_PX + 1){ p.style.zoom = String(((PAGE_PX - 6) / h).toFixed(4)); }
+    });
+  }
+  function reset(){ document.querySelectorAll('#printArea .page').forEach(function(p){ p.style.zoom=''; }); }
+  window.addEventListener('beforeprint', fit);
+  window.addEventListener('afterprint', reset);
+})();
+</script>
 </body>
 </html>
