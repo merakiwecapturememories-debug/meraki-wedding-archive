@@ -1769,6 +1769,73 @@
     .ros-evt-crewcount { white-space: nowrap; }
   }
 
+  /* ---------- Completion approvals ---------- */
+  .ros-tab-badge { display: inline-block; min-width: 18px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: #F04438; color: #fff; font-size: 11px; font-weight: 700; line-height: 16px; text-align: center; vertical-align: 1px; }
+  .ros-appr-intro { font-size: 13px; color: var(--ros-ink-soft); line-height: 1.5; margin: 0 0 12px; }
+  .ros-appr-intro strong { color: var(--ros-ink); }
+  .ros-appr-list { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+  .ros-appr-day { background: var(--ros-surface); border: 1px solid var(--ros-border); border-left: 4px solid var(--accent, var(--ros-accent)); border-radius: 12px; box-shadow: var(--ros-shadow-sm); overflow: hidden; }
+  .ros-appr-head { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--ros-surface-muted); border-bottom: 1px solid var(--ros-border); flex-wrap: wrap; }
+  .ros-dtile-sm { flex: 0 0 48px; width: 48px; padding-bottom: 4px; }
+  .ros-dtile-sm b { font-size: 19px; margin-top: 2px; }
+  .ros-appr-title { flex: 1; min-width: 160px; display: flex; flex-direction: column; }
+  .ros-appr-title b { font-size: 15px; font-weight: 700; color: var(--ros-ink); }
+  .ros-appr-title span { font-size: 12.5px; color: var(--ros-ink-soft); margin-top: 2px; }
+  .ros-appr-progress { text-align: center; }
+  .ros-appr-progress b { display: block; font-size: 17px; font-weight: 700; color: var(--ros-ink); }
+  .ros-appr-progress span { font-size: 11px; color: var(--ros-ink-soft); }
+  .ros-appr-row { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--ros-border); }
+  .ros-appr-row:last-child { border-bottom: none; }
+  .ros-appr-row.is-approved { background: #F6FEF9; }
+  .ros-appr-row.is-rejected { background: #FFFBFA; }
+  .ros-appr-av { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 12.5px; font-weight: 700; color: #fff; }
+  .ros-appr-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .ros-appr-who b { font-size: 14px; color: var(--ros-ink); }
+  .ros-appr-who small { font-size: 11.5px; color: var(--ros-ink-soft); }
+  .ros-chk-pill { align-self: flex-start; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 9px; margin-top: 3px; border: 1px solid transparent; }
+  .ros-chk-pill.is-ok { background: var(--ros-success-bg); color: var(--ros-success-text); border-color: var(--ros-success-border); }
+  .ros-chk-pill.is-bad { background: var(--ros-danger-bg); color: var(--ros-danger-text); border-color: var(--ros-danger-border); }
+  .ros-chk-pill.is-done { background: var(--ros-accent-soft-bg); color: var(--ros-accent); border-color: var(--ros-accent-soft-border); }
+  .ros-chk-pill.is-pend { background: var(--ros-neutral-bg); color: var(--ros-ink-soft); border-color: var(--ros-neutral-border); }
+  .ros-appr-actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+  .ros-appr-btn { font-family: var(--ros-font-sans); font-size: 13px; font-weight: 700; border-radius: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid transparent; white-space: nowrap; }
+  .ros-appr-btn.is-yes { background: #12B76A; color: #fff; }
+  .ros-appr-btn.is-yes:hover { background: #039855; }
+  .ros-appr-btn.is-no { background: var(--ros-surface); color: var(--ros-danger-text); border-color: var(--ros-danger-border); }
+  .ros-appr-btn.is-no:hover { background: var(--ros-danger-bg); }
+  .ros-appr-btn:disabled { opacity: .6; cursor: wait; }
+  .ros-appr-all { margin-left: auto; }
+  .ros-reject-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .ros-reject-input { width: 240px; max-width: 100%; padding: 8px 10px; border: 1px solid var(--ros-danger-border); border-radius: 8px; font-family: var(--ros-font-sans); font-size: 13px; color: var(--ros-ink); background: var(--ros-surface); }
+  .ros-btn-danger-solid { background: #D92D20; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: var(--ros-font-sans); }
+  .ros-staff.is-review .ros-staff-bar i { background: var(--ros-accent); }
+  .ros-staff.is-review span { color: var(--ros-accent); }
+
+  /* crew side: confirm your work */
+  .ros-confirm-banner { display: flex; flex-direction: column; gap: 2px; max-width: 640px; margin: 0 auto 12px; padding: 12px 16px; border-radius: 12px; background: var(--ros-warning-bg); border: 1px solid var(--ros-warning-border); color: var(--ros-warning-text); }
+  .ros-confirm-banner b { font-size: 14.5px; }
+  .ros-confirm-banner span { font-size: 12.5px; }
+  .ros-confirm-banner + .ros-card-grid { margin-bottom: 26px; }
+  .ros-callsheet-confirm { border-color: var(--ros-warning-border); box-shadow: 0 0 0 3px var(--ros-warning-bg); }
+  .ros-chk { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; font-weight: 600; border-radius: 10px; padding: 9px 12px; margin: 0 0 12px; border: 1px solid transparent; }
+  .ros-chk.is-ok { background: var(--ros-success-bg); color: var(--ros-success-text); border-color: var(--ros-success-border); }
+  .ros-chk.is-bad { background: var(--ros-danger-bg); color: var(--ros-danger-text); border-color: var(--ros-danger-border); }
+  .ros-chk.is-wait { background: var(--ros-accent-soft-bg); color: var(--ros-accent); border-color: var(--ros-accent-soft-border); }
+  .ros-chk.is-pend { background: var(--ros-neutral-bg); color: var(--ros-ink-soft); border-color: var(--ros-neutral-border); }
+  .ros-chk-btn { font-family: var(--ros-font-sans); font-size: 12.5px; font-weight: 700; color: #fff; background: #12B76A; border: none; border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  .ros-chk-btn.is-big { display: block; width: 100%; font-size: 14.5px; padding: 12px; margin: 0 0 12px; border-radius: 10px; }
+  .ros-chk-btn:disabled { opacity: .6; cursor: wait; }
+
+  @media (max-width: 600px) {
+    .ros-appr-row { grid-template-columns: 36px 1fr; }
+    .ros-appr-actions { grid-column: 1 / -1; justify-content: stretch; }
+    .ros-appr-actions .ros-appr-btn { flex: 1; padding: 11px; }
+    .ros-reject-form { width: 100%; }
+    .ros-reject-input { flex: 1 1 100%; width: auto; }
+    .ros-appr-all { width: 100%; padding: 11px; }
+    .ros-list-stats > div:nth-child(n) b { font-size: 17px; }
+  }
+
   @media (max-width: 560px) {
     .ros-my-summary b { font-size: 15px; }
     .ros-team-row { grid-template-columns: 1fr; gap: 4px; }
@@ -2287,6 +2354,7 @@
       <button type="button" class="ros-tab-btn ros-active" data-view="my">My Schedule</button>
       <button type="button" class="ros-tab-btn" data-view="all">All Events</button>
       <button type="button" class="ros-tab-btn" data-view="avail">Availability</button>
+      <button type="button" class="ros-tab-btn" data-view="approve" id="rosApproveTab" style="display:none">Approvals<span class="ros-tab-badge" id="rosApproveBadge"></span></button>
       <button type="button" class="ros-tab-btn" data-view="crew">Team</button>
     </nav>
     <main class="ros-content" id="ros-content"></main>
@@ -6444,7 +6512,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     editingEvent: null,
     editingCrew: null,
     availStart: '',
-    listFilter: 'all'
+    listFilter: 'all',
+    selfName: '',
+    apprFilter: 'needs',
+    rejecting: ''
   };
 
   var EVENT_TYPES = ['Wedding','Engagement','Political Event','College Event','Corporate Event','Birthday','Other'];
@@ -6652,6 +6723,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
           });
           if (replaced) { day.roles[role] = newParts.join(''); changed = true; }
         });
+        var nl = newName.trim().toLowerCase();
+        if (day.checks && day.checks[oldLower] && nl !== oldLower) { day.checks[nl] = day.checks[oldLower]; delete day.checks[oldLower]; changed = true; }
       });
     });
     return changed;
@@ -6680,6 +6753,261 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     });
   }
 
+
+
+  /* ---------- Completion approval: crew marks done, admin cross-checks ---------- */
+  var REVIEW_WINDOW = 30; // days back that show under "Needs review"
+  function dayPeople(day) {
+    var map = {}, out = [];
+    ROLE_KEYS.forEach(function (role) {
+      namesInRoleValue(day.roles && day.roles[role]).forEach(function (n) {
+        var k = n.toLowerCase();
+        if (!map[k]) { var c = crewByName(n); map[k] = { name: c ? c.name : n, key: k, roles: [] }; out.push(map[k]); }
+        if (map[k].roles.indexOf(role) === -1) map[k].roles.push(role);
+      });
+    });
+    return out;
+  }
+  function checkOf(day, key) { return (day && day.checks && day.checks[key]) || null; }
+  function checkState(day, key) { var c = checkOf(day, key); return c && c.status ? c.status : 'pending'; }
+  function currentUserLabel() {
+    var n = (currentUser && (currentUser.name || currentUser.email)) || 'Admin';
+    return String(n).split('@')[0];
+  }
+  function findDay(ev, date, fn) {
+    var days = ev.days || [];
+    return days.find(function (d) { return d.date === date && (d.function || '') === (fn || ''); }) ||
+           days.find(function (d) { return d.date === date; }) || null;
+  }
+  function eventReview(ev) {
+    var t = todayStr(), r = { total: 0, approved: 0, rejected: 0, waiting: 0, marked: 0, allPast: true };
+    (ev.days || []).forEach(function (d) {
+      if (!d.date || d.date > t) { r.allPast = false; return; }
+      dayPeople(d).forEach(function (p) {
+        r.total++;
+        var st = checkState(d, p.key);
+        if (st === 'approved') r.approved++;
+        else if (st === 'rejected') r.rejected++;
+        else { r.waiting++; if (st === 'done') r.marked++; }
+      });
+    });
+    return r;
+  }
+  function maybeAutoComplete(ev) {
+    if (ev.status === 'Completed' || ev.status === 'Cancelled') return false;
+    var r = eventReview(ev);
+    if (r.allPast && r.total && r.waiting === 0) { ev.status = 'Completed'; return true; }
+    return false;
+  }
+  // Re-load the roster first, apply just this change, then save — so a crew member
+  // ticking "done" on their phone never overwrites edits someone else just made.
+  async function updateCheck(evId, date, fn, keys, patchFn) {
+    try {
+      var res = await sb.from('crew_roster_data').select('events').eq('id', 'main').single();
+      if (res.error) throw res.error;
+      if (Array.isArray(res.data.events)) state.events = res.data.events;
+    } catch (e) { toast("Couldn't reach the server — try again.", true); return false; }
+    var ev = state.events.find(function (x) { return x.id === evId; });
+    if (!ev) { toast('That event no longer exists.', true); return false; }
+    var day = findDay(ev, date, fn);
+    if (!day) { toast('That shoot day was changed — refresh and try again.', true); return false; }
+    day.checks = day.checks || {};
+    keys.forEach(function (k) {
+      var next = patchFn(day.checks[k] || {}, k);
+      if (next === null) delete day.checks[k]; else day.checks[k] = next;
+    });
+    var autoDone = maybeAutoComplete(ev);
+    var ok = await saveEvents();
+    if (ok && autoDone) toast('All crew approved — “' + (ev.title || 'Event') + '” is now marked Completed.');
+    return ok;
+  }
+  function reviewItems() {
+    var t = todayStr(), items = [];
+    state.events.forEach(function (ev) {
+      if (ev.status === 'Cancelled') return;
+      (ev.days || []).forEach(function (d) {
+        if (!d.date || d.date > t) return;
+        var people = dayPeople(d);
+        if (people.length) items.push({ ev: ev, day: d, people: people });
+      });
+    });
+    items.sort(function (a, b) { return b.day.date.localeCompare(a.day.date) || (a.ev.title || '').localeCompare(b.ev.title || ''); });
+    return items;
+  }
+  function needsReviewCount() {
+    var cutoff = addDaysToIso(todayStr(), -REVIEW_WINDOW), n = 0;
+    reviewItems().forEach(function (it) {
+      if (it.day.date < cutoff) return;
+      it.people.forEach(function (p) { var st = checkState(it.day, p.key); if (st === 'pending' || st === 'done') n++; });
+    });
+    return n;
+  }
+  function updateApproveBadge() {
+    var b = document.getElementById('rosApproveBadge');
+    if (!b) return;
+    var n = canManageSchedule() ? needsReviewCount() : 0;
+    b.textContent = n ? String(n) : '';
+    b.style.display = n ? '' : 'none';
+  }
+  function fmtStamp(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    var h = d.getHours(), mm = String(d.getMinutes()).padStart(2, '0');
+    return d.getDate() + ' ' + m + ', ' + ((h % 12) || 12) + ':' + mm + (h >= 12 ? ' PM' : ' AM');
+  }
+  function chkAttrs(ev, day, key) {
+    return ' data-ev="' + escapeHtml(ev.id) + '" data-date="' + escapeHtml(day.date) + '" data-fn="' + escapeHtml(day.function || '') + '" data-name="' + escapeHtml(key) + '"';
+  }
+
+  function approvalsHtml() {
+    if (!canManageSchedule()) return '<div class="ros-empty-state"><h3>Admins only</h3><p>Approvals are handled by the studio admin.</p></div>';
+    var t = todayStr(), cutoff = addDaysToIso(t, -REVIEW_WINDOW), f = state.apprFilter || 'needs';
+    var items = reviewItems();
+    var c = { needs: 0, marked: 0, approved: 0, rejected: 0, all: 0 };
+    items.forEach(function (it) {
+      it.people.forEach(function (p) {
+        var st = checkState(it.day, p.key);
+        c.all++;
+        if (st === 'approved') c.approved++;
+        else if (st === 'rejected') c.rejected++;
+        else if (it.day.date >= cutoff) { c.needs++; if (st === 'done') c.marked++; }
+      });
+    });
+    function keep(it, p) {
+      var st = checkState(it.day, p.key);
+      if (f === 'needs') return it.day.date >= cutoff && (st === 'pending' || st === 'done');
+      if (f === 'approved') return st === 'approved';
+      if (f === 'rejected') return st === 'rejected';
+      return true;
+    }
+    var shown = items.map(function (it) { return { ev: it.ev, day: it.day, people: it.people.filter(function (p) { return keep(it, p); }) }; })
+      .filter(function (it) { return it.people.length; });
+
+    var chips = [['needs', 'Needs review', c.needs], ['approved', 'Approved', c.approved], ['rejected', 'Not approved', c.rejected], ['all', 'All', c.all]]
+      .map(function (x) {
+        return '<button type="button" class="ros-fchip' + (f === x[0] ? ' is-on' : '') + (x[0] === 'needs' && x[2] ? ' is-alert' : '') + '" data-action="appr-filter" data-id="' + x[0] + '">' + x[1] + '<b>' + x[2] + '</b></button>';
+      }).join('');
+
+    var html = '<div class="ros-list-stats">' +
+        '<div class="' + (c.needs ? 'is-alert' : 'is-ok') + '"><b>' + c.needs + '</b><span>waiting for your check</span></div>' +
+        '<div><b>' + c.marked + '</b><span>marked done by crew</span></div>' +
+        '<div class="is-ok"><b>' + c.approved + '</b><span>approved so far</span></div>' +
+      '</div>' +
+      '<p class="ros-appr-intro">After each shoot day, crew tap <strong>“I’ve completed my work”</strong> on their My Schedule. Cross-check and approve each person here. When everyone on an event is reviewed, the event is marked <strong>Completed</strong> automatically.</p>' +
+      '<div class="ros-fchips">' + chips + '</div>';
+
+    if (!shown.length) {
+      html += '<div class="ros-empty-state"><h3>' + (f === 'needs' ? 'All caught up 🎉' : 'Nothing here') + '</h3><p>' +
+        (f === 'needs' ? 'Nobody is waiting for approval from the last ' + REVIEW_WINDOW + ' days. Older shoot days are under “All”.' : 'No crew entries match this view.') + '</p></div>';
+      return html;
+    }
+    return html + '<div class="ros-appr-list">' + shown.map(approvalDayHtml).join('') + '</div>';
+  }
+
+  function approvalDayHtml(it) {
+    var ev = it.ev, day = it.day, tc = getTypeColors(ev.eventType);
+    var all = dayPeople(day);
+    var approvedN = all.filter(function (p) { return checkState(day, p.key) === 'approved'; }).length;
+    var waiting = it.people.filter(function (p) { var st = checkState(day, p.key); return st === 'pending' || st === 'done'; });
+    var rows = it.people.map(function (p) {
+      var st = checkState(day, p.key), ch = checkOf(day, p.key) || {};
+      var rowId = ev.id + '|' + day.date + '|' + (day.function || '') + '|' + p.key;
+      var pill;
+      if (st === 'approved') pill = '<span class="ros-chk-pill is-ok">✓ Approved' + (ch.by ? ' by ' + escapeHtml(ch.by) : '') + (ch.at ? ' · ' + fmtStamp(ch.at) : '') + '</span>';
+      else if (st === 'rejected') pill = '<span class="ros-chk-pill is-bad">✕ Not approved' + (ch.note ? ' — ' + escapeHtml(ch.note) : '') + '</span>';
+      else if (st === 'done') pill = '<span class="ros-chk-pill is-done">● Marked done by crew' + (ch.crewAt ? ' · ' + fmtStamp(ch.crewAt) : '') + '</span>';
+      else pill = '<span class="ros-chk-pill is-pend">Not marked by crew yet</span>';
+      var actions;
+      if (state.rejecting === rowId) {
+        actions = '<div class="ros-reject-form"><input type="text" class="ros-reject-input" placeholder="Reason (e.g. left early, data not handed over)" maxlength="140">' +
+          '<button type="button" class="ros-btn ros-btn-danger-solid" data-action="chk-reject-save"' + chkAttrs(ev, day, p.key) + '>Save</button>' +
+          '<button type="button" class="ros-link-btn" data-action="chk-reject-cancel">Cancel</button></div>';
+      } else if (st === 'approved' || st === 'rejected') {
+        actions = '<button type="button" class="ros-link-btn" data-action="chk-undo"' + chkAttrs(ev, day, p.key) + '>Undo</button>';
+      } else {
+        actions = '<button type="button" class="ros-appr-btn is-yes" data-action="chk-approve"' + chkAttrs(ev, day, p.key) + '>✓ Approve</button>' +
+          '<button type="button" class="ros-appr-btn is-no" data-action="chk-reject-open"' + chkAttrs(ev, day, p.key) + '>Not done</button>';
+      }
+      return '<div class="ros-appr-row is-' + st + '">' +
+        '<i class="ros-appr-av" style="background:' + avatarColor(p.name) + '">' + escapeHtml(initialsOf(p.name)) + '</i>' +
+        '<div class="ros-appr-who"><b>' + escapeHtml(p.name) + '</b><small>' + escapeHtml(p.roles.join(' + ')) + '</small>' + pill + '</div>' +
+        '<div class="ros-appr-actions">' + actions + '</div></div>';
+    }).join('');
+    var p = day.date.split('-').map(Number);
+    var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][p[1] - 1];
+    return '<section class="ros-appr-day" style="--accent:' + tc.fg + '">' +
+      '<header class="ros-appr-head">' +
+        '<div class="ros-dtile ros-dtile-sm" style="--tile:' + tc.fg + '"><em>' + mo + '</em><b>' + p[2] + '</b></div>' +
+        '<div class="ros-appr-title"><b>' + escapeHtml(ev.title || 'Untitled event') + '</b>' +
+          '<span>' + (day.function ? escapeHtml(day.function) + ' · ' : '') + formatDate(day.date) + ' · ' + (function () { var a = daysBetween(day.date, todayStr()); return a === 0 ? 'Today' : a === 1 ? 'Yesterday' : a + ' days ago'; })() + '</span></div>' +
+        '<div class="ros-appr-progress"><b>' + approvedN + '/' + all.length + '</b><span>approved</span></div>' +
+        (waiting.length > 1 ? '<button type="button" class="ros-appr-btn is-yes ros-appr-all" data-action="chk-approve-day"' + chkAttrs(ev, day, '') +
+          ' data-names="' + escapeHtml(waiting.map(function (w) { return w.key; }).join('|')) + '">✓ Approve all ' + waiting.length + '</button>' : '') +
+      '</header>' + rows + '</section>';
+  }
+
+  // Status strip on a crew member's own past call cards.
+  function selfCheckHtml(ev, day, viewerName) {
+    if (!viewerName || !day.date || day.date > todayStr() || ev.status === 'Cancelled') return '';
+    var k = viewerName.trim().toLowerCase();
+    var st = checkState(day, k), ch = checkOf(day, k) || {};
+    var isSelf = !!state.selfName && state.selfName.trim().toLowerCase() === k;
+    var attrs = chkAttrs(ev, day, k);
+    if (st === 'approved') return '<div class="ros-chk is-ok">✓ Work approved' + (ch.by ? ' by ' + escapeHtml(ch.by) : '') + '</div>';
+    if (st === 'rejected') return '<div class="ros-chk is-bad">✕ Not approved' + (ch.note ? ': ' + escapeHtml(ch.note) : '') +
+      (isSelf ? '<button type="button" class="ros-chk-btn" data-action="chk-self-done"' + attrs + '>Mark done again</button>' : '') + '</div>';
+    if (st === 'done') return '<div class="ros-chk is-wait">⏳ Marked done — waiting for approval' +
+      (isSelf ? '<button type="button" class="ros-link-btn" data-action="chk-self-undo"' + attrs + '>Undo</button>' : '') + '</div>';
+    return isSelf
+      ? '<button type="button" class="ros-chk-btn is-big" data-action="chk-self-done"' + attrs + '>✓ I’ve completed my work</button>'
+      : '<div class="ros-chk is-pend">Not marked done yet</div>';
+  }
+
+  async function handleCheckAction(btn, action) {
+    if (action === 'appr-filter') { state.apprFilter = btn.dataset.id; state.rejecting = ''; renderContent(); return; }
+    if (action === 'chk-reject-cancel') { state.rejecting = ''; renderContent(); return; }
+    var evId = btn.dataset.ev, date = btn.dataset.date, fn = btn.dataset.fn || '', key = btn.dataset.name;
+    var who = currentUserLabel(), now = new Date().toISOString();
+    var ok = false;
+    if (action === 'chk-self-done' || action === 'chk-self-undo') {
+      if (!state.selfName || state.selfName.trim().toLowerCase() !== key) { toast('You can only mark your own work.', true); return; }
+      btn.disabled = true;
+      ok = await updateCheck(evId, date, fn, [key], function (cur) {
+        if (action === 'chk-self-undo') return cur.status === 'done' ? null : cur;
+        return { status: 'done', crewAt: now };
+      });
+      if (ok) toast(action === 'chk-self-done' ? 'Marked done — waiting for approval.' : 'Undone.');
+      renderContent();
+      return;
+    }
+    if (!canManageSchedule()) { toast('Only admins can approve work.', true); return; }
+    if (action === 'chk-reject-open') {
+      state.rejecting = evId + '|' + date + '|' + fn + '|' + key;
+      renderContent();
+      var inp = document.querySelector('#ros-content .ros-reject-input');
+      if (inp) inp.focus();
+      return;
+    }
+    btn.disabled = true;
+    if (action === 'chk-approve') {
+      ok = await updateCheck(evId, date, fn, [key], function (cur) { return Object.assign({}, cur, { status: 'approved', by: who, at: now, note: '' }); });
+    } else if (action === 'chk-approve-day') {
+      var keys = (btn.dataset.names || '').split('|').filter(Boolean);
+      ok = await updateCheck(evId, date, fn, keys, function (cur) { return Object.assign({}, cur, { status: 'approved', by: who, at: now, note: '' }); });
+      if (ok) toast('Approved ' + keys.length + ' people.');
+    } else if (action === 'chk-reject-save') {
+      var row = btn.closest('.ros-appr-row');
+      var note = row ? row.querySelector('.ros-reject-input').value.trim() : '';
+      if (!note) { btn.disabled = false; toast('Add a short reason so the crew member knows why.', true); return; }
+      ok = await updateCheck(evId, date, fn, [key], function (cur) { return Object.assign({}, cur, { status: 'rejected', by: who, at: now, note: note }); });
+    } else if (action === 'chk-undo') {
+      ok = await updateCheck(evId, date, fn, [key], function (cur) { return cur.crewAt ? { status: 'done', crewAt: cur.crewAt } : null; });
+    }
+    state.rejecting = '';
+    renderContent();
+  }
 
   /* ---------- event card helpers (All Events) ---------- */
   var AVATAR_COLORS = ['#2F5FE0','#7A5AF8','#C11574','#0E9384','#D92D20','#B54708','#175CD3','#3E8E41','#6941C6','#0086C9'];
@@ -6811,6 +7139,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   function updatePrimaryActionButton() {
     var btn = document.getElementById('rosPrimaryActionBtn');
     // Only admins can create events or crew members — everyone else is view-only.
+    var apTab = document.getElementById('rosApproveTab');
+    if (apTab) apTab.style.display = canManageSchedule() ? '' : 'none';
     if (!canManageSchedule()) { btn.style.display = 'none'; return; }
     btn.style.display = '';
     if (state.view === 'crew') { btn.textContent = '+ Add crew member'; btn.onclick = function () { openCrewModal(null); }; }
@@ -6819,10 +7149,12 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
 
   /* ---------- ros-content router ---------- */
   function renderContent() {
+    setTimeout(updateApproveBadge, 0);
     var el = document.getElementById('ros-content');
     if (state.view === 'my') { el.innerHTML = myScheduleHtml(); }
     else if (state.view === 'crew') { el.innerHTML = crewTabHtml(); }
     else if (state.view === 'avail') { el.innerHTML = availabilityHtml(); }
+    else if (state.view === 'approve') { el.innerHTML = approvalsHtml(); }
     else {
       el.innerHTML = '<div class="ros-search-row">' +
         '<input type="text" id="rosSearchInput" placeholder="Search events, venues, crew…" value="' + escapeHtml(state.searchQuery) + '">' +
@@ -6858,6 +7190,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<div><b>' + thisWeek + '</b><span>in the next 7 days</span></div>' +
       '<div><b>' + (live.length ? escapeHtml(relativeDayLabel(live[0].day.date)) : '—') + '</b><span>next shoot</span></div>' +
     '</div>';
+    var summaryEnd = html.length;
 
     if (upcoming.length) {
       html += callCard(upcoming[0], { hero: true, viewerName: state.myName });
@@ -6876,6 +7209,20 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       });
     } else {
       html += '<div class="ros-empty-state"><h3>Nothing on your schedule</h3><p>You\'re all clear for now. New assignments will show up here.</p></div>';
+    }
+    // Recent shoot days the logged-in crew member still needs to mark as done.
+    var isSelfView = state.selfName && state.selfName === state.myName;
+    var cutoffConfirm = addDaysToIso(today, -REVIEW_WINDOW);
+    var selfKey = state.myName.toLowerCase();
+    var toConfirm = (isSelfView ? calls : []).filter(function (c) {
+      if (c.event.status === 'Cancelled' || c.day.date > today || c.day.date < cutoffConfirm) return false;
+      var st = checkState(c.day, selfKey);
+      return st === 'pending' || st === 'rejected';
+    }).sort(function (a, b) { return b.day.date.localeCompare(a.day.date); });
+    if (toConfirm.length) {
+      html = html.slice(0, summaryEnd) + '<div class="ros-confirm-banner"><b>' + toConfirm.length + ' shoot day' + (toConfirm.length === 1 ? '' : 's') + ' to confirm</b><span>Tap “I’ve completed my work” on each so the studio can approve it.</span></div>' +
+        '<div class="ros-card-grid">' + toConfirm.map(function (c) { return callCard(c, { viewerName: state.myName, confirm: true }); }).join('') + '</div>' + html.slice(summaryEnd);
+      past = past.filter(function (c) { return toConfirm.indexOf(c) === -1; });
     }
     if (past.length) {
       html += '<details class="ros-past-section"><summary>Past assignments (' + past.length + ')</summary><div class="ros-card-grid">' +
@@ -6919,7 +7266,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       : '';
     var status = ev.status || 'Tentative';
 
-    return '<article class="ros-callsheet' + (opts.hero ? ' ros-callsheet-hero' : '') + (opts.muted ? ' ros-callsheet-muted' : '') + (status === 'Cancelled' ? ' ros-callsheet-cancelled' : '') + '">' +
+    return '<article class="ros-callsheet' + (opts.hero ? ' ros-callsheet-hero' : '') + (opts.muted ? ' ros-callsheet-muted' : '') + (opts.confirm ? ' ros-callsheet-confirm' : '') + (status === 'Cancelled' ? ' ros-callsheet-cancelled' : '') + '">' +
       '<div class="ros-callsheet-top"><span class="ros-eyebrow">' + (opts.hero ? 'Next up · ' : '') + escapeHtml(opts.muted ? formatDateShort(day.date) : relativeDayLabel(day.date)) + '</span>' +
       '<span class="ros-ref-code">' + escapeHtml(ev.refCode || '') + (totalDays > 1 ? ' · Day ' + dayIdx + ' of ' + totalDays : '') + '</span></div>' +
       '<h3 class="ros-callsheet-title">' + escapeHtml(ev.title || 'Untitled event') + '</h3>' +
@@ -6938,6 +7285,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '</dl>' +
       (teamRows ? '<div class="ros-team-block"><div class="ros-team-head">Team on this day</div>' + teamRows + '</div>' : '') +
       (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
+      selfCheckHtml(ev, day, opts.viewerName) +
       '<div class="ros-callsheet-footer"><span class="ros-status-badge ros-status-' + status.toLowerCase() + '">' + escapeHtml(status) + '</span>' +
       '<div class="ros-callsheet-actions">' +
         (opts.muted ? '' : '<a class="ros-wa-btn" href="' + whatsappHref(ev, day) + '" target="_blank" rel="noopener">Share on WhatsApp</a>') +
@@ -7253,9 +7601,19 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
         '<div class="ros-evt-side">' +
           (allCrew.length ? avatarStackHtml(allCrew, 5) + '<span class="ros-evt-crewcount">' + allCrew.length + ' crew</span>'
                           : '<span class="ros-evt-nocrew">No crew yet</span>') +
-          (staff.total ? '<div class="ros-staff ' + staffCls + '" title="' + staff.filled + ' of ' + staff.total + ' needed role-slots filled">' +
+          (function () {
+            var rv = eventReview(ev);
+            if ((timing.key === 'past' || timing.key === 'now') && rv.total && status !== 'Cancelled') {
+              var ap = Math.round(rv.approved / rv.total * 100);
+              var cls = rv.waiting === 0 ? (rv.rejected ? 'is-mid' : 'is-full') : 'is-review';
+              return '<div class="ros-staff ' + cls + '" title="' + rv.approved + ' of ' + rv.total + ' crew entries approved">' +
+                '<div class="ros-staff-bar"><i style="width:' + ap + '%"></i></div>' +
+                '<span>' + (rv.waiting ? '✓ ' + rv.approved + '/' + rv.total + ' approved · ' + rv.waiting + ' to check' : (rv.rejected ? rv.rejected + ' not approved' : 'All work approved')) + '</span></div>';
+            }
+            return staff.total ? '<div class="ros-staff ' + staffCls + '" title="' + staff.filled + ' of ' + staff.total + ' needed role-slots filled">' +
               '<div class="ros-staff-bar"><i style="width:' + pct + '%"></i></div>' +
-              '<span>' + (staff.open ? staff.open + ' slot' + (staff.open === 1 ? '' : 's') + ' open' : 'Fully staffed') + '</span></div>' : '') +
+              '<span>' + (staff.open ? staff.open + ' slot' + (staff.open === 1 ? '' : 's') + ' open' : 'Fully staffed') + '</span></div>' : '';
+          })() +
         '</div>' +
         '<svg class="ros-evt-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</summary>' +
@@ -7651,7 +8009,14 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     ev.rentalFrom = document.getElementById('rosF_rentalFrom').value.trim();
     ev.rentalStatus = document.getElementById('rosF_rentalStatus').value;
     ev.notes = document.getElementById('rosF_notes').value.trim();
+    var prevDays = ev.days || [];
     ev.days = readDaysFromDom();
+    // Carry completion checks over to the re-read days (matched by date, then function).
+    ev.days.forEach(function (d) {
+      var old = prevDays.find(function (o) { return o.date === d.date && (o.function || '') === (d.function || '') && o.checks; }) ||
+                prevDays.find(function (o) { return o.date === d.date && o.checks; });
+      if (old) d.checks = old.checks;
+    });
 
     if (!ev.title || !ev.eventType) { toast('Event name and type are required.', true); return; }
     if (!ev.days.length || ev.days.some(function (d) { return !d.date; })) { toast('Every day needs a date.', true); return; }
@@ -7791,6 +8156,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       if (!btn) return;
       var action = btn.dataset.action;
       var id = btn.dataset.id;
+      if (action === 'appr-filter' || action.indexOf('chk-') === 0) { handleCheckAction(btn, action); return; }
       if (action === 'list-filter') {
         state.listFilter = id;
         var chips = document.getElementById('rosFilterChips');
@@ -7850,6 +8216,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       return c.name.trim().toLowerCase() === loginFirst || c.name.trim().toLowerCase().indexOf(loginFirst) === 0;
     });
     state.myName = match ? match.name : '';
+    state.selfName = state.myName;
   }
 
   async function loadRosterData() {
