@@ -1673,6 +1673,102 @@
   .ros-av-foot td, .ros-av-foot th { background: var(--ros-surface-muted); text-align: center; font-weight: 700; color: var(--ros-success-text); height: 34px; }
   .ros-av-foot td.is-none { color: var(--ros-danger-text); }
 
+  /* ---------- All Events v3: richer event cards ---------- */
+  .ros-list-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: -8px 0 14px; }
+  .ros-list-stats > div { background: var(--ros-surface); border: 1px solid var(--ros-border); border-radius: 12px; padding: 12px 14px; display: flex; align-items: baseline; gap: 8px; box-shadow: var(--ros-shadow-sm); }
+  .ros-list-stats b { font-size: 22px; font-weight: 700; color: var(--ros-ink); letter-spacing: -0.02em; }
+  .ros-list-stats span { font-size: 12px; color: var(--ros-ink-soft); }
+  .ros-list-stats .is-alert b { color: var(--ros-warning-text); }
+  .ros-list-stats .is-ok b { color: var(--ros-success-text); }
+  .ros-fchips { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 6px; }
+  .ros-fchip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--ros-border-strong); background: var(--ros-surface); color: var(--ros-ink); font-family: var(--ros-font-sans); font-size: 13px; font-weight: 600; padding: 6px 8px 6px 13px; border-radius: 999px; cursor: pointer; transition: all .12s; }
+  .ros-fchip b { font-size: 11px; font-weight: 700; background: var(--ros-neutral-bg); color: var(--ros-ink-soft); border-radius: 999px; padding: 1px 7px; }
+  .ros-fchip:hover { border-color: var(--ros-accent); }
+  .ros-fchip.is-alert b { background: var(--ros-warning-bg); color: var(--ros-warning-text); }
+  .ros-fchip.is-on { background: var(--ros-ink); border-color: var(--ros-ink); color: #fff; }
+  .ros-fchip.is-on b { background: rgba(255,255,255,0.2); color: #fff; }
+
+  .ros-evcard { padding: 0; overflow: hidden; border-left: 4px solid var(--accent, var(--ros-accent)); transition: box-shadow .15s, transform .15s; }
+  .ros-evcard:hover { box-shadow: var(--ros-shadow-md); }
+  .ros-evcard > .ros-event-summary { align-items: center; gap: 16px; padding: 16px 18px; border-radius: 0; }
+  .ros-evcard[open] > summary { border-radius: 0; background: var(--ros-surface-muted); }
+  .ros-evcard > *:not(summary) { margin-left: 22px; margin-right: 22px; }
+  .ros-evcard > *:last-child { margin-bottom: 20px; }
+  .ros-evcard.is-past { opacity: .72; }
+  .ros-evcard.is-past:hover { opacity: 1; }
+  .ros-evcard.is-cancelled .ros-evt-sum-title { text-decoration: line-through; color: var(--ros-ink-soft); }
+  .ros-evcard .ros-evt-chevron { margin-top: 0; }
+
+  .ros-dtile { flex: 0 0 62px; width: 62px; border-radius: 12px; background: var(--ros-surface); border: 1px solid var(--ros-border); text-align: center; overflow: hidden; box-shadow: var(--ros-shadow-sm); padding-bottom: 6px; }
+  .ros-dtile em { display: block; font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: var(--tile, var(--ros-accent)); padding: 3px 0; }
+  .ros-dtile b { display: block; font-size: 24px; font-weight: 800; line-height: 1.1; color: var(--ros-ink); margin-top: 4px; letter-spacing: -0.02em; }
+  .ros-dtile span { display: block; font-size: 11px; font-weight: 600; color: var(--ros-ink-soft); text-transform: uppercase; letter-spacing: .06em; }
+  .ros-dtile small { display: block; font-size: 10px; color: var(--ros-ink-faint); margin-top: 2px; }
+  .ros-dtile.is-empty b { color: var(--ros-ink-faint); }
+
+  .ros-evcard .ros-evt-sum-title { font-size: 16.5px; }
+  .ros-evcard .ros-evt-sum-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; font-size: 12.5px; }
+  .ros-when-chip { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+  .ros-when-chip.is-now { background: var(--ros-danger-bg); color: var(--ros-danger-text); border-color: var(--ros-danger-border); }
+  .ros-when-chip.is-soon { background: var(--ros-warning-bg); color: var(--ros-warning-text); border-color: var(--ros-warning-border); }
+  .ros-when-chip.is-later { background: var(--ros-accent-soft-bg); color: var(--ros-accent); border-color: var(--ros-accent-soft-border); }
+  .ros-when-chip.is-past, .ros-when-chip.is-undated { background: var(--ros-neutral-bg); color: var(--ros-ink-soft); border-color: var(--ros-neutral-border); }
+  .ros-evt-venue { color: var(--ros-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .ros-evcard .ros-evt-other { margin-left: 0; }
+
+  .ros-evt-timeline { display: flex; flex-wrap: wrap; gap: 0; margin-top: 10px; }
+  .ros-tl-step { position: relative; display: flex; flex-direction: column; padding: 0 16px 0 16px; min-width: 0; }
+  .ros-tl-step:first-child { padding-left: 16px; }
+  .ros-tl-step i { position: absolute; left: 0; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent, var(--ros-accent)); box-shadow: 0 0 0 3px var(--ros-surface); }
+  .ros-tl-step:not(:last-child)::after { content: ''; position: absolute; left: 9px; right: 0; top: 8px; height: 2px; background: var(--ros-border); }
+  .ros-tl-step b { font-size: 12.5px; font-weight: 700; color: var(--ros-ink); white-space: nowrap; background: var(--ros-surface); position: relative; z-index: 1; padding-right: 6px; }
+  .ros-evcard[open] .ros-tl-step b { background: var(--ros-surface-muted); }
+  .ros-evcard[open] .ros-tl-step i { box-shadow: 0 0 0 3px var(--ros-surface-muted); }
+  #rosEventListArea { margin-top: 18px; }
+  .ros-evcard .ros-role-line-quiet { display: flex !important; flex-wrap: wrap; align-items: center; gap: 2px 0; }
+  .ros-tl-step small { font-size: 11px; color: var(--ros-ink-soft); white-space: nowrap; }
+  .ros-tl-step.is-done i { background: var(--ros-ink-faint); }
+  .ros-tl-step.is-done b { color: var(--ros-ink-soft); }
+  .ros-tl-step.is-today i { background: var(--ros-danger-text); box-shadow: 0 0 0 3px var(--ros-danger-bg); }
+
+  .ros-evt-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 150px; }
+  .ros-avstack { display: inline-flex; }
+  .ros-avstack i { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; font-weight: 700; color: #fff; border: 2px solid var(--ros-surface); margin-left: -8px; box-shadow: 0 1px 2px rgba(16,24,40,.15); }
+  .ros-avstack i:first-child { margin-left: 0; }
+  .ros-avstack-more { background: var(--ros-neutral-bg) !important; color: var(--ros-ink-soft) !important; }
+  .ros-evt-crewcount { font-size: 11.5px; color: var(--ros-ink-soft); font-weight: 600; }
+  .ros-evt-nocrew { font-size: 12px; font-weight: 600; color: var(--ros-danger-text); background: var(--ros-danger-bg); border: 1px solid var(--ros-danger-border); border-radius: 999px; padding: 3px 10px; }
+  .ros-staff { width: 150px; }
+  .ros-staff-bar { height: 6px; border-radius: 999px; background: var(--ros-neutral-bg); overflow: hidden; }
+  .ros-staff-bar i { display: block; height: 100%; border-radius: 999px; background: var(--ros-accent); }
+  .ros-staff span { display: block; text-align: right; font-size: 11px; font-weight: 600; margin-top: 3px; color: var(--ros-ink-soft); }
+  .ros-staff.is-full .ros-staff-bar i { background: #12B76A; }
+  .ros-staff.is-full span { color: var(--ros-success-text); }
+  .ros-staff.is-mid .ros-staff-bar i { background: #F79009; }
+  .ros-staff.is-mid span { color: var(--ros-warning-text); }
+  .ros-staff.is-low .ros-staff-bar i { background: #F04438; }
+  .ros-staff.is-low span { color: var(--ros-danger-text); }
+
+  @media (max-width: 700px) {
+    .ros-list-stats { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .ros-list-stats > div { flex-direction: column; gap: 0; padding: 10px; }
+    .ros-list-stats b { font-size: 18px; }
+    .ros-list-stats span { font-size: 10.5px; line-height: 1.25; }
+    .ros-evcard > .ros-event-summary { flex-wrap: wrap; gap: 12px; padding: 14px; align-items: flex-start; }
+    .ros-evcard .ros-evt-sum-main { flex: 1 1 calc(100% - 110px); }
+    .ros-evt-side { flex: 1 1 100%; flex-direction: row; align-items: center; justify-content: space-between; min-width: 0; padding-top: 10px; border-top: 1px dashed var(--ros-border); }
+    .ros-evt-crewcount { margin-right: auto; margin-left: 8px; }
+    .ros-staff { width: 120px; }
+    .ros-evcard .ros-evt-chevron { position: absolute; right: 14px; top: 18px; }
+    .ros-evcard > .ros-event-summary { position: relative; padding-right: 34px; }
+    .ros-evcard > *:not(summary) { margin-left: 14px; margin-right: 14px; }
+    .ros-evt-venue { max-width: 100%; }
+    .ros-fchips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+    .ros-fchip { flex-shrink: 0; }
+    .ros-tl-step:not(:last-child)::after { display: none; }
+    .ros-evt-crewcount { white-space: nowrap; }
+  }
+
   @media (max-width: 560px) {
     .ros-my-summary b { font-size: 15px; }
     .ros-team-row { grid-template-columns: 1fr; gap: 4px; }
@@ -6347,7 +6443,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     monthFilter: '',
     editingEvent: null,
     editingCrew: null,
-    availStart: ''
+    availStart: '',
+    listFilter: 'all'
   };
 
   var EVENT_TYPES = ['Wedding','Engagement','Political Event','College Event','Corporate Event','Birthday','Other'];
@@ -6583,6 +6680,109 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     });
   }
 
+
+  /* ---------- event card helpers (All Events) ---------- */
+  var AVATAR_COLORS = ['#2F5FE0','#7A5AF8','#C11574','#0E9384','#D92D20','#B54708','#175CD3','#3E8E41','#6941C6','#0086C9'];
+  function avatarColor(name) {
+    var h = 0, k = String(name || '').trim().toLowerCase();
+    for (var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+    return AVATAR_COLORS[h % AVATAR_COLORS.length];
+  }
+  // Unique crew across days, case-insensitive ("chirag" and "Chirag" are one person),
+  // using the Team-list spelling when the person is on it.
+  function eventCrew(days) {
+    var seen = {}, out = [];
+    days.forEach(function (day) {
+      ROLE_KEYS.forEach(function (role) {
+        namesInRoleValue(day.roles && day.roles[role]).forEach(function (n) {
+          var k = n.toLowerCase();
+          if (seen[k]) return;
+          seen[k] = 1;
+          var c = crewByName(n);
+          out.push(c ? c.name : n);
+        });
+      });
+    });
+    return out;
+  }
+  function avatarStackHtml(names, max) {
+    max = max || 5;
+    var shown = names.slice(0, max);
+    return '<span class="ros-avstack" title="' + escapeHtml(names.join(', ')) + '">' +
+      shown.map(function (n) {
+        return '<i style="background:' + avatarColor(n) + '">' + escapeHtml(initialsOf(n)) + '</i>';
+      }).join('') +
+      (names.length > max ? '<i class="ros-avstack-more">+' + (names.length - max) + '</i>' : '') +
+    '</span>';
+  }
+  // Slots = role × day that are needed (Not required doesn't count).
+  function eventStaffing(days) {
+    var filled = 0, open = 0;
+    days.forEach(function (day) {
+      ROLE_KEYS.forEach(function (role) {
+        var raw = day.roles && day.roles[role];
+        if (!raw || !String(raw).trim()) open++;
+        else if (!isNotRequiredValue(raw)) filled++;
+      });
+    });
+    return { filled: filled, open: open, total: filled + open };
+  }
+  function eventTiming(days) {
+    var dates = days.map(function (d) { return d.date; }).filter(Boolean).sort();
+    var today = todayStr();
+    if (!dates.length) return { key: 'undated', label: 'No date', cls: 'is-undated' };
+    var first = dates[0], last = dates[dates.length - 1];
+    if (last < today) {
+      var ago = daysBetween(last, today);
+      return { key: 'past', label: ago === 1 ? 'Yesterday' : (ago < 30 ? ago + ' days ago' : 'Done'), cls: 'is-past' };
+    }
+    if (first <= today) return { key: 'now', label: 'Happening now', cls: 'is-now' };
+    var d = daysBetween(today, first);
+    return { key: 'upcoming', label: d === 1 ? 'Tomorrow' : 'In ' + d + ' days', cls: d <= 7 ? 'is-soon' : 'is-later' };
+  }
+  var LIST_FILTERS = [
+    { key: 'all', label: 'All' },
+    { key: 'upcoming', label: 'Upcoming' },
+    { key: 'needs', label: 'Needs crew' },
+    { key: 'Tentative', label: 'Tentative' },
+    { key: 'Confirmed', label: 'Confirmed' },
+    { key: 'past', label: 'Past' }
+  ];
+  function eventPassesListFilter(ev, f) {
+    if (!f || f === 'all') return true;
+    var t = eventTiming(ev.days || []);
+    if (f === 'upcoming') return (t.key === 'upcoming' || t.key === 'now') && ev.status !== 'Cancelled';
+    if (f === 'past') return t.key === 'past' || ev.status === 'Completed';
+    if (f === 'needs') return t.key !== 'past' && ev.status !== 'Cancelled' && ev.status !== 'Completed' && eventStaffing(ev.days || []).open > 0;
+    return ev.status === f;
+  }
+  function filterChipsHtml() {
+    return LIST_FILTERS.map(function (f) {
+      var n = state.events.filter(function (ev) { return eventPassesListFilter(ev, f.key); }).length;
+      return '<button type="button" class="ros-fchip' + (state.listFilter === f.key ? ' is-on' : '') + (f.key === 'needs' && n ? ' is-alert' : '') + '" data-action="list-filter" data-id="' + f.key + '">' +
+        escapeHtml(f.label) + '<b>' + n + '</b></button>';
+    }).join('');
+  }
+  function listStatsHtml() {
+    var today = todayStr(), weekEnd = addDaysToIso(today, 6), monthKey = today.slice(0, 7);
+    var weekDays = 0, monthEvents = 0, openSlots = 0;
+    state.events.forEach(function (ev) {
+      if (ev.status === 'Cancelled') return;
+      var days = ev.days || [];
+      if (days.some(function (d) { return d.date && d.date.slice(0, 7) === monthKey; })) monthEvents++;
+      days.forEach(function (d) { if (d.date >= today && d.date <= weekEnd) weekDays++; });
+      if (ev.status !== 'Completed') {
+        var upcomingDays = days.filter(function (d) { return d.date >= today; });
+        openSlots += eventStaffing(upcomingDays).open;
+      }
+    });
+    return '<div class="ros-list-stats">' +
+      '<div><b>' + monthEvents + '</b><span>events this month</span></div>' +
+      '<div><b>' + weekDays + '</b><span>shoot days in next 7 days</span></div>' +
+      '<div class="' + (openSlots ? 'is-alert' : 'is-ok') + '"><b>' + openSlots + '</b><span>open crew slots ahead</span></div>' +
+    '</div>';
+  }
+
   /* ---------- top bar / ros-tabs ---------- */
   function renderWhoAmI() {
     // Identity comes from the logged-in account. Admins also get a picker so they can
@@ -6627,7 +6827,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       el.innerHTML = '<div class="ros-search-row">' +
         '<input type="text" id="rosSearchInput" placeholder="Search events, venues, crew…" value="' + escapeHtml(state.searchQuery) + '">' +
         buildMonthFilterHtml() +
-        '</div><div id="rosEventListArea"></div>';
+        '</div>' + listStatsHtml() + '<div class="ros-fchips" id="rosFilterChips">' + filterChipsHtml() + '</div><div id="rosEventListArea"></div>';
       updateEventListArea();
     }
   }
@@ -6859,6 +7059,11 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     }
     if (!events.length) return '<p class="ros-no-results">No events match "' + escapeHtml(state.searchQuery) + '".</p>';
 
+    if (state.listFilter && state.listFilter !== 'all') {
+      events = events.filter(function (ev) { return eventPassesListFilter(ev, state.listFilter); });
+      if (!events.length) return '<p class="ros-no-results">No events in this view.</p>';
+    }
+
     if (state.monthFilter) {
       events = events.filter(function (ev) {
         var dates = (ev.days || []).map(function (d) { return d.date; }).filter(Boolean);
@@ -6991,15 +7196,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '</details>';
     }).join('');
 
-    // A one-line summary that answers when / what / who without opening anything.
-    var allCrew = [];
-    days.forEach(function (day) {
-      ROLE_KEYS.forEach(function (role) {
-        var raw = day.roles && day.roles[role];
-        if (!raw || !String(raw).trim() || isNotRequiredValue(raw)) return;
-        namesInRoleValue(raw).forEach(function (n) { if (allCrew.indexOf(n) === -1) allCrew.push(n); });
-      });
-    });
+    // Card header: date tile · title + when + day timeline · crew & staffing.
+    var allCrew = eventCrew(days);
     // When listed under a month heading, show that month's dates — not the whole
     // span. Otherwise a November wedding reads "25 Aug – 6 Nov" under November.
     var daysHere = (monthKey && monthKey !== 'undated')
@@ -7008,24 +7206,58 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var otherCount = days.length - daysHere.length;
     var dated = daysHere.map(function (d) { return d.date; }).filter(Boolean).sort();
     var whenLabel = dated.length
-      ? (dated.length > 1 ? formatDate(dated[0]) + ' – ' + formatDate(dated[dated.length - 1]) : formatDate(dated[0]))
+      ? (dated.length > 1 ? formatDateShort(dated[0]) + ' – ' + formatDate(dated[dated.length - 1]) : formatDate(dated[0]))
       : 'No dates set';
-    return '<details class="ros-event-block">' +
+    var timing = eventTiming(days);
+    var staff = eventStaffing(days);
+    var pct = staff.total ? Math.round(staff.filled / staff.total * 100) : 0;
+    var staffCls = !staff.total ? 'is-none' : (staff.open === 0 ? 'is-full' : (pct >= 60 ? 'is-mid' : 'is-low'));
+    var status = ev.status || 'Tentative';
+    var tile = (function () {
+      if (!dated.length) return '<div class="ros-dtile is-empty"><b>?</b><span>No date</span></div>';
+      var p = dated[0].split('-').map(Number);
+      var dt = new Date(p[0], p[1] - 1, p[2]);
+      var wk = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
+      var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][p[1] - 1];
+      return '<div class="ros-dtile" style="--tile:' + tc.fg + '"><em>' + wk + '</em><b>' + p[2] + '</b><span>' + mo + '</span>' +
+        (dated.length > 1 ? '<small>+' + (dated.length - 1) + ' day' + (dated.length > 2 ? 's' : '') + '</small>' : '') + '</div>';
+    })();
+    var timeline = daysHere.length > 1 || (daysHere[0] && daysHere[0].function)
+      ? '<div class="ros-evt-timeline">' + daysHere.map(function (d) {
+          var past = d.date && d.date < todayStr();
+          var isToday = d.date === todayStr();
+          return '<span class="ros-tl-step' + (past ? ' is-done' : '') + (isToday ? ' is-today' : '') + '">' +
+            '<i></i><b>' + escapeHtml(d.function || 'Shoot') + '</b><small>' + (d.date ? formatDateShort(d.date) : '—') + (d.time ? ' · ' + formatTime(d.time) : '') + '</small></span>';
+        }).join('') + '</div>'
+      : '';
+    var cardCls = 'ros-event-block ros-evcard' +
+      (timing.key === 'past' || status === 'Completed' ? ' is-past' : '') +
+      (status === 'Cancelled' ? ' is-cancelled' : '');
+    return '<details class="' + cardCls + '" style="--accent:' + tc.fg + '">' +
       '<summary class="ros-event-summary">' +
-        '<svg class="ros-evt-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        tile +
         '<div class="ros-evt-sum-main">' +
           '<div class="ros-evt-sum-top">' +
             '<span class="ros-evt-sum-title">' + escapeHtml(ev.title || 'Untitled event') + '</span>' +
-            '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span>' +
-            '<span class="ros-status-badge ros-status-' + String(ev.status || 'Tentative').toLowerCase() + '">' + escapeHtml(ev.status || 'Tentative') + '</span>' +
+            '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType || 'Event') + '</span>' +
+            '<span class="ros-status-badge ros-status-' + status.toLowerCase() + '">' + escapeHtml(status) + '</span>' +
           '</div>' +
           '<div class="ros-evt-sum-sub">' +
+            '<span class="ros-when-chip ' + timing.cls + '">' + escapeHtml(timing.label) + '</span>' +
             '<strong>' + escapeHtml(whenLabel) + '</strong>' +
-            (daysHere.length ? ' · ' + daysHere.length + ' day' + (daysHere.length === 1 ? '' : 's') : '') +
-            (otherCount ? ' <span class="ros-evt-other">+' + otherCount + ' in another month</span>' : '') +
-            (allCrew.length ? ' · ' + escapeHtml(allCrew.join(', ')) : ' · <em>no crew assigned</em>') +
+            (ev.venue ? '<span class="ros-evt-venue">📍 ' + escapeHtml(ev.venue) + '</span>' : '') +
+            (otherCount ? '<span class="ros-evt-other">+' + otherCount + ' in another month</span>' : '') +
           '</div>' +
+          timeline +
         '</div>' +
+        '<div class="ros-evt-side">' +
+          (allCrew.length ? avatarStackHtml(allCrew, 5) + '<span class="ros-evt-crewcount">' + allCrew.length + ' crew</span>'
+                          : '<span class="ros-evt-nocrew">No crew yet</span>') +
+          (staff.total ? '<div class="ros-staff ' + staffCls + '" title="' + staff.filled + ' of ' + staff.total + ' needed role-slots filled">' +
+              '<div class="ros-staff-bar"><i style="width:' + pct + '%"></i></div>' +
+              '<span>' + (staff.open ? staff.open + ' slot' + (staff.open === 1 ? '' : 's') + ' open' : 'Fully staffed') + '</span></div>' : '') +
+        '</div>' +
+        '<svg class="ros-evt-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</summary>' +
       '<div class="ros-event-block-header">' +
       '<div class="ros-event-block-heading">' +
@@ -7559,6 +7791,13 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       if (!btn) return;
       var action = btn.dataset.action;
       var id = btn.dataset.id;
+      if (action === 'list-filter') {
+        state.listFilter = id;
+        var chips = document.getElementById('rosFilterChips');
+        if (chips) chips.innerHTML = filterChipsHtml();
+        updateEventListArea();
+        return;
+      }
       if (action === 'avail-prev' || action === 'avail-next' || action === 'avail-today') {
         var base = state.availStart || todayStr();
         state.availStart = action === 'avail-today' ? todayStr() : addDaysToIso(base, action === 'avail-next' ? 14 : -14);
