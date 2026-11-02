@@ -1545,6 +1545,142 @@
     .ros-modal-footer .ros-btn { flex: 1; }
   }
 
+  /* ---------- Crew Schedule v2: assigning + clearer call sheets ---------- */
+  #confirmOverlay { z-index: 300; }
+  .ros-past-section summary::before { content: '▸ '; }
+  .ros-past-section[open] summary::before { content: '▾ '; }
+
+  .ros-whoami-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ros-ink-soft); font-family: var(--ros-font-sans); }
+  .ros-whoami-switch select { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--ros-border-strong); background: var(--ros-surface); color: var(--ros-ink); font-family: var(--ros-font-sans); font-size: 13.5px; font-weight: 600; max-width: 200px; }
+
+  /* My Schedule summary */
+  .ros-my-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 640px; margin: 0 auto 16px; }
+  .ros-my-summary > div { background: var(--ros-surface); border: 1px solid var(--ros-border); border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .ros-my-summary b { display: block; font-size: 18px; font-weight: 700; color: var(--ros-ink); }
+  .ros-my-summary span { font-size: 11.5px; color: var(--ros-ink-soft); }
+
+  /* Call card */
+  .ros-callsheet-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 2px 0 10px; }
+  .ros-function-pill { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 9999px; background: var(--ros-ink); color: #fff; }
+  .ros-your-role { display: flex; align-items: center; gap: 10px; background: var(--ros-accent); color: #fff; border-radius: 10px; padding: 10px 14px; margin: 4px 0 12px; }
+  .ros-your-role span { font-family: var(--ros-font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; }
+  .ros-your-role strong { font-size: 16px; font-weight: 700; }
+  .ros-callsheet-data { grid-template-columns: 78px 1fr; }
+  .ros-inline-link { color: var(--ros-accent); font-weight: 600; font-size: 12.5px; text-decoration: none; white-space: nowrap; }
+  .ros-inline-link:hover { text-decoration: underline; }
+  .ros-team-block { border: 1px solid var(--ros-border); border-radius: 10px; background: var(--ros-surface); margin: 0 0 12px; overflow: hidden; }
+  .ros-team-head { font-family: var(--ros-font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ros-ink-soft); padding: 8px 12px; background: var(--ros-surface-muted); border-bottom: 1px solid var(--ros-border); }
+  .ros-team-row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--ros-border); align-items: center; }
+  .ros-team-row:last-child { border-bottom: none; }
+  .ros-card-grid .ros-team-row { grid-template-columns: 1fr; gap: 4px; }
+  .ros-team-people { min-width: 0; }
+  .ros-slot-btn { white-space: nowrap; }
+  .ros-team-role { font-size: 12px; font-weight: 600; color: var(--ros-ink-soft); }
+  .ros-team-people { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ros-team-person { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ros-ink); background: var(--ros-surface-muted); border: 1px solid var(--ros-border); border-radius: 20px; padding: 2px 4px 2px 3px; }
+  .ros-team-person em { font-style: normal; font-weight: 500; color: var(--ros-accent); }
+  .ros-team-person.is-me { background: var(--ros-accent-soft-bg); border-color: var(--ros-accent-soft-border); }
+  .ros-team-person:not(:has(.ros-tel)) { padding-right: 10px; }
+  .ros-tel { font-size: 11px; font-weight: 700; color: var(--ros-success-text); background: var(--ros-success-bg); border: 1px solid var(--ros-success-border); border-radius: 20px; padding: 2px 8px; text-decoration: none; }
+  .ros-callsheet-cancelled { opacity: 0.7; }
+  .ros-callsheet-cancelled .ros-callsheet-title { text-decoration: line-through; }
+  .ros-callsheet-actions { align-items: center; flex-wrap: wrap; }
+  .ros-wa-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: #067647; background: #ECFDF3; border: 1px solid #ABEFC6; border-radius: 8px; padding: 6px 10px; text-decoration: none; }
+  .ros-wa-btn:hover { background: #D1FADF; }
+  .ros-day-actions { padding: 10px 14px 12px; }
+  .ros-clash-note { margin: 8px 14px 0; font-size: 12.5px; font-weight: 600; color: var(--ros-danger-text); background: var(--ros-danger-bg); border: 1px solid var(--ros-danger-border); border-radius: 8px; padding: 7px 10px; }
+
+  /* Team badges */
+  a.ros-badge-phone { display: block; text-decoration: none; color: var(--ros-accent); }
+  .ros-badge-next { font-size: 12px; font-weight: 600; color: var(--ros-accent); margin-top: 4px; }
+  .ros-badge-next.is-free { color: var(--ros-success-text); }
+
+  /* Editor: role slots + picker */
+  .ros-hint-free { color: var(--ros-success-text); font-weight: 600; }
+  .ros-hint-busy { color: var(--ros-danger-text); font-weight: 600; }
+  .ros-day-roles { align-items: start; }
+  .ros-role-field.is-picking { grid-column: 1 / -1; }
+  .ros-slot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 36px; padding: 4px; border: 1px dashed var(--ros-border-strong); border-radius: 8px; background: var(--ros-surface); }
+  .ros-pick-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ros-accent); background: var(--ros-accent-soft-bg); border: 1px solid var(--ros-accent-soft-border); border-radius: 20px; padding: 3px 4px 3px 10px; }
+  .ros-pick-chip.is-clash { color: var(--ros-danger-text); background: var(--ros-danger-bg); border-color: var(--ros-danger-border); }
+  .ros-pick-chip.is-guest { border-style: dashed; }
+  .ros-chip-x { border: none; background: none; cursor: pointer; font-size: 16px; line-height: 1; color: inherit; opacity: 0.6; width: 22px; height: 22px; border-radius: 50%; }
+  .ros-chip-x:hover { opacity: 1; background: rgba(0,0,0,0.06); }
+  .ros-slot-btn { border: 1px solid var(--ros-border-strong); background: var(--ros-surface-muted); color: var(--ros-ink); font-family: var(--ros-font-sans); font-size: 12.5px; font-weight: 600; border-radius: 20px; padding: 5px 11px; cursor: pointer; }
+  .ros-slot-add { border-color: var(--ros-accent-soft-border); color: var(--ros-accent); background: var(--ros-accent-soft-bg); }
+  .ros-slot-nr, .ros-slot-undo-nr { color: var(--ros-ink-soft); }
+  .ros-nr-pill { font-size: 12.5px; font-style: italic; color: var(--ros-ink-soft); padding: 4px 8px; }
+  .ros-picker { margin-top: 6px; border: 1px solid var(--ros-border-strong); border-radius: 10px; background: var(--ros-surface); box-shadow: var(--ros-shadow-md); overflow: hidden; }
+  .ros-pick-head { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--ros-border); background: var(--ros-surface-muted); }
+  .ros-pick-search { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--ros-border-strong); border-radius: 7px; font-family: var(--ros-font-sans); font-size: 13.5px; color: var(--ros-ink); background: var(--ros-surface); }
+  .ros-pick-done { padding: 6px 14px; }
+  .ros-pick-list { max-height: 260px; overflow-y: auto; }
+  .ros-pick-opt { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; width: 100%; text-align: left; border: none; border-bottom: 1px solid var(--ros-border); background: var(--ros-surface); padding: 9px 10px; cursor: pointer; font-family: var(--ros-font-sans); color: var(--ros-ink); }
+  .ros-pick-opt:last-child { border-bottom: none; }
+  .ros-pick-opt:hover { background: var(--ros-surface-muted); }
+  .ros-pick-opt.is-on { background: var(--ros-accent-soft-bg); }
+  .ros-pick-check { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--ros-border-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; }
+  .ros-pick-opt.is-on .ros-pick-check { background: var(--ros-accent); border-color: var(--ros-accent); }
+  .ros-pick-guest .ros-pick-check { color: var(--ros-accent); border-style: dashed; }
+  .ros-pick-main { display: flex; flex-direction: column; min-width: 0; }
+  .ros-pick-main b { font-size: 13.5px; font-weight: 600; }
+  .ros-pick-main small { font-size: 11.5px; color: var(--ros-ink-soft); }
+  .ros-pick-status { font-size: 11.5px; font-weight: 600; text-align: right; max-width: 200px; }
+  .ros-pick-opt.is-free .ros-pick-status { color: var(--ros-success-text); }
+  .ros-pick-opt.is-busy .ros-pick-status { color: var(--ros-danger-text); }
+  .ros-pick-opt.is-warn .ros-pick-status { color: var(--ros-warning-text); }
+  .ros-pick-opt.is-unknown .ros-pick-status { color: var(--ros-ink-faint); font-weight: 500; }
+  .ros-pick-empty { padding: 14px; font-size: 13px; color: var(--ros-ink-soft); text-align: center; }
+  .ros-day-free { font-size: 12px; color: var(--ros-ink-soft); margin: -2px 0 10px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .ros-free-label { font-weight: 600; color: var(--ros-ink-soft); }
+  .ros-free-name { background: var(--ros-success-bg); color: var(--ros-success-text); border: 1px solid var(--ros-success-border); border-radius: 20px; padding: 1px 8px; font-weight: 600; }
+  .ros-free-busy { flex-basis: 100%; color: var(--ros-danger-text); }
+  .ros-free-hint { font-style: italic; }
+  .ros-day-row-tools { margin-top: 8px; text-align: right; }
+
+  /* Availability grid */
+  .ros-av-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ros-av-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ros-av-range { font-weight: 700; font-size: 14px; color: var(--ros-ink); }
+  .ros-av-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ros-ink-soft); margin-bottom: 10px; }
+  .ros-av-legend span::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; border: 1px solid var(--ros-border-strong); }
+  .ros-av-legend .lg-free::before { background: var(--ros-success-bg); border-color: var(--ros-success-border); }
+  .ros-av-legend .lg-busy::before { background: var(--ros-accent-soft-bg); border-color: var(--ros-accent-soft-border); }
+  .ros-av-legend .lg-clash::before { background: var(--ros-danger-bg); border-color: var(--ros-danger-border); }
+  .ros-av-legend .lg-tip::before { display: none; }
+  .ros-av-wrap { overflow-x: auto; border: 1px solid var(--ros-border); border-radius: 12px; background: var(--ros-surface); -webkit-overflow-scrolling: touch; }
+  .ros-av { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 900px; font-size: 12px; }
+  .ros-av th, .ros-av td { border-bottom: 1px solid var(--ros-border); border-right: 1px solid var(--ros-border); }
+  .ros-av thead th { background: var(--ros-surface-muted); padding: 6px 4px; font-weight: 500; color: var(--ros-ink-soft); text-align: center; }
+  .ros-av-day span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .ros-av-day b { font-size: 15px; color: var(--ros-ink); }
+  .ros-av-day.is-sun span { color: var(--ros-danger-text); }
+  .ros-av-day.is-today { background: var(--ros-accent) !important; }
+  .ros-av-day.is-today span, .ros-av-day.is-today b { color: #fff; }
+  .ros-av-name { position: sticky; left: 0; z-index: 1; background: var(--ros-surface); text-align: left; padding: 8px 10px; min-width: 130px; max-width: 150px; }
+  thead .ros-av-name { background: var(--ros-surface-muted); }
+  .ros-av-name b { display: block; font-size: 13px; color: var(--ros-ink); }
+  .ros-av-name small { display: block; font-size: 10.5px; color: var(--ros-ink-soft); font-weight: 400; }
+  .ros-av td { height: 46px; min-width: 62px; vertical-align: middle; padding: 3px; }
+  .ros-av-free { background: var(--ros-success-bg); }
+  .ros-av-busy { background: var(--ros-accent-soft-bg); }
+  .ros-av-busy span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 10.5px; line-height: 1.25; font-weight: 600; color: var(--ros-accent); }
+  .ros-av-busy.is-clash { background: var(--ros-danger-bg); }
+  .ros-av-busy.is-clash span { color: var(--ros-danger-text); }
+  .ros-av-busy i { display: block; font-style: normal; font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: var(--ros-danger-text); }
+  .ros-av-busy.is-click { cursor: pointer; }
+  .ros-av-busy.is-click:hover { outline: 2px solid var(--ros-accent); outline-offset: -2px; }
+  .ros-av-foot td, .ros-av-foot th { background: var(--ros-surface-muted); text-align: center; font-weight: 700; color: var(--ros-success-text); height: 34px; }
+  .ros-av-foot td.is-none { color: var(--ros-danger-text); }
+
+  @media (max-width: 560px) {
+    .ros-my-summary b { font-size: 15px; }
+    .ros-team-row { grid-template-columns: 1fr; gap: 4px; }
+    .ros-pick-opt { grid-template-columns: 22px 1fr; }
+    .ros-pick-status { grid-column: 2; text-align: left; max-width: none; }
+    .ros-whoami-switch select { max-width: 160px; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2054,6 +2190,7 @@
     <nav class="ros-tabs" id="ros-tabs">
       <button type="button" class="ros-tab-btn ros-active" data-view="my">My Schedule</button>
       <button type="button" class="ros-tab-btn" data-view="all">All Events</button>
+      <button type="button" class="ros-tab-btn" data-view="avail">Availability</button>
       <button type="button" class="ros-tab-btn" data-view="crew">Team</button>
     </nav>
     <main class="ros-content" id="ros-content"></main>
@@ -6209,7 +6346,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     searchQuery: '',
     monthFilter: '',
     editingEvent: null,
-    editingCrew: null
+    editingCrew: null,
+    availStart: ''
   };
 
   var EVENT_TYPES = ['Wedding','Engagement','Political Event','College Event','Corporate Event','Birthday','Other'];
@@ -6318,6 +6456,72 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       return namesInRoleValue(day.roles[role]).some(function (n) { return n.toLowerCase() === target; });
     });
   }
+
+  /* ---------- shared helpers for assigning + reading the schedule ---------- */
+  var ROLE_SHORT = { 'Traditional Photo': 'Trad Photo', 'Traditional Video': 'Trad Video', 'Candid Cam': 'Candid', 'Cinematic Video': 'Cinematic', 'Drone': 'Drone' };
+  function initialsOf(n) { return String(n || '').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0] || ''; }).join('').toUpperCase(); }
+  function crewByName(name) {
+    var t = String(name || '').trim().toLowerCase();
+    return state.crew.find(function (c) { return c.name.trim().toLowerCase() === t; }) || null;
+  }
+  function telHref(phone) { var d = String(phone || '').replace(/[^\d+]/g, ''); return d ? 'tel:' + d : ''; }
+  function mapsHref(venue) { return venue ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(venue) : ''; }
+  // Every assignment on one date across all events (cancelled events don't count).
+  // skipEventId leaves out the event being edited, so it never clashes with itself.
+  function bookingsOn(date, skipEventId) {
+    var out = [];
+    if (!date) return out;
+    state.events.forEach(function (ev) {
+      if (skipEventId && ev.id === skipEventId) return;
+      if (ev.status === 'Cancelled') return;
+      (ev.days || []).forEach(function (day) {
+        if (day.date !== date) return;
+        ROLE_KEYS.forEach(function (role) {
+          namesInRoleValue(day.roles && day.roles[role]).forEach(function (n) {
+            out.push({ name: n, key: n.toLowerCase(), event: ev, day: day, role: role });
+          });
+        });
+      });
+    });
+    return out;
+  }
+  function daysBetween(a, b) {
+    return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+  }
+  function relativeDayLabel(dateStr) {
+    if (!dateStr) return 'No date';
+    var diff = daysBetween(todayStr(), dateStr);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    if (diff > 1 && diff < 7) return 'In ' + diff + ' days';
+    return formatDateShort(dateStr);
+  }
+  // Plain-text call sheet for WhatsApp — the format the crew already reads all day.
+  function callSheetText(ev, day) {
+    var lines = [];
+    lines.push('*' + (ev.title || 'Shoot') + '*' + (day.function ? ' — ' + day.function : ''));
+    lines.push('📅 ' + formatDate(day.date) + (day.time ? '  ·  Call time ' + formatTime(day.time) : ''));
+    if (ev.venue) lines.push('📍 ' + ev.venue + '\n' + mapsHref(ev.venue));
+    var crewLines = [];
+    ROLE_KEYS.forEach(function (role) {
+      var names = namesInRoleValue(day.roles && day.roles[role]);
+      if (names.length) crewLines.push('• ' + role + ': ' + names.join(', '));
+    });
+    if (crewLines.length) { lines.push(''); lines.push('👥 *Crew*'); lines = lines.concat(crewLines); }
+    if (ev.contactPerson || ev.contactNumber) { lines.push(''); lines.push('📞 Client contact: ' + [ev.contactPerson, ev.contactNumber].filter(Boolean).join(' · ')); }
+    if (ev.rentalFrom) lines.push('🎥 Rental gear: ' + ev.rentalFrom);
+    if (ev.notes) { lines.push(''); lines.push('📝 ' + ev.notes); }
+    return lines.join('\n');
+  }
+  function whatsappHref(ev, day) { return 'https://wa.me/?text=' + encodeURIComponent(callSheetText(ev, day)); }
+  // The app-wide askConfirm() is callback-based; this wraps it so roster code can await it.
+  function rosConfirm(title, body, okLabel) {
+    return new Promise(function (resolve) {
+      var bodyEl = document.getElementById('confirmBody');
+      if (bodyEl) bodyEl.style.whiteSpace = 'pre-line';
+      askConfirm(title, body, function () { resolve(true); }, okLabel);
+    });
+  }
   function roleCellValue(val) {
     if (!val || !String(val).trim()) return '<span class="ros-cell-empty">—</span>';
     if (isNotRequiredValue(val)) return '<span class="ros-cell-na">Not required</span>';
@@ -6381,11 +6585,25 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
 
   /* ---------- top bar / ros-tabs ---------- */
   function renderWhoAmI() {
-    // The old "I am" picker is gone — identity is derived from the logged-in account
-    // (see syncMyNameFromLoggedInUser). This just shows who we matched you to, so a
-    // mismatch is visible rather than silently producing an empty My Schedule.
+    // Identity comes from the logged-in account. Admins also get a picker so they can
+    // check exactly what any team member sees on their My Schedule.
     var wrap = document.getElementById('rosWhoamiWrap');
     if (!wrap) return;
+    if (canManageSchedule() && state.crew.length) {
+      wrap.innerHTML = '<label class="ros-whoami-switch">Schedule of ' +
+        '<select id="rosViewAs">' + (state.myName ? '' : '<option value="">— pick a person —</option>') +
+        state.crew.map(function (c) {
+          return '<option value="' + escapeHtml(c.name) + '"' + (c.name === state.myName ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>';
+        }).join('') + '</select></label>';
+      wrap.querySelector('#rosViewAs').addEventListener('change', function (e) {
+        state.myName = e.target.value;
+        state.view = 'my';
+        document.querySelectorAll('.ros-tab-btn').forEach(function (b) { b.classList.toggle('ros-active', b.dataset.view === 'my'); });
+        updatePrimaryActionButton();
+        renderContent();
+      });
+      return;
+    }
     wrap.innerHTML = state.myName
       ? '<span class="ros-whoami-chip">Viewing as <strong>' + escapeHtml(state.myName) + '</strong></span>'
       : '';
@@ -6404,6 +6622,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var el = document.getElementById('ros-content');
     if (state.view === 'my') { el.innerHTML = myScheduleHtml(); }
     else if (state.view === 'crew') { el.innerHTML = crewTabHtml(); }
+    else if (state.view === 'avail') { el.innerHTML = availabilityHtml(); }
     else {
       el.innerHTML = '<div class="ros-search-row">' +
         '<input type="text" id="rosSearchInput" placeholder="Search events, venues, crew…" value="' + escapeHtml(state.searchQuery) + '">' +
@@ -6422,23 +6641,41 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   /* ---------- My Schedule (flattened, per crew member) ---------- */
   function myScheduleHtml() {
     if (!state.crew.length) return emptyStateHtml('No crew added yet', 'Add your team first, then come back here to see assignments.', 'Add crew member', 'add-first-crew');
-    if (!state.myName) return '<div class="ros-empty-state"><h3>We couldn\'t match your account</h3><p>Your login name doesn\'t match anyone in the Team list, so there are no assignments to show. Ask an admin to add you to the team (or adjust the spelling to match your account).</p></div>';
+    if (!state.myName) {
+      if (canManageSchedule()) return '<div class="ros-empty-state"><h3>Pick a team member</h3><p>Choose a name from "Schedule of" above to see exactly what that person sees.</p></div>';
+      return '<div class="ros-empty-state"><h3>We couldn\'t match your account</h3><p>Your login name doesn\'t match anyone in the Team list, so there are no assignments to show. Ask an admin to add you to the team (or adjust the spelling to match your account).</p></div>';
+    }
 
     var calls = getAllCalls().filter(function (c) { return dayHasCrew(c.day, state.myName); });
     var today = todayStr();
     var upcoming = calls.filter(function (c) { return c.day.date >= today; }).sort(function (a, b) { return a.day.date.localeCompare(b.day.date) || (a.day.time || '').localeCompare(b.day.time || ''); });
     var past = calls.filter(function (c) { return c.day.date < today; }).sort(function (a, b) { return b.day.date.localeCompare(a.day.date); });
+    var live = upcoming.filter(function (c) { return c.event.status !== 'Cancelled'; });
+    var thisWeek = live.filter(function (c) { return daysBetween(today, c.day.date) < 7; }).length;
 
-    var html = '';
+    var html = '<div class="ros-my-summary">' +
+      '<div><b>' + live.length + '</b><span>upcoming shoot day' + (live.length === 1 ? '' : 's') + '</span></div>' +
+      '<div><b>' + thisWeek + '</b><span>in the next 7 days</span></div>' +
+      '<div><b>' + (live.length ? escapeHtml(relativeDayLabel(live[0].day.date)) : '—') + '</b><span>next shoot</span></div>' +
+    '</div>';
+
     if (upcoming.length) {
       html += callCard(upcoming[0], { hero: true, viewerName: state.myName });
       var rest = upcoming.slice(1);
-      if (rest.length) {
-        html += '<h2 class="ros-section-label">Also upcoming (' + rest.length + ')</h2><div class="ros-card-grid">' +
-          rest.map(function (c) { return callCard(c, { viewerName: state.myName }); }).join('') + '</div>';
-      }
+      var buckets = [
+        { label: 'Today', test: function (d) { return d === 0; } },
+        { label: 'Tomorrow', test: function (d) { return d === 1; } },
+        { label: 'This week', test: function (d) { return d > 1 && d < 7; } },
+        { label: 'Later', test: function (d) { return d >= 7; } }
+      ];
+      buckets.forEach(function (b) {
+        var list = rest.filter(function (c) { return b.test(daysBetween(today, c.day.date)); });
+        if (!list.length) return;
+        html += '<h2 class="ros-section-label">' + b.label + '<span class="ros-section-count">' + list.length + '</span></h2>' +
+          '<div class="ros-card-grid">' + list.map(function (c) { return callCard(c, { viewerName: state.myName }); }).join('') + '</div>';
+      });
     } else {
-      html += '<div class="ros-empty-state"><h3>Nothing on your schedule</h3><p>You\'re all clear for now. New assignments will ros-show up here.</p></div>';
+      html += '<div class="ros-empty-state"><h3>Nothing on your schedule</h3><p>You\'re all clear for now. New assignments will show up here.</p></div>';
     }
     if (past.length) {
       html += '<details class="ros-past-section"><summary>Past assignments (' + past.length + ')</summary><div class="ros-card-grid">' +
@@ -6453,43 +6690,124 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var tc = getTypeColors(ev.eventType);
     var totalDays = (ev.days || []).length;
     var dayIdx = (ev.days || []).indexOf(day) + 1;
-
-    var crewLine = ROLE_KEYS.map(function (role) {
-      var val = (day.roles && day.roles[role]) || '';
-      if (!val.trim()) return null;
-      return role + ': ' + (isNotRequiredValue(val) ? 'Not required' : val.trim());
-    }).filter(Boolean).join(' · ');
-
-    var myLine = '';
-    if (opts.viewerName) {
-      var mine = rolesForCrew(day, opts.viewerName);
-      if (mine.length) myLine = '<div><dt>Your role</dt><dd class="ros-my-role">' + escapeHtml(mine.join(', ')) + '</dd></div>';
-    }
     var callTime = formatTime(day.time);
-    var contactLine = (ev.contactPerson || ev.contactNumber)
-      ? '<div><dt>Contact</dt><dd>' + escapeHtml(ev.contactPerson || '') + (ev.contactPerson && ev.contactNumber ? ' · ' : '') + escapeHtml(ev.contactNumber || '') + '</dd></div>'
-      : '';
+    var viewerKey = String(opts.viewerName || '').trim().toLowerCase();
+    var mine = opts.viewerName ? rolesForCrew(day, opts.viewerName) : [];
 
-    return '<article class="ros-callsheet' + (opts.hero ? ' ros-callsheet-hero' : '') + (opts.muted ? ' ros-callsheet-muted' : '') + '">' +
-      '<div class="ros-callsheet-top"><span class="ros-eyebrow">' + (opts.hero ? 'Next up' : formatDateShort(day.date)) + '</span>' +
-      '<span class="ros-ref-code">' + escapeHtml(ev.refCode || '') + (totalDays > 1 ? ' · Day ' + dayIdx + '/' + totalDays : '') + '</span></div>' +
+    // Who's working that day, one line per role, with a Call button for each teammate.
+    var teamRows = ROLE_KEYS.map(function (role) {
+      var raw = (day.roles && day.roles[role]) || '';
+      if (!String(raw).trim() || isNotRequiredValue(raw)) return '';
+      var people = namesInRoleValue(raw).map(function (n) {
+        var me = n.toLowerCase() === viewerKey;
+        var c = crewByName(n);
+        var tel = c && c.phone ? telHref(c.phone) : '';
+        return '<span class="ros-team-person' + (me ? ' is-me' : '') + '">' +
+          '<i class="ros-name-dot">' + escapeHtml(initialsOf(n)) + '</i>' + escapeHtml(n) + (me ? ' <em>(you)</em>' : '') +
+          (tel && !me ? '<a class="ros-tel" href="' + tel + '">Call</a>' : '') +
+        '</span>';
+      }).join('');
+      return '<div class="ros-team-row"><span class="ros-team-role">' + escapeHtml(role) + '</span><span class="ros-team-people">' + people + '</span></div>';
+    }).join('');
+
+    var venueHtml = ev.venue
+      ? escapeHtml(ev.venue) + ' <a class="ros-inline-link" href="' + mapsHref(ev.venue) + '" target="_blank" rel="noopener">Open map ↗</a>'
+      : '<span class="ros-cell-empty">Not set</span>';
+    var contactHtml = (ev.contactPerson || ev.contactNumber)
+      ? escapeHtml([ev.contactPerson, ev.contactNumber].filter(Boolean).join(' · ')) +
+        (ev.contactNumber ? ' <a class="ros-inline-link" href="' + telHref(ev.contactNumber) + '">Call</a>' : '')
+      : '';
+    var status = ev.status || 'Tentative';
+
+    return '<article class="ros-callsheet' + (opts.hero ? ' ros-callsheet-hero' : '') + (opts.muted ? ' ros-callsheet-muted' : '') + (status === 'Cancelled' ? ' ros-callsheet-cancelled' : '') + '">' +
+      '<div class="ros-callsheet-top"><span class="ros-eyebrow">' + (opts.hero ? 'Next up · ' : '') + escapeHtml(opts.muted ? formatDateShort(day.date) : relativeDayLabel(day.date)) + '</span>' +
+      '<span class="ros-ref-code">' + escapeHtml(ev.refCode || '') + (totalDays > 1 ? ' · Day ' + dayIdx + ' of ' + totalDays : '') + '</span></div>' +
       '<h3 class="ros-callsheet-title">' + escapeHtml(ev.title || 'Untitled event') + '</h3>' +
-      (day.function ? '<div class="ros-function-tag">' + escapeHtml(day.function) + '</div>' : '') +
-      '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span>' +
+      '<div class="ros-callsheet-tags">' +
+        (day.function ? '<span class="ros-function-pill">' + escapeHtml(day.function) + '</span>' : '') +
+        '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType || 'Event') + '</span>' +
+        (status === 'Cancelled' ? '<span class="ros-status-badge ros-status-cancelled">Cancelled</span>' : '') +
+      '</div>' +
+      (mine.length ? '<div class="ros-your-role"><span>Your role</span><strong>' + escapeHtml(mine.join(' + ')) + '</strong></div>' : '') +
       '<dl class="ros-callsheet-data">' +
-      '<div><dt>Date</dt><dd>' + formatDate(day.date) + '</dd></div>' +
-      (callTime ? '<div><dt>Call</dt><dd>' + callTime + '</dd></div>' : '') +
-      '<div><dt>Venue</dt><dd>' + escapeHtml(ev.venue || '—') + '</dd></div>' +
-      myLine +
-      '<div><dt>Crew</dt><dd>' + (crewLine || '—') + '</dd></div>' +
-      contactLine +
+        '<div><dt>Date</dt><dd><strong>' + formatDate(day.date) + '</strong></dd></div>' +
+        '<div><dt>Call time</dt><dd>' + (callTime ? '<strong>' + callTime + '</strong>' : '<span class="ros-cell-empty">Not set yet</span>') + '</dd></div>' +
+        '<div><dt>Venue</dt><dd>' + venueHtml + '</dd></div>' +
+        (contactHtml ? '<div><dt>Client</dt><dd>' + contactHtml + '</dd></div>' : '') +
+        (ev.rentalFrom ? '<div><dt>Gear</dt><dd>' + escapeHtml(ev.rentalFrom) + (ev.rentalStatus ? ' · ' + escapeHtml(ev.rentalStatus) : '') + '</dd></div>' : '') +
       '</dl>' +
+      (teamRows ? '<div class="ros-team-block"><div class="ros-team-head">Team on this day</div>' + teamRows + '</div>' : '') +
       (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
-      '<div class="ros-callsheet-footer"><span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
-      (canManageSchedule() ? '<div class="ros-callsheet-actions">' +
-      '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
-      '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
-      '</div>' : '') + '</div></article>';
+      '<div class="ros-callsheet-footer"><span class="ros-status-badge ros-status-' + status.toLowerCase() + '">' + escapeHtml(status) + '</span>' +
+      '<div class="ros-callsheet-actions">' +
+        (opts.muted ? '' : '<a class="ros-wa-btn" href="' + whatsappHref(ev, day) + '" target="_blank" rel="noopener">Share on WhatsApp</a>') +
+        (canManageSchedule() ?
+          '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
+          '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' : '') +
+      '</div></div></article>';
+  }
+
+  /* ---------- Availability (who's free / booked, next 2 weeks) ---------- */
+  function availabilityHtml() {
+    if (!state.crew.length) return emptyStateHtml('No crew added yet', 'Add your team members to see who is free on which day.', 'Add crew member', 'add-first-crew');
+    var today = todayStr();
+    var start = state.availStart || today;
+    var N = 14, dates = [];
+    for (var i = 0; i < N; i++) dates.push(addDaysToIso(start, i));
+    var wk = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    var byPerson = {};
+    dates.forEach(function (d) {
+      bookingsOn(d).forEach(function (b) {
+        var p = byPerson[b.key] = byPerson[b.key] || {};
+        var list = p[d] = p[d] || [];
+        var hit = list.find(function (x) { return x.event.id === b.event.id; });
+        if (hit) { if (hit.roles.indexOf(b.role) === -1) hit.roles.push(b.role); }
+        else list.push({ event: b.event, day: b.day, roles: [b.role] });
+      });
+    });
+
+    var members = state.crew.filter(function (c) { return c.type !== 'freelancer'; })
+      .concat(state.crew.filter(function (c) { return c.type === 'freelancer'; }));
+    var admin = canManageSchedule();
+
+    var head = '<tr><th class="ros-av-name">Crew</th>' + dates.map(function (d) {
+      var dt = new Date(d + 'T00:00:00');
+      return '<th class="ros-av-day' + (d === today ? ' is-today' : '') + (dt.getDay() === 0 ? ' is-sun' : '') + '"><span>' + wk[dt.getDay()] + '</span><b>' + dt.getDate() + '</b></th>';
+    }).join('') + '</tr>';
+
+    var freeCount = dates.map(function () { return 0; });
+    var body = members.map(function (m) {
+      var k = m.name.trim().toLowerCase();
+      var cells = dates.map(function (d, di) {
+        var list = (byPerson[k] || {})[d] || [];
+        if (!list.length) { freeCount[di]++; return '<td class="ros-av-free" title="' + escapeHtml(m.name) + ' is free on ' + formatDate(d) + '"></td>'; }
+        var clash = list.length > 1;
+        var label = list.map(function (x) {
+          return (x.event.title || 'Event').slice(0, 16) + ' · ' + x.roles.map(function (r) { return ROLE_SHORT[r] || r; }).join('+');
+        });
+        var title = list.map(function (x) { return (x.event.title || 'Event') + (x.day.function ? ' (' + x.day.function + ')' : '') + ' — ' + x.roles.join(', '); }).join('\n');
+        return '<td class="ros-av-busy' + (clash ? ' is-clash' : '') + (admin ? ' is-click' : '') + '" title="' + escapeHtml(title) + '"' +
+          (admin ? ' data-action="edit-event" data-id="' + list[0].event.id + '"' : '') + '>' +
+          (clash ? '<i>Double</i>' : '') + '<span>' + escapeHtml(label.join(' / ')) + '</span></td>';
+      }).join('');
+      return '<tr><th class="ros-av-name"><b>' + escapeHtml(m.name) + '</b><small>' + escapeHtml((m.role || 'Crew') + (m.type === 'freelancer' ? ' · Freelancer' : '')) + '</small></th>' + cells + '</tr>';
+    }).join('');
+    var foot = '<tr class="ros-av-foot"><th class="ros-av-name">Free</th>' + freeCount.map(function (n) {
+      return '<td class="' + (n === 0 ? 'is-none' : '') + '">' + n + '/' + members.length + '</td>';
+    }).join('') + '</tr>';
+
+    return '<div class="ros-av-toolbar">' +
+        '<div class="ros-av-nav">' +
+          '<button type="button" class="ros-btn ros-btn-ghost" data-action="avail-prev">← Earlier</button>' +
+          '<button type="button" class="ros-btn ros-btn-ghost" data-action="avail-today">Today</button>' +
+          '<button type="button" class="ros-btn ros-btn-ghost" data-action="avail-next">Later →</button>' +
+        '</div>' +
+        '<span class="ros-av-range">' + formatDateShort(dates[0]) + ' – ' + formatDateShort(dates[N - 1]) + '</span>' +
+      '</div>' +
+      '<div class="ros-av-legend"><span class="lg-free">Free</span><span class="lg-busy">Booked</span><span class="lg-clash">Double-booked</span>' +
+        (admin ? '<span class="lg-tip">Tap a booked cell to open that event</span>' : '') + '</div>' +
+      '<div class="ros-av-wrap"><table class="ros-av"><thead>' + head + '</thead><tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>';
   }
 
   /* ---------- All Events (grouped by event, days as a table) ---------- */
@@ -6655,7 +6973,21 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
           '<span class="ros-day-chevron" aria-hidden="true">▾</span>' +
         '</summary>' +
         (crewSummary ? '<div class="ros-day-peek">' + escapeHtml(crewSummary) + '</div>' : '') +
+        (function () {
+          // Flag anyone who is also booked on a different shoot that same day.
+          if (ev.status === 'Cancelled') return '';
+          var here = {};
+          ROLE_KEYS.forEach(function (role) { namesInRoleValue(day.roles && day.roles[role]).forEach(function (n) { here[n.toLowerCase()] = n; }); });
+          var msgs = [];
+          bookingsOn(day.date, ev.id).forEach(function (b) {
+            if (!here[b.key]) return;
+            var m = here[b.key] + ' is also on “' + (b.event.title || 'another event') + '”';
+            if (msgs.indexOf(m) === -1) msgs.push(m);
+          });
+          return msgs.length ? '<div class="ros-clash-note">⚠ Double booking: ' + escapeHtml(msgs.join('; ')) + '</div>' : '';
+        })() +
         '<div class="ros-callsheet-roles">' + roleCells + '</div>' +
+        '<div class="ros-day-actions"><a class="ros-wa-btn" href="' + whatsappHref(ev, day) + '" target="_blank" rel="noopener">Share this day on WhatsApp</a></div>' +
       '</details>';
     }).join('');
 
@@ -6685,7 +7017,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
           '<div class="ros-evt-sum-top">' +
             '<span class="ros-evt-sum-title">' + escapeHtml(ev.title || 'Untitled event') + '</span>' +
             '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType) + '</span>' +
-            '<span class="ros-status-badge status-' + ev.status.toLowerCase() + '">' + escapeHtml(ev.status) + '</span>' +
+            '<span class="ros-status-badge ros-status-' + String(ev.status || 'Tentative').toLowerCase() + '">' + escapeHtml(ev.status || 'Tentative') + '</span>' +
           '</div>' +
           '<div class="ros-evt-sum-sub">' +
             '<strong>' + escapeHtml(whenLabel) + '</strong>' +
@@ -6739,16 +7071,24 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
            section('Freelancers', freelancers, 'No freelancers added yet.');
   }
   function crewBadgeHtml(c) {
-    var initials = c.name.split(' ').filter(Boolean).map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase();
-    var count = 0;
-    state.events.forEach(function (ev) { (ev.days || []).forEach(function (day) { if (dayHasCrew(day, c.name)) count++; }); });
+    var initials = initialsOf(c.name);
+    var total = 0, upcoming = 0, next = '', today = todayStr();
+    state.events.forEach(function (ev) {
+      if (ev.status === 'Cancelled') return;
+      (ev.days || []).forEach(function (day) {
+        if (!dayHasCrew(day, c.name)) return;
+        total++;
+        if (day.date >= today) { upcoming++; if (!next || day.date < next) next = day.date; }
+      });
+    });
     return '<div class="ros-crew-badge">' +
       '<div class="ros-badge-avatar">' + escapeHtml(initials) + '</div>' +
       '<div class="ros-badge-name">' + escapeHtml(c.name) + '</div>' +
       '<div class="ros-badge-role">' + escapeHtml(c.role || 'Crew') + '</div>' +
       (c.type === 'freelancer' ? '<div class="ros-freelance-tag">Freelancer</div>' : '') +
-      (c.phone ? '<div class="ros-badge-phone">' + escapeHtml(c.phone) + '</div>' : '') +
-      '<div class="ros-badge-meta">' + count + ' shoot day' + (count === 1 ? '' : 's') + '</div>' +
+      (c.phone ? '<a class="ros-badge-phone" href="' + telHref(c.phone) + '">' + escapeHtml(c.phone) + '</a>' : '') +
+      '<div class="ros-badge-meta">' + upcoming + ' upcoming · ' + total + ' total</div>' +
+      (next ? '<div class="ros-badge-next">Next: ' + escapeHtml(relativeDayLabel(next)) + '</div>' : '<div class="ros-badge-next is-free">Free — nothing booked</div>') +
       (canManageSchedule() ? '<div class="ros-badge-actions">' +
       '<button type="button" class="ros-link-btn" data-action="edit-crew" data-id="' + c.id + '">Edit</button>' +
       '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-crew" data-id="' + c.id + '">Remove</button>' +
@@ -6777,11 +7117,17 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     bindEventModalDynamicHandlers();
   }
   function dayRowHtml(day, num) {
+    // Each role is a "slot": the value still lives in a hidden input (same comma-separated
+    // format as before, so old events load fine) but people are picked from a list that
+    // shows who is free, busy or already on another role that day.
     var rolesHtml = ROLE_KEYS.map(function (role) {
       var val = (day.roles && day.roles[role]) || '';
-      return '<div class="ros-role-field"><label>' + role + '</label><div class="ros-role-input-row">' +
-        '<input type="text" class="ros-role-input" data-role="' + escapeHtml(role) + '" list="crewNamesList" value="' + escapeHtml(val) + '" placeholder="Name, second name">' +
-        '<button type="button" class="ros-role-na-btn">N/R</button></div></div>';
+      return '<div class="ros-role-field" data-role="' + escapeHtml(role) + '">' +
+        '<label>' + role + '</label>' +
+        '<input type="hidden" class="ros-role-input" data-role="' + escapeHtml(role) + '" value="' + escapeHtml(val) + '">' +
+        '<div class="ros-slot"></div>' +
+        '<div class="ros-picker" hidden></div>' +
+      '</div>';
     }).join('');
     return '<div class="ros-day-row"><div class="ros-day-row-header">' +
       '<span class="ros-day-row-label">Day ' + num + '</span>' +
@@ -6789,8 +7135,136 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<input type="time" class="ros-day-time" value="' + (day.time || '') + '">' +
       '<input type="text" class="ros-day-function" list="functionSuggestions" placeholder="Function (Haldi, Sangeet…)" value="' + escapeHtml(day.function || '') + '">' +
       '<button type="button" class="ros-day-remove" aria-label="Remove day">×</button>' +
-      '</div><div class="ros-day-roles">' + rolesHtml + '</div></div>';
+      '</div>' +
+      '<div class="ros-day-free"></div>' +
+      '<div class="ros-day-roles">' + rolesHtml + '</div>' +
+      '<div class="ros-day-row-tools"><button type="button" class="ros-link-btn ros-copy-all">Copy this crew to all other days</button></div>' +
+      '</div>';
   }
+
+  /* ---------- slot / picker logic for the editor ---------- */
+  function slotNames(field) { return namesInRoleValue(field.querySelector('.ros-role-input').value); }
+  function slotIsNR(field) { var v = field.querySelector('.ros-role-input').value.trim(); return !!v && isNotRequiredValue(v); }
+  function setSlotValue(field, v) { field.querySelector('.ros-role-input').value = v; }
+  function rowBusyMap(row) {
+    var map = {};
+    var date = row.querySelector('.ros-day-date').value;
+    bookingsOn(date, state.editingEvent && state.editingEvent.id).forEach(function (b) {
+      var label = (b.event.title || 'another event') + ' (' + b.role + ')';
+      var list = map[b.key] = map[b.key] || [];
+      if (list.indexOf(label) === -1) list.push(label);
+    });
+    return map;
+  }
+  function renderSlot(field, busy) {
+    var slot = field.querySelector('.ros-slot');
+    if (slotIsNR(field)) {
+      slot.innerHTML = '<span class="ros-nr-pill">Not required</span><button type="button" class="ros-slot-btn ros-slot-undo-nr">Undo</button>';
+      return;
+    }
+    var names = slotNames(field);
+    slot.innerHTML = names.map(function (n) {
+      var clash = busy[n.toLowerCase()];
+      var guest = !crewByName(n);
+      return '<span class="ros-pick-chip' + (clash ? ' is-clash' : '') + (guest ? ' is-guest' : '') + '"' +
+        (clash ? ' title="Also booked: ' + escapeHtml(clash.join('; ')) + '"' : (guest ? ' title="Not in the Team list"' : '')) + '>' +
+        (clash ? '⚠ ' : '') + escapeHtml(n) +
+        '<button type="button" class="ros-chip-x" data-name="' + escapeHtml(n) + '" aria-label="Remove ' + escapeHtml(n) + '">×</button></span>';
+    }).join('') +
+      '<button type="button" class="ros-slot-btn ros-slot-add">' + (names.length ? '+ Add' : '+ Assign') + '</button>' +
+      (names.length ? '' : '<button type="button" class="ros-slot-btn ros-slot-nr">Not needed</button>');
+  }
+  function renderPickerList(field, busy) {
+    var picker = field.querySelector('.ros-picker');
+    var row = field.closest('.ros-day-row');
+    var hasDate = !!row.querySelector('.ros-day-date').value;
+    var role = field.dataset.role;
+    var search = picker.querySelector('.ros-pick-search');
+    var raw = search ? search.value.trim() : '';
+    var q = raw.toLowerCase();
+    var chosen = slotNames(field).map(function (n) { return n.toLowerCase(); });
+    var sameDay = {};
+    row.querySelectorAll('.ros-role-field').forEach(function (f) {
+      if (f === field) return;
+      slotNames(f).forEach(function (n) { var k = n.toLowerCase(); (sameDay[k] = sameDay[k] || []).push(f.dataset.role); });
+    });
+    // Free people first, then people whose usual role matches, freelancers after team.
+    var list = state.crew.filter(function (c) { return !q || c.name.toLowerCase().indexOf(q) !== -1; }).map(function (c) {
+      var k = c.name.trim().toLowerCase();
+      var score = (busy[k] ? 4 : 0) + (sameDay[k] ? 2 : 0) + (c.type === 'freelancer' ? 0.5 : 0) -
+        ((c.role || '').trim().toLowerCase() === role.toLowerCase() ? 1 : 0);
+      return { c: c, k: k, score: score };
+    }).sort(function (a, b) { return a.score - b.score || a.c.name.localeCompare(b.c.name); });
+
+    var html = list.map(function (o) {
+      var c = o.c, k = o.k, on = chosen.indexOf(k) !== -1;
+      var status, cls;
+      if (busy[k]) { status = 'Busy: ' + busy[k].join('; '); cls = 'is-busy'; }
+      else if (sameDay[k]) { status = 'Already on ' + sameDay[k].join(', ') + ' this day'; cls = 'is-warn'; }
+      else if (!hasDate) { status = 'Set the date to check'; cls = 'is-unknown'; }
+      else { status = 'Free'; cls = 'is-free'; }
+      return '<button type="button" class="ros-pick-opt ' + cls + (on ? ' is-on' : '') + '" data-name="' + escapeHtml(c.name) + '">' +
+        '<span class="ros-pick-check">' + (on ? '✓' : '') + '</span>' +
+        '<span class="ros-pick-main"><b>' + escapeHtml(c.name) + '</b><small>' + escapeHtml((c.role || 'Crew') + (c.type === 'freelancer' ? ' · Freelancer' : '')) + '</small></span>' +
+        '<span class="ros-pick-status">' + escapeHtml(status) + '</span></button>';
+    }).join('');
+    if (raw && !state.crew.some(function (c) { return c.name.trim().toLowerCase() === q; })) {
+      html += '<button type="button" class="ros-pick-opt ros-pick-guest" data-name="' + escapeHtml(raw) + '">' +
+        '<span class="ros-pick-check">+</span><span class="ros-pick-main"><b>Add “' + escapeHtml(raw) + '”</b><small>One-time name, not in the Team list</small></span></button>';
+    }
+    picker.querySelector('.ros-pick-list').innerHTML = html || '<p class="ros-pick-empty">No one in the Team list yet.</p>';
+  }
+  function renderFreeStrip(row, busy) {
+    var el = row.querySelector('.ros-day-free');
+    if (!el) return;
+    if (!state.crew.length) { el.innerHTML = ''; return; }
+    if (!row.querySelector('.ros-day-date').value) { el.innerHTML = '<span class="ros-free-hint">Set the date to see who\'s free.</span>'; return; }
+    var assigned = {};
+    row.querySelectorAll('.ros-role-field').forEach(function (f) { slotNames(f).forEach(function (n) { assigned[n.toLowerCase()] = 1; }); });
+    var free = [], away = [];
+    state.crew.forEach(function (c) {
+      var k = c.name.trim().toLowerCase();
+      if (busy[k]) away.push(c.name);
+      else if (!assigned[k]) free.push(c.name);
+    });
+    el.innerHTML = '<span class="ros-free-label">Free that day:</span> ' +
+      (free.length ? free.map(function (n) { return '<span class="ros-free-name">' + escapeHtml(n) + '</span>'; }).join('') : '<em>everyone is assigned or busy</em>') +
+      (away.length ? '<span class="ros-free-busy">Busy on another shoot: ' + escapeHtml(away.join(', ')) + '</span>' : '');
+  }
+  function refreshRow(row) {
+    var busy = rowBusyMap(row);
+    row.querySelectorAll('.ros-role-field').forEach(function (f) {
+      renderSlot(f, busy);
+      var p = f.querySelector('.ros-picker');
+      if (!p.hidden) renderPickerList(f, busy);
+    });
+    renderFreeStrip(row, busy);
+  }
+  function closePickers(except) {
+    document.querySelectorAll('#rosDaysContainer .ros-picker').forEach(function (p) {
+      if (p === except) return;
+      p.hidden = true; p.innerHTML = '';
+      p.closest('.ros-role-field').classList.remove('is-picking');
+    });
+  }
+  function openPicker(field) {
+    var picker = field.querySelector('.ros-picker');
+    closePickers(picker);
+    picker.innerHTML = '<div class="ros-pick-head"><input type="text" class="ros-pick-search" placeholder="Search, or type a new name"><button type="button" class="ros-btn ros-btn-accent ros-pick-done">Done</button></div><div class="ros-pick-list"></div>';
+    picker.hidden = false;
+    field.classList.add('is-picking');
+    renderPickerList(field, rowBusyMap(field.closest('.ros-day-row')));
+    // Don't pop the phone keyboard over the list; desktop gets the search focused.
+    if (window.matchMedia && window.matchMedia('(hover: hover)').matches) picker.querySelector('.ros-pick-search').focus();
+  }
+  function toggleName(field, name) {
+    var names = slotNames(field);
+    var k = name.trim().toLowerCase();
+    var idx = names.map(function (n) { return n.toLowerCase(); }).indexOf(k);
+    if (idx === -1) names.push(name.trim()); else names.splice(idx, 1);
+    setSlotValue(field, names.join(', '));
+  }
+
   function eventModalBodyHtml() {
     var ev = state.editingEvent;
     var typeOptions = '<option value="" disabled' + (!ev.eventType ? ' selected' : '') + '>— select —</option>' +
@@ -6819,10 +7293,10 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<div class="ros-field"><label for="rosF_rentalStatus">Rental status</label><select id="rosF_rentalStatus">' + rentalStatusOptions + '</select></div>' +
       '</div>' +
       '<div class="ros-field-row"><div class="ros-field"><label>Function days</label>' +
-      '<p class="ros-field-hint">Two people on one role? Separate the names with a comma — e.g. <em>Ajay, Rupendra</em>. Use <strong>N/R</strong> when a role isn\'t needed that day.</p>' +
+      '<p class="ros-field-hint">Tap <strong>+ Assign</strong> on a role to pick people — the list shows who is <span class="ros-hint-free">free</span>, <span class="ros-hint-busy">busy on another shoot</span> or already on another role that day. Add more than one person to a role if needed.</p>' +
       '<div class="ros-days-editor" id="rosDaysContainer">' + daysHtml + '</div>' +
       '<button type="button" class="ros-btn ros-btn-ghost ros-add-day-btn" id="rosAddDayBtn">+ Add another day</button>' +
-      crewDatalist + functionDatalist +
+      functionDatalist +
       '</div></div>' +
       '<div class="ros-field-row"><div class="ros-field"><label for="rosF_notes">Notes</label>' +
       '<textarea id="rosF_notes" rows="2" placeholder="Data backup, delivery status, special instructions…">' + escapeHtml(ev.notes) + '</textarea></div></div>';
@@ -6831,7 +7305,9 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     var rows = document.querySelectorAll('#rosDaysContainer .ros-day-row');
     rows.forEach(function (row, i) {
       row.querySelector('.ros-day-row-label').textContent = 'Day ' + (i + 1);
-      row.querySelector('.ros-day-remove').style.visibility = rows.length > 1 ? 'visible' : 'ros-hidden';
+      row.querySelector('.ros-day-remove').style.visibility = rows.length > 1 ? 'visible' : 'hidden';
+      var copy = row.querySelector('.ros-copy-all');
+      if (copy) copy.style.display = rows.length > 1 ? '' : 'none';
     });
   }
   function addDayRow() {
@@ -6850,12 +7326,15 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     }
     container.insertAdjacentHTML('beforeend', dayRowHtml(newDay, rows.length + 1));
     renumberDayRows();
+    var added = container.querySelectorAll('.ros-day-row');
+    refreshRow(added[added.length - 1]);
   }
   function bindEventModalDynamicHandlers() {
     var container = document.getElementById('rosDaysContainer');
     if (!container) return;
     container.addEventListener('click', function (e) {
-      var removeBtn = e.target.closest('.ros-day-remove');
+      var t = e.target;
+      var removeBtn = t.closest('.ros-day-remove');
       if (removeBtn) {
         var rows = container.querySelectorAll('.ros-day-row');
         if (rows.length <= 1) return;
@@ -6863,16 +7342,55 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
         renumberDayRows();
         return;
       }
-      var naBtn = e.target.closest('.ros-role-na-btn');
-      if (naBtn) {
-        var input = naBtn.parentElement.querySelector('.ros-role-input');
-        input.value = input.value.trim().toLowerCase() === 'not required' ? '' : 'Not required';
+      var field = t.closest('.ros-role-field');
+      var row = t.closest('.ros-day-row');
+      if (t.closest('.ros-slot-add')) { openPicker(field); return; }
+      if (t.closest('.ros-pick-done')) { closePickers(); return; }
+      var opt = t.closest('.ros-pick-opt');
+      if (opt) {
+        toggleName(field, opt.dataset.name);
+        var s = field.querySelector('.ros-pick-search');
+        if (s && opt.classList.contains('ros-pick-guest')) s.value = '';
+        refreshRow(row);
+        return;
+      }
+      var x = t.closest('.ros-chip-x');
+      if (x) { toggleName(field, x.dataset.name); refreshRow(row); return; }
+      if (t.closest('.ros-slot-nr')) { closePickers(); setSlotValue(field, 'Not required'); refreshRow(row); return; }
+      if (t.closest('.ros-slot-undo-nr')) { setSlotValue(field, ''); refreshRow(row); return; }
+      if (t.closest('.ros-copy-all')) {
+        var src = {};
+        row.querySelectorAll('.ros-role-input').forEach(function (inp) { src[inp.dataset.role] = inp.value; });
+        container.querySelectorAll('.ros-day-row').forEach(function (r) {
+          if (r === row) return;
+          r.querySelectorAll('.ros-role-input').forEach(function (inp) { inp.value = src[inp.dataset.role] || ''; });
+          refreshRow(r);
+        });
+        toast('Crew copied to all days — check any day that needs changes.');
         return;
       }
     });
+    container.addEventListener('input', function (e) {
+      if (e.target.classList.contains('ros-pick-search')) {
+        var field = e.target.closest('.ros-role-field');
+        renderPickerList(field, rowBusyMap(field.closest('.ros-day-row')));
+      }
+    });
+    container.addEventListener('keydown', function (e) {
+      if (!e.target.classList.contains('ros-pick-search')) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var first = e.target.closest('.ros-picker').querySelector('.ros-pick-opt:not(.is-on)');
+        if (first && e.target.value.trim()) first.click();
+      }
+    });
+    container.addEventListener('change', function (e) {
+      if (e.target.classList.contains('ros-day-date')) refreshRow(e.target.closest('.ros-day-row'));
+    });
     var addBtn = document.getElementById('rosAddDayBtn');
-    if (addBtn) addBtn.addEventListener('click', function () { addDayRow(); });
+    if (addBtn) addBtn.addEventListener('click', function () { closePickers(); addDayRow(); });
     renumberDayRows();
+    container.querySelectorAll('.ros-day-row').forEach(refreshRow);
   }
   function readDaysFromDom() {
     var rows = document.querySelectorAll('#rosDaysContainer .ros-day-row');
@@ -6907,6 +7425,30 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     if (!ev.days.length || ev.days.some(function (d) { return !d.date; })) { toast('Every day needs a date.', true); return; }
     ev.days.sort(function (a, b) { return a.date.localeCompare(b.date); });
 
+    if (ev.status !== 'Cancelled') {
+      var clashes = [];
+      ev.days.forEach(function (d) {
+        var busy = {};
+        bookingsOn(d.date, ev.id).forEach(function (b) {
+          var t = b.event.title || 'another event';
+          var l = busy[b.key] = busy[b.key] || [];
+          if (l.indexOf(t) === -1) l.push(t);
+        });
+        ROLE_KEYS.forEach(function (role) {
+          namesInRoleValue(d.roles[role]).forEach(function (n) {
+            var k = n.toLowerCase();
+            if (!busy[k]) return;
+            var msg = '• ' + n + ' on ' + formatDateShort(d.date) + ' — already on ' + busy[k].join(', ');
+            if (clashes.indexOf(msg) === -1) clashes.push(msg);
+          });
+        });
+      });
+      if (clashes.length) {
+        var go = await rosConfirm('Double booking', 'These people are already booked on another shoot the same day:\n\n' + clashes.join('\n') + '\n\nSave anyway?', 'Save anyway');
+        if (!go) return;
+      }
+    }
+
     if (ev.id) {
       var idx = state.events.findIndex(function (x) { return x.id === ev.id; });
       state.events[idx] = ev;
@@ -6923,7 +7465,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     if (ok) { rosCloseEventModal(); toast('Event saved.'); renderContent(); }
   }
   async function deleteEvent(id) {
-    var confirmed1 = await askConfirm('Remove this event?', "This event will be permanently removed from the roster. This can't be undone.", null, 'Remove permanently');
+    var confirmed1 = await rosConfirm('Remove this event?', "This event will be permanently removed from the roster. This can't be undone.", 'Remove permanently');
     if (!confirmed1) return;
     state.events = state.events.filter(function (e) { return e.id !== id; });
     var ok = await saveEvents();
@@ -6989,7 +7531,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   async function deleteCrewMember(id) {
     var m = state.crew.find(function (c) { return c.id === id; });
     if (!m) return;
-    var confirmed2 = await askConfirm('Remove this person?', m.name + " will be removed from the team. They'll stay listed on past events for record-keeping.", null, 'Remove permanently');
+    var confirmed2 = await rosConfirm('Remove this person?', m.name + " will be removed from the team. They'll stay listed on past events for record-keeping.", 'Remove permanently');
     if (!confirmed2) return;
     state.crew = state.crew.filter(function (c) { return c.id !== id; });
     var ok = await saveCrew();
@@ -7017,6 +7559,12 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       if (!btn) return;
       var action = btn.dataset.action;
       var id = btn.dataset.id;
+      if (action === 'avail-prev' || action === 'avail-next' || action === 'avail-today') {
+        var base = state.availStart || todayStr();
+        state.availStart = action === 'avail-today' ? todayStr() : addDaysToIso(base, action === 'avail-next' ? 14 : -14);
+        renderContent();
+        return;
+      }
       // Defence in depth: the buttons above are already hidden for non-admins, but
       // block the actions here too so they can't be triggered any other way.
       if (!canManageSchedule()) { toast("You don't have permission to change the roster.", true); return; }
