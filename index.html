@@ -1547,6 +1547,17 @@
 
   /* ---------- Crew Schedule v2: assigning + clearer call sheets ---------- */
   #confirmOverlay { z-index: 300; }
+  .ros-copied-badge { background: #e8f1ff; color: #1d4ed8; border-color: #bcd3ff; }
+  .ros-copy-ov { position: fixed; inset: 0; background: rgba(20,20,30,.45); display: flex; align-items: center; justify-content: center; z-index: 310; padding: 16px; }
+  .ros-copy-box { background: #fff; border-radius: 14px; width: 100%; max-width: 420px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.25); font-family: var(--ros-font-sans); }
+  .ros-copy-box h3 { margin: 0 0 4px; font-size: 17px; color: #1b1b24; }
+  .ros-copy-box p.sub { margin: 0 0 14px; font-size: 12.5px; color: #6b6b7b; }
+  .ros-copy-box label { display: block; font-size: 12px; font-weight: 600; color: #444; margin: 10px 0 4px; }
+  .ros-copy-box input { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid #d5d5de; border-radius: 8px; font-size: 14px; }
+  .ros-copy-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+  .ros-copy-actions button { padding: 9px 14px; border-radius: 8px; border: 1px solid #d5d5de; background: #fff; font-size: 13.5px; cursor: pointer; }
+  .ros-copy-actions button.primary { background: #4f6ef7; color: #fff; border-color: #4f6ef7; font-weight: 600; }
+  .ros-copy-actions button.danger { color: #b42318; margin-right: auto; }
   .ros-past-section summary::before { content: '▸ '; }
   .ros-past-section[open] summary::before { content: '▾ '; }
 
@@ -6520,7 +6531,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
 
   var EVENT_TYPES = ['Wedding','Engagement','Political Event','College Event','Corporate Event','Birthday','Other'];
   var STATUSES = ['Tentative','Confirmed','Completed','Cancelled'];
-  var ROLE_KEYS = ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video','Drone'];
+  var ROLE_KEYS = ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video','Drone','Assistant'];
   var ROLE_SUGGESTIONS = ['Traditional Photo','Traditional Video','Candid Cam','Cinematic Video','Drone','Photo Editor','Assistant'];
   var FUNCTION_SUGGESTIONS = ['Prewedding','Haldi','Mehendi','Sangeet','Wedding Day','Reception','Engagement','Other'];
   var RENTAL_STATUS_OPTIONS = ['', 'Booked', 'Confirmed', 'Returned'];
@@ -6626,7 +6637,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   }
 
   /* ---------- shared helpers for assigning + reading the schedule ---------- */
-  var ROLE_SHORT = { 'Traditional Photo': 'Trad Photo', 'Traditional Video': 'Trad Video', 'Candid Cam': 'Candid', 'Cinematic Video': 'Cinematic', 'Drone': 'Drone' };
+  var ROLE_SHORT = { 'Traditional Photo': 'Trad Photo', 'Traditional Video': 'Trad Video', 'Candid Cam': 'Candid', 'Cinematic Video': 'Cinematic', 'Drone': 'Drone', 'Assistant': 'Assistant' };
   function initialsOf(n) { return String(n || '').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0] || ''; }).join('').toUpperCase(); }
   function crewByName(name) {
     var t = String(name || '').trim().toLowerCase();
@@ -7589,6 +7600,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
             '<span class="ros-evt-sum-title">' + escapeHtml(ev.title || 'Untitled event') + '</span>' +
             '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType || 'Event') + '</span>' +
             '<span class="ros-status-badge ros-status-' + status.toLowerCase() + '">' + escapeHtml(status) + '</span>' +
+            (ev.dataCopied ? '<span class="ros-status-badge ros-copied-badge" title="Data copied">\ud83d\udcbe Data copied</span>' : '') +
           '</div>' +
           '<div class="ros-evt-sum-sub">' +
             '<span class="ros-when-chip ' + timing.cls + '">' + escapeHtml(timing.label) + '</span>' +
@@ -7622,14 +7634,19 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<div class="ros-ref-code">' + escapeHtml(ev.refCode || '') + '</div>' +
       '</div>' +
       (canManageSchedule() ? '<div class="ros-event-block-actions">' +
+      (status !== 'Completed' && status !== 'Cancelled' ? '<button type="button" class="ros-link-btn" data-action="complete-event" data-id="' + ev.id + '">\u2713 Mark completed</button>' : '') +
+      '<button type="button" class="ros-link-btn" data-action="copy-event" data-id="' + ev.id + '">' + (ev.dataCopied ? '\ud83d\udcbe Data copied \u2713' : '\ud83d\udcbe Data copied?') + '</button>' +
       '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
       '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
       '</div>' : '') + '</div>' +
       (function () {
+        var copiedLine = ev.dataCopied
+          ? '<div class="ros-meta-item"><dt>Data copied</dt><dd>' + escapeHtml(ev.dataCopied.by || '') + (ev.dataCopied.to ? ' \u2192 ' + escapeHtml(ev.dataCopied.to) : '') + (ev.dataCopied.on ? ' \u00b7 ' + escapeHtml(formatDateShort(ev.dataCopied.on)) : '') + '</dd></div>'
+          : '';
         var venueLine = ev.venue
           ? '<div class="ros-meta-item"><dt>Venue</dt><dd>' + escapeHtml(ev.venue) + '</dd></div>'
           : '';
-        var meta = venueLine + contactLine + albumLine;
+        var meta = venueLine + contactLine + albumLine + copiedLine;
         return meta ? '<dl class="ros-event-block-meta">' + meta + '</dl>' : '';
       })() +
       (days.length > 2
@@ -8061,6 +8078,61 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     btn.disabled = false; btn.textContent = 'Save event';
     if (ok) { rosCloseEventModal(); toast('Event saved.'); renderContent(); }
   }
+  async function markEventCompleted(id) {
+    var ev = state.events.find(function (x) { return x.id === id; });
+    if (!ev) return;
+    var ok = await rosConfirm('Mark this event as completed?', (ev.title || 'This event') + ' will be marked Completed.', 'Mark completed');
+    if (!ok) return;
+    ev.status = 'Completed';
+    ev.completedOn = todayStr();
+    ev.completedBy = whoAmI();
+    if (await saveEvents()) {
+      toast('Marked as completed.');
+      renderContent();
+      if (!ev.dataCopied) openCopyDialog(id);
+    }
+  }
+  function openCopyDialog(id) {
+    var ev = state.events.find(function (x) { return x.id === id; });
+    if (!ev) return;
+    var dc = ev.dataCopied || {};
+    var old = document.getElementById('rosCopyOv');
+    if (old) old.remove();
+    var ov = document.createElement('div');
+    ov.className = 'ros-copy-ov';
+    ov.id = 'rosCopyOv';
+    ov.innerHTML =
+      '<div class="ros-copy-box" role="dialog" aria-modal="true">' +
+        '<h3>\ud83d\udcbe Data copied</h3>' +
+        '<p class="sub">' + escapeHtml(ev.title || 'Event') + ' \u2014 note who copied the footage and where it is saved.</p>' +
+        '<label>Copied by</label><input type="text" id="rosCopyBy" maxlength="80" value="' + escapeHtml(dc.by || whoAmI() || '') + '" placeholder="e.g. Ajay">' +
+        '<label>Copied to (drive / system)</label><input type="text" id="rosCopyTo" maxlength="120" value="' + escapeHtml(dc.to || '') + '" placeholder="e.g. Meraki HDD 03, Editing PC">' +
+        '<label>Date copied</label><input type="date" id="rosCopyOn" value="' + escapeHtml(dc.on || todayStr()) + '">' +
+        '<div class="ros-copy-actions">' +
+          (ev.dataCopied ? '<button type="button" class="danger" id="rosCopyClear">Remove mark</button>' : '') +
+          '<button type="button" id="rosCopyCancel">Cancel</button>' +
+          '<button type="button" class="primary" id="rosCopySave">Save</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    document.getElementById('rosCopyCancel').onclick = close;
+    document.getElementById('rosCopySave').onclick = async function () {
+      var by = document.getElementById('rosCopyBy').value.trim();
+      var to = document.getElementById('rosCopyTo').value.trim();
+      var on = document.getElementById('rosCopyOn').value;
+      if (!by) { toast('Enter who copied the data.', true); return; }
+      ev.dataCopied = { by: by, to: to, on: on || todayStr() };
+      if (await saveEvents()) { close(); toast('Data copy recorded.'); renderContent(); }
+    };
+    var clr = document.getElementById('rosCopyClear');
+    if (clr) clr.onclick = async function () {
+      delete ev.dataCopied;
+      if (await saveEvents()) { close(); toast('Mark removed.'); renderContent(); }
+    };
+    setTimeout(function () { var i = document.getElementById(dc.by ? 'rosCopyTo' : 'rosCopyBy'); if (i) i.focus(); }, 30);
+  }
   async function deleteEvent(id) {
     var confirmed1 = await rosConfirm('Remove this event?', "This event will be permanently removed from the roster. This can't be undone.", 'Remove permanently');
     if (!confirmed1) return;
@@ -8175,6 +8247,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       if (!canManageSchedule()) { toast("You don't have permission to change the roster.", true); return; }
       if (action === 'edit-event') rosOpenEventModal(state.events.find(function (x) { return x.id === id; }));
       else if (action === 'delete-event') deleteEvent(id);
+      else if (action === 'complete-event') markEventCompleted(id);
+      else if (action === 'copy-event') openCopyDialog(id);
       else if (action === 'edit-crew') openCrewModal(state.crew.find(function (x) { return x.id === id; }));
       else if (action === 'delete-crew') deleteCrewMember(id);
       else if (action === 'add-first-event') rosOpenEventModal(null);
