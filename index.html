@@ -1547,6 +1547,59 @@
 
   /* ---------- Crew Schedule v2: assigning + clearer call sheets ---------- */
   #confirmOverlay { z-index: 300; }
+  .ros-event-block-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+  /* ---------- Day cards (redesign): date tile, colour-coded roles, side-by-side on wide screens ---------- */
+  .ros-day-cards { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+  .ros-dc { background: var(--ros-surface); border: 1px solid var(--ros-border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(20,20,40,.04); transition: box-shadow .15s, transform .15s; }
+  .ros-dc:hover { box-shadow: 0 8px 22px rgba(40,50,120,.10); transform: translateY(-1px); }
+  .ros-dc-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: linear-gradient(135deg, #f4f6ff 0%, #faf5ff 100%); border-bottom: 1px solid var(--ros-border); }
+  .ros-dc-tile { flex: 0 0 auto; width: 46px; border-radius: 10px; background: #fff; border: 1px solid #dfe3f6; text-align: center; overflow: hidden; line-height: 1; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .ros-dc-tile span { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: #5b6cf0; padding: 3px 0; }
+  .ros-dc-tile b { display: block; font-size: 19px; font-weight: 800; color: #1c1c2b; padding: 4px 0 0; }
+  .ros-dc-tile em { display: block; font-style: normal; font-size: 9.5px; font-weight: 700; color: #7b7b91; padding: 1px 0 5px; letter-spacing: .05em; }
+  .ros-dc-title { min-width: 0; flex: 1; }
+  .ros-dc-title strong { display: block; font-size: 14.5px; font-weight: 700; color: #1c1c2b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ros-dc-title span { display: block; font-size: 12px; color: #7b7b91; margin-top: 2px; }
+  .ros-dc-count { flex: 0 0 auto; font-size: 11.5px; font-weight: 700; color: #3f4fc4; background: #e9ecff; border-radius: 9999px; padding: 3px 10px; }
+  .ros-dc-body { padding: 8px 14px 4px; flex: 1; }
+  .ros-dc-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px dashed #ececf3; }
+  .ros-dc-row:last-child { border-bottom: 0; }
+  .ros-dc-role { flex: 0 0 112px; display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: #5d5d72; line-height: 1.2; }
+  .ros-dc-role i { width: 9px; height: 9px; border-radius: 50%; background: var(--rc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc) 18%, transparent); flex: 0 0 auto; }
+  .ros-dc-names { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+  .ros-dc-empty { padding: 14px 0; text-align: center; font-size: 13px; color: #9a9ab0; }
+  .ros-dc-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px 14px 12px; background: #fafafd; border-top: 1px solid var(--ros-border); }
+  .ros-dc-notes { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+  .ros-dc-open { font-size: 11px; font-weight: 600; color: #b45309; background: #fff4e0; border-radius: 9999px; padding: 3px 9px; }
+  .ros-dc-nr { font-size: 11px; color: #7b7b91; background: #f0f0f5; border-radius: 9999px; padding: 3px 9px; }
+  .ros-dc-wa { margin-left: auto; font-size: 12px; font-weight: 700; color: #137a43; background: #e6f8ee; border: 1px solid #bfe9d2; border-radius: 9999px; padding: 5px 12px; text-decoration: none; white-space: nowrap; }
+  .ros-dc-wa:hover { background: #d6f2e3; }
+  .ros-dc .ros-clash-note { margin: 8px 14px 0; }
+  @media (max-width: 520px) { .ros-dc-role { flex-basis: 96px; } }
+
+  /* ---------- Expanded event: finishing touches ---------- */
+  .ros-event-block[open] { background: #fbfbfe; }
+  .ros-event-block[open] > .ros-event-block-header, .ros-event-block[open] > .ros-event-block-meta, .ros-event-block[open] > .ros-event-collapse, .ros-event-block[open] > .ros-day-cards { margin-left: 16px; margin-right: 16px; }
+  .ros-event-block-header .ros-ref-code { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: #5b6cf0; background: #eef0ff; border-radius: 6px; padding: 3px 8px; }
+  .ros-event-block-meta { gap: 8px; margin: 10px 0 14px; }
+  .ros-meta-item { background: #fff; border: 1px solid #e6e6f0; border-radius: 10px; padding: 7px 12px; align-items: center; }
+  .ros-meta-item dt { font-size: 10px; font-weight: 700; color: #8a8aa3; }
+  .ros-meta-item dd { font-size: 13px; font-weight: 600; color: #22222f; margin: 0; }
+  .ros-event-collapse > summary { padding: 6px 0 12px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #6b6b85; }
+  .ros-event-collapse > summary u { text-decoration: none; font-weight: 700; letter-spacing: 0; text-transform: none; color: #5b6cf0; margin-left: 8px; font-size: 12px; }
+  .ros-event-block[open] { padding-bottom: 16px; }
+  @media (max-width: 640px) {
+    .ros-event-block-actions { width: 100%; justify-content: flex-start; }
+    .ros-event-block-actions .ros-act-btn { flex: 1 1 42%; text-align: center; padding: 10px 12px; }
+    .ros-event-block-actions .ros-link-btn { flex: 1 1 40%; text-align: center; padding: 9px 6px; border: 1px solid #e6e6f0; border-radius: 9999px; background: #fff; }
+    .ros-event-block[open] > .ros-event-block-header, .ros-event-block[open] > .ros-event-block-meta, .ros-event-block[open] > .ros-event-collapse, .ros-event-block[open] > .ros-day-cards { margin-left: 10px; margin-right: 10px; }
+  }
+  .ros-act-btn { font-family: var(--ros-font-sans); font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 9999px; border: 1px solid #d5d5de; background: #fff; color: #444; cursor: pointer; }
+  .ros-act-btn:hover { border-color: #4f6ef7; color: #4f6ef7; }
+  .ros-act-btn.ros-act-done { background: #1f9d55; border-color: #1f9d55; color: #fff; }
+  .ros-act-btn.ros-act-done:hover { background: #17824a; color: #fff; }
+  .ros-act-btn.ros-act-on { background: #e8f1ff; border-color: #bcd3ff; color: #1d4ed8; }
   .ros-copied-badge { background: #e8f1ff; color: #1d4ed8; border-color: #bcd3ff; }
   .ros-copy-ov { position: fixed; inset: 0; background: rgba(20,20,30,.45); display: flex; align-items: center; justify-content: center; z-index: 310; padding: 16px; }
   .ros-copy-box { background: #fff; border-radius: 14px; width: 100%; max-width: 420px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.25); font-family: var(--ros-font-sans); }
@@ -3363,21 +3416,52 @@ function showIdleWarning(){
   });
 }
 
-function resetIdleTimer(){
+// Activity is shared between every open tab/page of the site (the Quotation page writes the
+// same key). Without this, working only in the Quotation tab left this tab "idle", and it
+// signed the user out from under the quotation they were typing.
+const IDLE_SHARED_KEY = 'meraki-last-activity';
+let lastActivityWrite = 0;
+function sharedLastActivity(){
+  try { return Number(localStorage.getItem(IDLE_SHARED_KEY)) || 0; } catch(e){ return 0; }
+}
+function markSharedActivity(){
+  const now = Date.now();
+  if(now - lastActivityWrite < 2000) return;
+  lastActivityWrite = now;
+  try { localStorage.setItem(IDLE_SHARED_KEY, String(now)); } catch(e){}
+}
+function scheduleIdle(msUntilLogout){
   dismissIdleWarning();
   if(idleTimer) clearTimeout(idleTimer);
   if(idleWarnTimer) clearTimeout(idleWarnTimer);
-  // Fire the warning 30s before logout
-  idleWarnTimer = setTimeout(showIdleWarning, IDLE_TIMEOUT_MS - IDLE_WARNING_MS);
+  idleWarnTimer = setTimeout(() => {
+    // another tab may have been active in the meantime
+    const idleFor = Date.now() - Math.max(sharedLastActivity(), 0);
+    if(idleFor < IDLE_TIMEOUT_MS - IDLE_WARNING_MS - 1000){ scheduleIdle(IDLE_TIMEOUT_MS - idleFor); return; }
+    showIdleWarning();
+  }, Math.max(msUntilLogout - IDLE_WARNING_MS, 0));
   idleTimer = setTimeout(async () => {
+    const idleFor = Date.now() - sharedLastActivity();
+    if(idleFor < IDLE_TIMEOUT_MS - 1000){ scheduleIdle(IDLE_TIMEOUT_MS - idleFor); return; }
     dismissIdleWarning();
     toast("Signed out after 5 minutes of inactivity");
     await sb.auth.signOut();
-  }, IDLE_TIMEOUT_MS);
+  }, msUntilLogout);
 }
+function resetIdleTimer(){
+  markSharedActivity();
+  scheduleIdle(IDLE_TIMEOUT_MS);
+}
+window.addEventListener('storage', (e) => {
+  if(e.key === IDLE_SHARED_KEY && idleTimer){
+    const idleFor = Date.now() - sharedLastActivity();
+    scheduleIdle(Math.max(IDLE_TIMEOUT_MS - idleFor, 1000));
+  }
+});
 
 function startIdleTimer(){
   IDLE_ACTIVITY_EVENTS.forEach(evt => document.addEventListener(evt, resetIdleTimer, {passive:true}));
+  lastActivityWrite = 0;
   resetIdleTimer();
 }
 
@@ -6637,6 +6721,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
   }
 
   /* ---------- shared helpers for assigning + reading the schedule ---------- */
+  var OPTIONAL_ROLES = ['Assistant'];
+  var ROLE_COLORS = { 'Traditional Photo': '#6366f1', 'Traditional Video': '#0ea5e9', 'Candid Cam': '#ec4899', 'Cinematic Video': '#f59e0b', 'Drone': '#10b981', 'Assistant': '#8b5cf6' };
   var ROLE_SHORT = { 'Traditional Photo': 'Trad Photo', 'Traditional Video': 'Trad Video', 'Candid Cam': 'Candid', 'Cinematic Video': 'Cinematic', 'Drone': 'Drone', 'Assistant': 'Assistant' };
   function initialsOf(n) { return String(n || '').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0] || ''; }).join('').toUpperCase(); }
   function crewByName(name) {
@@ -7060,7 +7146,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     days.forEach(function (day) {
       ROLE_KEYS.forEach(function (role) {
         var raw = day.roles && day.roles[role];
-        if (!raw || !String(raw).trim()) open++;
+        if (!raw || !String(raw).trim()) { if (OPTIONAL_ROLES.indexOf(role) === -1) open++; }
         else if (!isNotRequiredValue(raw)) filled++;
       });
     });
@@ -7515,7 +7601,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       // a full-height cell — an empty role isn't worth as much space as a staffed one.
       if (unfilled.length) {
         var nrList = unfilled.filter(function (u) { return u.nr; }).map(function (u) { return u.role; });
-        var naList = unfilled.filter(function (u) { return !u.nr; }).map(function (u) { return u.role; });
+        var naList = unfilled.filter(function (u) { return !u.nr && OPTIONAL_ROLES.indexOf(u.role) === -1; }).map(function (u) { return u.role; });
         var parts = [];
         if (naList.length) parts.push('<span class="ros-role-unset">Not assigned: ' + escapeHtml(naList.join(', ')) + '</span>');
         if (nrList.length) parts.push('<span class="ros-role-nr">Not required: ' + escapeHtml(nrList.join(', ')) + '</span>');
@@ -7527,17 +7613,26 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       var crewSummary = filled.map(function (f) { return namesInRoleValue(day.roles[f.role]).join(', '); })
         .filter(Boolean).join(', ');
 
-      return '<details class="ros-day-card"' + (idx === 0 ? ' open' : '') + '>' +
-        '<summary class="ros-day-card-head">' +
-          '<span class="ros-day-num">Day ' + (idx + 1) + '</span>' +
-          '<span class="ros-day-date">' + formatDate(day.date) + '</span>' +
-          (day.function ? '<span class="ros-day-function">' + escapeHtml(day.function) + '</span>' : '') +
-          (callTime ? '<span class="ros-day-call"><i>Call</i>' + callTime + '</span>' : '') +
-          '<span class="ros-day-crewcount">' + filled.length + ' role' + (filled.length === 1 ? '' : 's') + '</span>' +
-          '<span class="ros-day-chevron" aria-hidden="true">▾</span>' +
-        '</summary>' +
-        (crewSummary ? '<div class="ros-day-peek">' + escapeHtml(crewSummary) + '</div>' : '') +
-        (function () {
+      var dtObj = day.date ? new Date(day.date + 'T00:00:00') : null;
+      var okDt = dtObj && !isNaN(dtObj);
+      var tileDay = okDt ? dtObj.getDate() : '–';
+      var tileMon = okDt ? ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][dtObj.getMonth()] : '';
+      var tileWd = okDt ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dtObj.getDay()] : '';
+      var crewNames = {};
+      filled.forEach(function (f) { namesInRoleValue(day.roles[f.role]).forEach(function (n) { crewNames[n.toLowerCase()] = 1; }); });
+      var crewTotal = Object.keys(crewNames).length;
+      var openList = unfilled.filter(function (u) { return !u.nr && OPTIONAL_ROLES.indexOf(u.role) === -1; }).map(function (u) { return u.role; });
+      var nrOnly = unfilled.filter(function (u) { return u.nr; }).map(function (u) { return u.role; });
+      var roleRows = filled.map(function (f) {
+        return '<div class="ros-dc-row" style="--rc:' + (ROLE_COLORS[f.role] || '#6b7280') + '">' +
+          '<span class="ros-dc-role"><i></i>' + escapeHtml(f.role) + '</span>' +
+          '<span class="ros-dc-names">' + f.body + '</span></div>';
+      }).join('');
+      if (!filled.length) roleRows = '<div class="ros-dc-empty">No crew assigned yet</div>';
+      var foot = '';
+      if (openList.length) foot += '<span class="ros-dc-open" title="Roles still to fill">' + openList.length + ' open · ' + escapeHtml(openList.map(function (r) { return ROLE_SHORT[r] || r; }).join(', ')) + '</span>';
+      if (nrOnly.length) foot += '<span class="ros-dc-nr">Not needed: ' + escapeHtml(nrOnly.map(function (r) { return ROLE_SHORT[r] || r; }).join(', ')) + '</span>';
+      var clash = (function () {
           // Flag anyone who is also booked on a different shoot that same day.
           if (ev.status === 'Cancelled') return '';
           var here = {};
@@ -7549,10 +7644,18 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
             if (msgs.indexOf(m) === -1) msgs.push(m);
           });
           return msgs.length ? '<div class="ros-clash-note">⚠ Double booking: ' + escapeHtml(msgs.join('; ')) + '</div>' : '';
-        })() +
-        '<div class="ros-callsheet-roles">' + roleCells + '</div>' +
-        '<div class="ros-day-actions"><a class="ros-wa-btn" href="' + whatsappHref(ev, day) + '" target="_blank" rel="noopener">Share this day on WhatsApp</a></div>' +
-      '</details>';
+        })();
+      return '<div class="ros-dc">' +
+        '<div class="ros-dc-head">' +
+          '<div class="ros-dc-tile"><span>' + escapeHtml(tileWd) + '</span><b>' + tileDay + '</b><em>' + tileMon + '</em></div>' +
+          '<div class="ros-dc-title"><strong>' + escapeHtml(day.function || ('Day ' + (idx + 1))) + '</strong>' +
+            '<span>Day ' + (idx + 1) + (callTime ? ' · Call ' + callTime : '') + '</span></div>' +
+          '<span class="ros-dc-count" title="People on this day">' + crewTotal + ' crew</span>' +
+        '</div>' + clash +
+        '<div class="ros-dc-body">' + roleRows + '</div>' +
+        '<div class="ros-dc-foot">' + (foot ? '<div class="ros-dc-notes">' + foot + '</div>' : '') +
+          '<a class="ros-dc-wa" href="' + whatsappHref(ev, day) + '" target="_blank" rel="noopener">Share on WhatsApp</a></div>' +
+      '</div>';
     }).join('');
 
     // Card header: date tile · title + when + day timeline · crew & staffing.
@@ -7600,7 +7703,7 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
             '<span class="ros-evt-sum-title">' + escapeHtml(ev.title || 'Untitled event') + '</span>' +
             '<span class="ros-type-badge" style="color:' + tc.fg + ';background:' + tc.bg + ';border-color:' + tc.border + '">' + escapeHtml(ev.eventType || 'Event') + '</span>' +
             '<span class="ros-status-badge ros-status-' + status.toLowerCase() + '">' + escapeHtml(status) + '</span>' +
-            (ev.dataCopied ? '<span class="ros-status-badge ros-copied-badge" title="Data copied">\ud83d\udcbe Data copied</span>' : '') +
+            (ev.dataCopied ? '<span class="ros-status-badge ros-copied-badge" title="Data copied">\u2713 Data copied</span>' : '') +
           '</div>' +
           '<div class="ros-evt-sum-sub">' +
             '<span class="ros-when-chip ' + timing.cls + '">' + escapeHtml(timing.label) + '</span>' +
@@ -7634,8 +7737,8 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       '<div class="ros-ref-code">' + escapeHtml(ev.refCode || '') + '</div>' +
       '</div>' +
       (canManageSchedule() ? '<div class="ros-event-block-actions">' +
-      (status !== 'Completed' && status !== 'Cancelled' ? '<button type="button" class="ros-link-btn" data-action="complete-event" data-id="' + ev.id + '">\u2713 Mark completed</button>' : '') +
-      '<button type="button" class="ros-link-btn" data-action="copy-event" data-id="' + ev.id + '">' + (ev.dataCopied ? '\ud83d\udcbe Data copied \u2713' : '\ud83d\udcbe Data copied?') + '</button>' +
+      (status !== 'Completed' && status !== 'Cancelled' ? '<button type="button" class="ros-act-btn ros-act-done" data-action="complete-event" data-id="' + ev.id + '">\u2713 Mark completed</button>' : '') +
+      '<button type="button" class="ros-act-btn' + (ev.dataCopied ? ' ros-act-on' : '') + '" data-action="copy-event" data-id="' + ev.id + '">' + (ev.dataCopied ? '\u2713 Data copied' : 'Data copied') + '</button>' +
       '<button type="button" class="ros-link-btn" data-action="edit-event" data-id="' + ev.id + '">Edit</button>' +
       '<button type="button" class="ros-link-btn ros-link-danger" data-action="delete-event" data-id="' + ev.id + '">Remove</button>' +
       '</div>' : '') + '</div>' +
@@ -7646,13 +7749,13 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
         var venueLine = ev.venue
           ? '<div class="ros-meta-item"><dt>Venue</dt><dd>' + escapeHtml(ev.venue) + '</dd></div>'
           : '';
-        var meta = venueLine + contactLine + albumLine + copiedLine;
+        var meta = venueLine + albumLine + copiedLine;
         return meta ? '<dl class="ros-event-block-meta">' + meta + '</dl>' : '';
       })() +
       (days.length > 2
         ? '<details class="ros-event-collapse" open><summary>' +
-            '<span class="ros-evt-less">Hide ' + days.length + ' days</span>' +
-            '<span class="ros-evt-more">Show all ' + days.length + ' days</span>' +
+            '<span class="ros-evt-less">Schedule \u00b7 ' + days.length + ' days <u>Hide</u></span>' +
+            '<span class="ros-evt-more">Schedule \u00b7 ' + days.length + ' days <u>Show</u></span>' +
           '</summary><div class="ros-day-cards">' + rows + '</div></details>'
         : '<div class="ros-day-cards">' + rows + '</div>') +
       (ev.notes ? '<p class="ros-callsheet-notes">' + escapeHtml(ev.notes) + '</p>' : '') +
@@ -8092,6 +8195,23 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       if (!ev.dataCopied) openCopyDialog(id);
     }
   }
+  // Find the Event ledger (Archive) entries that belong to this calendar event.
+  var LEDGER_STOP = ['weds','wed','and','the','wedding','with','ceremony','function','roka','engagement','birthday','party'];
+  function ledgerCandidates(ev) {
+    var list = (typeof data !== 'undefined' && data.events) ? data.events : [];
+    var toks = String(ev.title || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+      .filter(function (t) { return t.length > 2 && LEDGER_STOP.indexOf(t) === -1; });
+    var dates = (ev.days || []).map(function (d) { return d.date; }).filter(Boolean).sort();
+    var lo = dates.length ? addDaysToIso(dates[0], -3) : '', hi = dates.length ? addDaysToIso(dates[dates.length - 1], 3) : '';
+    return list.map(function (e) {
+      var hay = ((e.client || '') + ' ' + (e.eventName || '')).toLowerCase();
+      var score = toks.filter(function (t) { return hay.indexOf(t) !== -1; }).length;
+      var near = !!(e.eventDate && lo && e.eventDate >= lo && e.eventDate <= hi);
+      return { e: e, score: score, near: near };
+    }).sort(function (a, b) {
+      return (b.score - a.score) || ((b.near ? 1 : 0) - (a.near ? 1 : 0)) || String(b.e.eventDate || '').localeCompare(String(a.e.eventDate || ''));
+    });
+  }
   function openCopyDialog(id) {
     var ev = state.events.find(function (x) { return x.id === id; });
     if (!ev) return;
@@ -8103,11 +8223,13 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
     ov.id = 'rosCopyOv';
     ov.innerHTML =
       '<div class="ros-copy-box" role="dialog" aria-modal="true">' +
-        '<h3>\ud83d\udcbe Data copied</h3>' +
+        '<h3>Data copied</h3>' +
         '<p class="sub">' + escapeHtml(ev.title || 'Event') + ' \u2014 note who copied the footage and where it is saved.</p>' +
         '<label>Copied by</label><input type="text" id="rosCopyBy" maxlength="80" value="' + escapeHtml(dc.by || whoAmI() || '') + '" placeholder="e.g. Ajay">' +
         '<label>Copied to (drive / system)</label><input type="text" id="rosCopyTo" maxlength="120" value="' + escapeHtml(dc.to || '') + '" placeholder="e.g. Meraki HDD 03, Editing PC">' +
         '<label>Date copied</label><input type="date" id="rosCopyOn" value="' + escapeHtml(dc.on || todayStr()) + '">' +
+        '<label>Event ledger entry <span style="font-weight:400;color:#8a8aa3">(the copy details will also be saved there)</span></label><select id="rosCopyLedger" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #d5d5de;border-radius:8px;font-size:14px;background:#fff"></select>' +
+        '<div id="rosCopyLedgerNote" style="font-size:11.5px;color:#8a8aa3;margin-top:4px"></div>' +
         '<div class="ros-copy-actions">' +
           (ev.dataCopied ? '<button type="button" class="danger" id="rosCopyClear">Remove mark</button>' : '') +
           '<button type="button" id="rosCopyCancel">Cancel</button>' +
@@ -8115,6 +8237,24 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
         '</div>' +
       '</div>';
     document.body.appendChild(ov);
+    var cands = ledgerCandidates(ev);
+    var selId = ev.ledgerId && cands.some(function (c) { return c.e.id === ev.ledgerId; }) ? ev.ledgerId : '';
+    var auto = false;
+    if (!selId && cands.length && cands[0].score >= 1 && (cands[0].near || !cands[1] || cands[0].score > cands[1].score)) { selId = cands[0].e.id; auto = true; }
+    var lsel = document.getElementById('rosCopyLedger');
+    lsel.innerHTML = '<option value="">\u2014 Don\u2019t link to the ledger \u2014</option>' + cands.slice(0, 60).map(function (c) {
+      return '<option value="' + escapeHtml(c.e.id) + '"' + (c.e.id === selId ? ' selected' : '') + '>' +
+        escapeHtml((c.e.client || 'Client') + ' \u00b7 ' + (c.e.eventName || c.e.eventType || 'Event') + (c.e.eventDate ? ' \u00b7 ' + c.e.eventDate : '')) + '</option>';
+    }).join('');
+    document.getElementById('rosCopyLedgerNote').textContent = !cands.length ? 'No Event ledger entries found yet.' : (auto ? 'Matched automatically \u2014 change it if this is the wrong entry.' : (selId ? '' : 'Pick the matching entry so it shows in the Event ledger.'));
+    function writeLedger(ledgerId, by, to) {
+      var rec = (data.events || []).find(function (x) { return x.id === ledgerId; });
+      if (!rec) return;
+      rec.copiedBy = by; rec.copiedTo = to;
+      rec.updatedBy = whoAmI(); rec.updatedAt = new Date().toISOString();
+      persistEvent(rec);
+      if (typeof renderAll === 'function') renderAll();
+    }
     function close() { ov.remove(); }
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
     document.getElementById('rosCopyCancel').onclick = close;
@@ -8124,12 +8264,23 @@ document.getElementById('groupBy').addEventListener('change', () => renderTable(
       var on = document.getElementById('rosCopyOn').value;
       if (!by) { toast('Enter who copied the data.', true); return; }
       ev.dataCopied = { by: by, to: to, on: on || todayStr() };
-      if (await saveEvents()) { close(); toast('Data copy recorded.'); renderContent(); }
+      var chosen = lsel.value;
+      if (ev.ledgerId && ev.ledgerId !== chosen) writeLedger(ev.ledgerId, '', '');
+      ev.ledgerId = chosen || undefined;
+      if (!chosen) delete ev.ledgerId;
+      if (await saveEvents()) {
+        if (chosen) writeLedger(chosen, by, to);
+        close(); toast(chosen ? 'Data copy recorded and added to the Event ledger.' : 'Data copy recorded.'); renderContent();
+      }
     };
     var clr = document.getElementById('rosCopyClear');
     if (clr) clr.onclick = async function () {
-      delete ev.dataCopied;
-      if (await saveEvents()) { close(); toast('Mark removed.'); renderContent(); }
+      var oldLedger = ev.ledgerId;
+      delete ev.dataCopied; delete ev.ledgerId;
+      if (await saveEvents()) {
+        if (oldLedger) writeLedger(oldLedger, '', '');
+        close(); toast('Mark removed.'); renderContent();
+      }
     };
     setTimeout(function () { var i = document.getElementById(dc.by ? 'rosCopyTo' : 'rosCopyBy'); if (i) i.focus(); }, 30);
   }
