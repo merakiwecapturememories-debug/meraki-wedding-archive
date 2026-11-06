@@ -1162,7 +1162,7 @@
 
 <div class="controls no-print">
   <h1>MERAKI — QUOTATION BUILDER</h1>
-  <p class="sub">Fill in the details below. The document beneath updates automatically to match the package and number of event days you choose. When ready, use Print / Save as PDF. <span id="qBuild" style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:10px;background:#efe4c8;color:#6a5a33;font-size:11px;font-weight:600;">Build 01-Nov-2026 · H</span></p>
+  <p class="sub">Fill in the details below. The document beneath updates automatically to match the package and number of event days you choose. When ready, use Print / Save as PDF. <span id="qBuild" style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:10px;background:#efe4c8;color:#6a5a33;font-size:11px;font-weight:600;">Build 04-Nov-2026 · I</span></p>
 
   <div class="ctrl-row">
     <div class="ctrl-field">
@@ -2799,6 +2799,23 @@
     var b = document.getElementById('qDraftBar'); if(b) b.remove();
   }
   window.addEventListener('beforeprint', clean);
+})();
+</script>
+<script>
+// Tell the main app this user is active here, so its 5-minute idle timer does not sign
+// them out while they are busy on the Quotation page (the session is shared).
+(function(){
+  var last = 0;
+  function ping(){
+    var now = Date.now();
+    if (now - last < 3000) return;
+    last = now;
+    try { localStorage.setItem('meraki-last-activity', String(now)); } catch (e) {}
+  }
+  ['mousemove','mousedown','keydown','scroll','touchstart','click','input','change'].forEach(function(ev){
+    document.addEventListener(ev, ping, { passive: true, capture: true });
+  });
+  ping();
 })();
 </script>
 </body>
